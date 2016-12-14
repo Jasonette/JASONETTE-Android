@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Jasonette</string>
+    <string name="url">https://raw.githubusercontent.com/Jasonette/Jasonpedia/gh-pages/hello.json</string>
+</resources>
