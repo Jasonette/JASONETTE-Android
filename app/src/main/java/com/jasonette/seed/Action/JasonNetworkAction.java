@@ -142,14 +142,22 @@ public class JasonNetworkAction {
                                 JasonHelper.next("error", action, error, context);
                             }
                         } catch (Exception err){
-
+                            Log.d("Error", err.toString());
                         }
                     }
 
                     @Override
                     public void onResponse(Call call, final Response response) throws IOException {
                         if (!response.isSuccessful()) {
-                            throw new IOException("Unexpected code " + response);
+                            try {
+                                if (action.has("error")) {
+                                    JSONObject error = new JSONObject();
+                                    error.put("data", response.toString());
+                                    JasonHelper.next("error", action, error, context);
+                                }
+                            } catch (Exception err){
+                                Log.d("Error", err.toString());
+                            }
                         }
 
                         try {
