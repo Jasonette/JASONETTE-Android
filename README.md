@@ -20,6 +20,12 @@ Looking for an iOS version? [See here](https://www.github.com/Jasonette/JASONETT
 
 <br>
 
+#How it works
+
+![diagram](https://raw.githubusercontent.com/gliechtenstein/images/master/diagram.gif)
+
+<br>
+
 #Cool things about Jasonette
 
 - **100% NATIVE**: Jasonette maps JSON into native components and native function calls. There is no gimmick. There is no magic.
