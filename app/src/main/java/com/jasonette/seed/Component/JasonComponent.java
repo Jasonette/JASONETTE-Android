@@ -45,6 +45,11 @@ public class JasonComponent {
                 view.setLayoutParams(layoutParams);
             }
 
+            if (style.has("background")) {
+                int color = JasonHelper.parse_color(style.getString("background"));
+                view.setBackgroundColor(color);
+            }
+
             if (style.has("corner_radius")) {
                 // TODO: Corner radius
             }
