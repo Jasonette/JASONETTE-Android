@@ -10,6 +10,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -72,6 +73,8 @@ public class JasonViewActivity extends AppCompatActivity{
     private LinearLayout footerInput;
     private View footer_input_textfield;
 
+    Parcelable listState;
+
 
     /*************************************************************
      *
@@ -85,6 +88,7 @@ public class JasonViewActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
 
         // Setup Layouts
 
@@ -168,8 +172,31 @@ public class JasonViewActivity extends AppCompatActivity{
         // Create model
         model = new JasonModel(url, intent, this);
 
-        // Fetch
-        model.fetch();
+        if(savedInstanceState != null) {
+            // Restore model and url
+            // Then rebuild the view
+            try {
+                url = savedInstanceState.getString("url");
+                model.url = url;
+                if(savedInstanceState.getString("jason")!=null) model.jason = new JSONObject(savedInstanceState.getString("jason"));
+                if(savedInstanceState.getString("rendered")!=null) model.rendered = new JSONObject(savedInstanceState.getString("rendered"));
+                if(savedInstanceState.getString("state")!=null) model.state = new JSONObject(savedInstanceState.getString("state"));
+                if(savedInstanceState.getString("var")!=null) model.var = new JSONObject(savedInstanceState.getString("var"));
+                if(savedInstanceState.getString("cache")!=null) model.cache = new JSONObject(savedInstanceState.getString("cache"));
+                if(savedInstanceState.getString("params")!=null) model.params = new JSONObject(savedInstanceState.getString("params"));
+                if(savedInstanceState.getString("session")!=null) model.session = new JSONObject(savedInstanceState.getString("session"));
+
+                listState = savedInstanceState.getParcelable("listState");
+
+                build();
+            } catch (Exception e){
+                Log.d("Error", e.toString());
+            }
+        } else {
+            // Fetch
+            model.fetch();
+        }
+
     }
 
 
@@ -200,7 +227,31 @@ public class JasonViewActivity extends AppCompatActivity{
         firstResume = false;
 
         super.onResume();
+
+        if (listState != null) {
+            listView.getLayoutManager().onRestoreInstanceState(listState);
+        }
+
     }
+
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState) {
+        if(model.url!=null) savedInstanceState.putString("url", model.url.toString());
+        if(model.jason!=null) savedInstanceState.putString("jason", model.jason.toString());
+        if(model.rendered!=null) savedInstanceState.putString("rendered", model.rendered.toString());
+        if(model.state!=null) savedInstanceState.putString("state", model.state.toString());
+        if(model.var!=null) savedInstanceState.putString("var", model.var.toString());
+        if(model.cache!=null) savedInstanceState.putString("cache", model.cache.toString());
+        if(model.params!=null) savedInstanceState.putString("params", model.params.toString());
+        if(model.session!=null) savedInstanceState.putString("session", model.session.toString());
+
+        // Store RecyclerView state
+        listState = listView.getLayoutManager().onSaveInstanceState();
+        savedInstanceState.putParcelable("listState", listState);
+
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
 
     /*************************************************************
 
