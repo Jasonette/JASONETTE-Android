@@ -695,34 +695,35 @@ public class JasonViewActivity extends AppCompatActivity{
      ************************************************************/
 
     public void build(){
-        try {
+        if(model.jason!=null) {
+            try {
 
-            // Set up background
+                // Set up background
 
-            if(model.jason.getJSONObject("$jason").has("body")){
-                final JSONObject body;
-                body = (JSONObject) model.jason.getJSONObject("$jason").getJSONObject("body");
-                setup_body(body);
-            }
+                if (model.jason.getJSONObject("$jason").has("body")) {
+                    final JSONObject body;
+                    body = (JSONObject) model.jason.getJSONObject("$jason").getJSONObject("body");
+                    setup_body(body);
+                }
 
-            if (model.jason.getJSONObject("$jason").has("head")) {
-                final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
-                if (head.has("data")) {
-                    if (head.has("templates")) {
-                        if (head.getJSONObject("templates").has("body")) {
-                            model.set("state", new JSONObject());
-                            render(new JSONObject(), model.state, this);
+                if (model.jason.getJSONObject("$jason").has("head")) {
+                    final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                    if (head.has("data")) {
+                        if (head.has("templates")) {
+                            if (head.getJSONObject("templates").has("body")) {
+                                model.set("state", new JSONObject());
+                                render(new JSONObject(), model.state, this);
+                            }
                         }
                     }
                 }
+
+                onLoad();
+
+
+            } catch (JSONException e) {
+                Log.d("Error", e.toString());
             }
-
-            onLoad();
-
-
-        }
-        catch (JSONException e){
-            Log.d("Error", e.toString());
         }
 
     }
