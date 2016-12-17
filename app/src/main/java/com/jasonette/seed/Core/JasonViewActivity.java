@@ -72,6 +72,7 @@ public class JasonViewActivity extends AppCompatActivity{
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
+    ArrayList<View> layer_items;
 
     Parcelable listState;
 
@@ -90,6 +91,7 @@ public class JasonViewActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
 
 
+        layer_items = new ArrayList<View>();
         // Setup Layouts
 
         // 1. Create root layout (Relative Layout)
@@ -776,6 +778,8 @@ public class JasonViewActivity extends AppCompatActivity{
                     // Set sections
                     if (body.has("sections")) {
                         setup_sections(body.getJSONArray("sections"));
+                    } else {
+                        setup_sections(null);
                     }
 
 
@@ -830,6 +834,8 @@ public class JasonViewActivity extends AppCompatActivity{
                     // Set layers
                     if (body.has("layers")){
                         setup_layers(body.getJSONArray("layers"));
+                    } else {
+                        setup_layers(null);
                     }
                     rootLayout.requestLayout();
 
@@ -865,45 +871,46 @@ public class JasonViewActivity extends AppCompatActivity{
 
     private void setup_sections(JSONArray sections){
         section_items = new ArrayList<JSONObject>();
-        try{
-            for(int i = 0; i < sections.length() ; i++){
-                JSONObject section = (JSONObject) sections.getJSONObject(i);
+        if(sections!=null) {
+            try {
+                for (int i = 0; i < sections.length(); i++) {
+                    JSONObject section = (JSONObject) sections.getJSONObject(i);
 
-                // Determine if it's a horizontal section or vertical section
-                // if it's vertical, simply keep adding to the section as individual items
-                // if it's horizontal, start a nested recyclerview
-                if(section.has("type") && section.getString("type").equals("horizontal")){
-                   // horizontal type
-                    // TEMPORARY: Add header as an item
-                    if(section.has("header")){
-                        JSONObject header = (JSONObject) section.getJSONObject("header");
-                        section_items.add(header);
-                    }
-                    if(section.has("items")){
-                        // Let's add the entire section as an item, under:
-                        // "horizontal_section": [items]
-                        JSONObject horizontal_section = new JSONObject();
-                        horizontal_section.put("horizontal_section", section.getJSONArray("items"));
-                        section_items.add(horizontal_section);
-                    }
-                } else {
-                    // vertical type (default)
-                    if(section.has("header")){
-                        JSONObject header = (JSONObject) section.getJSONObject("header");
-                        section_items.add(header);
-                    }
-                    if(section.has("items")){
-                        JSONArray items = (JSONArray) section.getJSONArray("items");
-                        for(int j = 0 ; j < items.length() ; j++){
-                            JSONObject item = (JSONObject) items.getJSONObject(j);
-                            section_items.add(item);
+                    // Determine if it's a horizontal section or vertical section
+                    // if it's vertical, simply keep adding to the section as individual items
+                    // if it's horizontal, start a nested recyclerview
+                    if (section.has("type") && section.getString("type").equals("horizontal")) {
+                        // horizontal type
+                        // TEMPORARY: Add header as an item
+                        if (section.has("header")) {
+                            JSONObject header = (JSONObject) section.getJSONObject("header");
+                            section_items.add(header);
+                        }
+                        if (section.has("items")) {
+                            // Let's add the entire section as an item, under:
+                            // "horizontal_section": [items]
+                            JSONObject horizontal_section = new JSONObject();
+                            horizontal_section.put("horizontal_section", section.getJSONArray("items"));
+                            section_items.add(horizontal_section);
+                        }
+                    } else {
+                        // vertical type (default)
+                        if (section.has("header")) {
+                            JSONObject header = (JSONObject) section.getJSONObject("header");
+                            section_items.add(header);
+                        }
+                        if (section.has("items")) {
+                            JSONArray items = (JSONArray) section.getJSONArray("items");
+                            for (int j = 0; j < items.length(); j++) {
+                                JSONObject item = (JSONObject) items.getJSONObject(j);
+                                section_items.add(item);
+                            }
                         }
                     }
                 }
+            } catch (JSONException e) {
+                Log.d("Error", e.toString());
             }
-        }
-        catch(JSONException e){
-            Log.d("Error", e.toString());
         }
 
         // Create adapter passing in the sample user data
@@ -1138,6 +1145,12 @@ public class JasonViewActivity extends AppCompatActivity{
 
     private void setup_layers(JSONArray layers){
         try{
+            if(layer_items != null) {
+                for (int j = 0; j < layer_items.size(); j++) {
+                    View layerView = layer_items.get(j);
+                    rootLayout.removeView(layerView);
+                }
+            }
             for(int i = 0; i<layers.length(); i++){
                 JSONObject layer = (JSONObject)layers.getJSONObject(i);
                 if(layer.has("type")){
@@ -1145,6 +1158,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     JasonComponentFactory.build(view, layer, null, JasonViewActivity.this);
                     stylize_layer(view, layer);
                     rootLayout.addView(view);
+                    layer_items.add(view);
                 }
             }
         } catch (Exception e) {
