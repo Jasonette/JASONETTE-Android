@@ -158,14 +158,14 @@ public class JasonNetworkAction {
                             } catch (Exception err){
                                 Log.d("Error", err.toString());
                             }
-                        }
+                        } else {
+                            try {
+                                String jsonData = response.body().string();
+                                JasonHelper.next("success", action, jsonData, context);
 
-                        try {
-                            String jsonData = response.body().string();
-                            JasonHelper.next("success", action, jsonData, context);
-
-                        } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            } catch (Exception e) {
+                                Log.d("Error", e.toString());
+                            }
                         }
                     }
                 });
