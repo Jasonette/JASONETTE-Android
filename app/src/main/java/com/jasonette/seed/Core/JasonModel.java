@@ -128,7 +128,7 @@ public class JasonModel{
                         String res = response.body().string();
                         jason = new JSONObject(res);
                         if(jason.has("$jason")){
-                            view.build();
+                            view.build(null);
                         } else {
 
                         }

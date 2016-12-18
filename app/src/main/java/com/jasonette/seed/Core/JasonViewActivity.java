@@ -190,7 +190,9 @@ public class JasonViewActivity extends AppCompatActivity{
 
                 listState = savedInstanceState.getParcelable("listState");
 
-                build();
+                JSONObject options = new JSONObject();
+                options.put("silent", true);
+                build(options);
             } catch (Exception e){
                 Log.d("Error", e.toString());
             }
@@ -694,7 +696,7 @@ public class JasonViewActivity extends AppCompatActivity{
      *
      ************************************************************/
 
-    public void build(){
+    public void build(JSONObject options){
         if(model.jason!=null) {
             try {
 
@@ -718,7 +720,12 @@ public class JasonViewActivity extends AppCompatActivity{
                     }
                 }
 
-                onLoad();
+                if(options!=null && options.has("silent") && options.getBoolean("silent")){
+                    // silent build
+                } else {
+                    // non-silent build => trigger events
+                    onLoad();
+                }
 
 
             } catch (JSONException e) {
