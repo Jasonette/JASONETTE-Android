@@ -1176,32 +1176,30 @@ public class JasonViewActivity extends AppCompatActivity{
 
     private void stylize_layer(View view, JSONObject component){
         try{
-            if(component.has("style")){
-                JSONObject style = component.getJSONObject("style");
-                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)view.getLayoutParams();
+            JSONObject style = JasonHelper.style(component, this);
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)view.getLayoutParams();
 
-                if(style.has("top")){
-                    int top = (int) JasonHelper.pixels(JasonViewActivity.this, style.getString("top"), "vertical");
-                    params.topMargin = top;
-                    params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-                }
-                if(style.has("left")){
-                    int left = (int) JasonHelper.pixels(JasonViewActivity.this, style.getString("left"), "horizontal");
-                    params.leftMargin = left;
-                    params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-                }
-                if(style.has("right")){
-                    int right = (int) JasonHelper.pixels(JasonViewActivity.this, style.getString("right"), "horizontal");
-                    params.rightMargin = right;
-                    params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-                }
-                if(style.has("bottom")){
-                    int bottom = (int) JasonHelper.pixels(JasonViewActivity.this, style.getString("bottom"), "vertical");
-                    params.bottomMargin = bottom;
-                    params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-                }
-                view.setLayoutParams(params);
+            if(style.has("top")){
+                int top = (int) JasonHelper.pixels(JasonViewActivity.this, style.getString("top"), "vertical");
+                params.topMargin = top;
+                params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
             }
+            if(style.has("left")){
+                int left = (int) JasonHelper.pixels(JasonViewActivity.this, style.getString("left"), "horizontal");
+                params.leftMargin = left;
+                params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            }
+            if(style.has("right")){
+                int right = (int) JasonHelper.pixels(JasonViewActivity.this, style.getString("right"), "horizontal");
+                params.rightMargin = right;
+                params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            }
+            if(style.has("bottom")){
+                int bottom = (int) JasonHelper.pixels(JasonViewActivity.this, style.getString("bottom"), "vertical");
+                params.bottomMargin = bottom;
+                params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            }
+            view.setLayoutParams(params);
         } catch (Exception e){
             Log.d("Error", e.toString());
         }
