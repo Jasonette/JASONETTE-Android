@@ -4,16 +4,11 @@ import android.content.Context;
 import android.util.Log;
 
 import com.jasonette.seed.Helper.JasonHelper;
+import com.squareup.duktape.Duktape;
 
 import org.json.JSONObject;
-import org.liquidplayer.webkit.javascriptcore.JSContext;
-import org.liquidplayer.webkit.javascriptcore.JSException;
-import org.liquidplayer.webkit.javascriptcore.JSFunction;
-import org.liquidplayer.webkit.javascriptcore.JSON;
-import org.liquidplayer.webkit.javascriptcore.JSObject;
-import org.liquidplayer.webkit.javascriptcore.JSValue;
 
-public class JasonParser implements JSContext.IJSExceptionHandler {
+public class JasonParser {
     static JSONObject res;
     private static Context context;
 
@@ -41,10 +36,10 @@ public class JasonParser implements JSContext.IJSExceptionHandler {
         return instance;
     }
 
-
-    @Override
-    public void handle(JSException exception) {
-        Log.d("Error", exception.toString());
+    interface  Fun {
+       String json(String template, String data, Boolean json);
+       String html(String template, String data, Boolean json);
+       String xml(String template, String data, Boolean json);
     }
 
     public void parse(final String data_type, final JSONObject data, final Object template, final Context context){
@@ -53,23 +48,31 @@ public class JasonParser implements JSContext.IJSExceptionHandler {
             new Thread(new Runnable(){
                 @Override public void run() {
                     try {
+                        Duktape duktape = Duktape.create();
                         String js = JasonHelper.read_file("parser", context);
-                        JSContext jscontext = new JSContext();
-                        jscontext.setExceptionHandler(JasonParser.getInstance());
-                        jscontext.evaluateScript(js);
-                        JSObject parser = jscontext.property("parser").toObject();
-                        JSFunction json = parser.property(data_type).toFunction();
-                        JSValue val;
-                        if(data_type.equalsIgnoreCase("json")){
-                            val = json.call(null, JSON.parse(jscontext, template.toString()), JSON.parse(jscontext, data.toString()));
-                        } else {
-                            String raw_data = data.getString("$jason");
+                        String jsonResult = "{}";
+                        try {
+                            duktape.evaluate(js);
+                            Fun fun = duktape.get("parser", Fun.class);
 
-                            // fix for emoji bug
-                            raw_data = escape_unicode(raw_data);
-                            val = json.call(null, JSON.parse(jscontext, template.toString()), raw_data);
+                            if (data_type.equalsIgnoreCase("json")) {
+                                String templateJson = template.toString();
+                                String dataJson = data.toString();
+                                jsonResult = fun.json(templateJson, dataJson, true);
+                            } else {
+                                String raw_data = data.getString("$jason");
+
+                                // fix for emoji bug
+                                //raw_data = escape_unicode(raw_data);
+                                String templateJson = template.toString();
+                                jsonResult = fun.html(templateJson, raw_data, true);
+                            }
+                        } catch (Exception e) {
+                            Log.d("Error", e.toString());
+                        } finally {
+                            duktape.close();
                         }
-                        res = new JSONObject(val.toJSON());
+                        JSONObject res = new JSONObject(jsonResult);
                         listener.onFinished(res);
                     } catch (Exception e){
                         Log.d("Error", e.toString());
