@@ -1,6 +1,7 @@
 package com.jasonette.seed.Component;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -13,9 +14,15 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaderFactory;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONObject;
+
+import java.net.URI;
+import java.util.Iterator;
 
 public class JasonImageComponent {
 
@@ -40,7 +47,40 @@ public class JasonImageComponent {
                 String type;
                 final JSONObject style = JasonHelper.style(component, context);
                 type = component.getString("type");
-                String url = component.getString("url");
+
+                // Constructing URL
+                GlideUrl url;
+                LazyHeaders.Builder builder = new LazyHeaders.Builder();
+
+                // Add session if included
+                SharedPreferences pref = context.getSharedPreferences("session", 0);
+                JSONObject session = null;
+                URI uri_for_session = new URI(component.getString("url").toLowerCase());
+                String session_domain = uri_for_session.getHost();
+                if(pref.contains(session_domain)){
+                    String str = pref.getString(session_domain, null);
+                    session = new JSONObject(str);
+                }
+                // Attach Header from Session
+                if(session != null && session.has("header")) {
+                    Iterator<?> keys = session.getJSONObject("header").keys();
+                    while (keys.hasNext()) {
+                        String key = (String) keys.next();
+                        String val = session.getJSONObject("header").getString(key);
+                        builder.addHeader(key, val);
+                    }
+                }
+
+                if(component.has("header")){
+                    Iterator<?> keys = component.getJSONObject("header").keys();
+                    while (keys.hasNext()) {
+                        String key = (String) keys.next();
+                        String val = component.getJSONObject("header").getString(key);
+                        builder.addHeader(key, val);
+                    }
+                }
+
+                url = new GlideUrl(component.getString("url"), builder.build());
 
                 if (style.has("corner_radius")) {
                     corner_radius = JasonHelper.pixels(context, style.getString("corner_radius"), "horizontal");
@@ -48,7 +88,7 @@ public class JasonImageComponent {
 
                 if (corner_radius == 0) {
                     try {
-                        if (url.matches("\\.gif")) {
+                        if (component.getString("url").matches("\\.gif")) {
                             Glide
                                     .with(context)
                                     .load(url)
@@ -89,7 +129,7 @@ public class JasonImageComponent {
                     }
                 } else {
                     final float corner_radius_float = (float)corner_radius;
-                    if (url.length() > 0) {
+                    if (component.getString("url").length() > 0) {
                         try {
                             Glide
                                     .with(context)
