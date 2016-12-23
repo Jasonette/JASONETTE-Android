@@ -29,7 +29,7 @@ public class JasonCacheAction {
             ((JasonViewActivity)context).model.cache = new_cache;
 
             // Execute next
-            JasonHelper.next("success", action, new JSONObject(), context);
+            JasonHelper.next("success", action, new_cache, context);
 
         } catch (Exception e){
             Log.d("Error", e.toString());
