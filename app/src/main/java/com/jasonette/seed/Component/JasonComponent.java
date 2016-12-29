@@ -51,8 +51,12 @@ public class JasonComponent {
             }
             if(style.has("opacity"))
             {
-                float opacity = (float) style.get("opacity");
-                view.setAlpha(opacity);
+                try {
+                    float opacity = (float) style.get("opacity");
+                    view.setAlpha(opacity);
+                }
+                catch (Exception ex) {
+                }
             }
 
             if (style.has("corner_radius")) {
