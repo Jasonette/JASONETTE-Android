@@ -49,6 +49,11 @@ public class JasonComponent {
                 int color = JasonHelper.parse_color(style.getString("background"));
                 view.setBackgroundColor(color);
             }
+            if(style.has("opacity"))
+            {
+                float opacity = (float) style.get("opacity");
+                view.setAlpha(opacity);
+            }
 
             if (style.has("corner_radius")) {
                 // TODO: Corner radius
