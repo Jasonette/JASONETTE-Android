@@ -62,7 +62,6 @@ public class JasonComponent {
                 cornerShape.setShape(GradientDrawable.RECTANGLE);
                 if (style.has("background")) {
                     color = JasonHelper.parse_color(style.getString("background"));
-                    cornerShape.setColor(color);
                 }
                 cornerShape.setColor(color);
                 cornerShape.setCornerRadius(corner);
