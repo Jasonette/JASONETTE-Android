@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
-
 import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONObject;
 import java.io.IOException;
