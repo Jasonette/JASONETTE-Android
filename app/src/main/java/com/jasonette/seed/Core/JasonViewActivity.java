@@ -47,6 +47,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import static com.bumptech.glide.Glide.with;
@@ -607,19 +608,23 @@ public class JasonViewActivity extends AppCompatActivity{
         try {
             if (action.has("options")) {
                 String url = action.getJSONObject("options").getString("url");
+                String view_type = "json";
+                if (action.getJSONObject("options").has("view")) {
+                    view_type = action.getJSONObject("options").getString("view");
+                }
+                if(!view_type.equalsIgnoreCase("app")) {
+                    url = JasonHelper.url(url, context);
+                }
                 String transition = "push";
                 if(action.getJSONObject("options").has("transition")){
                     transition = action.getJSONObject("options").getString("transition");
                 }
 
                 // "view": "web"
-                if (action.getJSONObject("options").has("view")) {
-                    String view_type = action.getJSONObject("options").getString("view");
-                    if(view_type.equalsIgnoreCase("web") || view_type.equalsIgnoreCase("app")){
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setData(Uri.parse(url));
-                        startActivity(intent);
-                    }
+                if(view_type.equalsIgnoreCase("web") || view_type.equalsIgnoreCase("app")){
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(url));
+                    startActivity(intent);
                     return;
                 }
 
@@ -752,26 +757,37 @@ public class JasonViewActivity extends AppCompatActivity{
                         if (style.has("background")) {
                             if(style.get("background") instanceof String){
                                 String background = style.getString("background");
-                                if(background.matches("http[s]?:\\/\\/.*")) {
-                                    if (background.matches(".*\\.gif")) {
-                                        with(JasonViewActivity.this).load(background).asGif().into(new SimpleTarget<GifDrawable>() {
-                                            @Override
-                                            public void onResourceReady(GifDrawable resource, GlideAnimation<? super GifDrawable> glideAnimation) {
-                                                sectionLayout.setBackground(resource);
-
-                                            }
-                                        });
-                                    } else {
-                                        with(JasonViewActivity.this).load(background).into(new SimpleTarget<GlideDrawable>() {
-                                            @Override
-                                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
-                                                sectionLayout.setBackground(resource);
-                                            }
-                                        });
-                                    }
-                                } else if(background == "camera"){
+                                if(background == "camera") {
+                                    // TODO
                                 } else {
-                                    getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
+                                    try {
+                                        // Set the background to a color, if it is parseable
+                                        int bg_color = JasonHelper.parse_color(background);
+                                        getWindow().getDecorView().setBackgroundColor(bg_color);
+                                    } catch (IllegalArgumentException e) {
+                                        // Not a color, get the URL
+                                        try {
+                                            background = JasonHelper.url(background, JasonViewActivity.this);
+                                        } catch (MalformedURLException me) {
+                                            Log.d("Error", me.toString());
+                                        }
+                                        if (background.matches(".*\\.gif")) {
+                                            with(JasonViewActivity.this).load(background).asGif().into(new SimpleTarget<GifDrawable>() {
+                                                @Override
+                                                public void onResourceReady(GifDrawable resource, GlideAnimation<? super GifDrawable> glideAnimation) {
+                                                    sectionLayout.setBackground(resource);
+
+                                                }
+                                            });
+                                        } else {
+                                            with(JasonViewActivity.this).load(background).into(new SimpleTarget<GlideDrawable>() {
+                                                @Override
+                                                public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                                    sectionLayout.setBackground(resource);
+                                                }
+                                            });
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -972,7 +988,7 @@ public class JasonViewActivity extends AppCompatActivity{
                 if(input.has("left")) {
                     JSONObject json = input.getJSONObject("left");
                     if(json.has("image")) {
-                        json.put("url", json.getString("image"));
+                        json.put("url", JasonHelper.url(json.getString("image"), JasonViewActivity.this));
                     }
                     json.put("type", "button");
                     json.put("style", style);
@@ -1001,7 +1017,7 @@ public class JasonViewActivity extends AppCompatActivity{
                         json.put("text", "Send");
                     }
                     if(json.has("image")) {
-                        json.put("url", json.getString("image"));
+                        json.put("url", JasonHelper.url(json.getString("image"), JasonViewActivity.this));
                     }
                     json.put("type", "button");
                     json.put("style", style);
@@ -1063,7 +1079,7 @@ public class JasonViewActivity extends AppCompatActivity{
                         final int index = i;
                         Glide
                                 .with(this)
-                                .load(item.getString("image"))
+                                .load(JasonHelper.url(item.getString("image"), JasonViewActivity.this))
                                 .asBitmap()
                                 .into(new SimpleTarget<Bitmap>(100, 100) {
                                     @Override
@@ -1094,7 +1110,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     final int index = i;
                     if(item.has("image")) {
                         with(this)
-                                .load(item.getString("image"))
+                                .load(JasonHelper.url(item.getString("image"), JasonViewActivity.this))
                                 .asBitmap()
                                 .into(new SimpleTarget<Bitmap>(100, 100) {
                                     @Override
@@ -1128,7 +1144,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     try {
                         JSONObject item = items.getJSONObject(position);
                         if(item.has("url")) {
-                            String url = item.getString("url");
+                            String url = JasonHelper.url(item.getString("image"), JasonViewActivity.this);
                             JSONObject action = new JSONObject();
                             JSONObject options = new JSONObject();
                             options.put("url", url);
@@ -1226,7 +1242,7 @@ public class JasonViewActivity extends AppCompatActivity{
 
                     // if it's an image button, both url and image should work
                     if(json.has("image")) {
-                        json.put("url", json.getString("image"));
+                        json.put("url", JasonHelper.url(json.getString("image"), JasonViewActivity.this));
                     }
 
                     // let's override the style so the menu button size has a sane dimension
@@ -1308,7 +1324,7 @@ public class JasonViewActivity extends AppCompatActivity{
                 } else if (title instanceof JSONObject) {
                     String type = ((JSONObject) title).getString("type");
                     if (type.equalsIgnoreCase("image")) {
-                        String url = ((JSONObject) title).getString("url");
+                        String url = JasonHelper.url(((JSONObject) title).getString("url"), JasonViewActivity.this);
                         int height = header_height;
                         int width = Toolbar.LayoutParams.WRAP_CONTENT;
                         if (((JSONObject) title).has("style")) {

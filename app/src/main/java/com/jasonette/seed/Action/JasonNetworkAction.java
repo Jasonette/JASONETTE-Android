@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
+
 import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class JasonNetworkAction {
         try{
             final JSONObject options = action.getJSONObject("options");
             if(options.has("url")){
-                String url = options.getString("url");
+                String url = JasonHelper.url(options.getString("url"), context);
 
                 // method
                 String method = "GET";

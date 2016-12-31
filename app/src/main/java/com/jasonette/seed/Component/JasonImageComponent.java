@@ -80,7 +80,8 @@ public class JasonImageComponent {
                     }
                 }
 
-                url = new GlideUrl(component.getString("url"), builder.build());
+                String url_string = JasonHelper.url(component.getString("url"), context);
+                url = new GlideUrl(url_string, builder.build());
 
                 if (style.has("corner_radius")) {
                     corner_radius = JasonHelper.pixels(context, style.getString("corner_radius"), "horizontal");
