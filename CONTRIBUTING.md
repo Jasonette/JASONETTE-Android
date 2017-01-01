@@ -54,6 +54,7 @@ Here's a brief walkthrough of how the project is structured:
         - JasonLayout: Deals with layout.
   - assets
     - parser.js: The javascript powered JSON templating engine.
+    - csv.js: CSV parser
   - res
     - values
       - strings.xml: Config strings
