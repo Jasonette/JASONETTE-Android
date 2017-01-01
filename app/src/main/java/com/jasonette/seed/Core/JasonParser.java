@@ -3,17 +3,14 @@ package com.jasonette.seed.Core;
 import android.content.Context;
 import android.util.Log;
 
+import com.eclipsesource.v8.V8;
+import com.eclipsesource.v8.V8Array;
+import com.eclipsesource.v8.V8Object;
 import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
-import org.liquidplayer.webkit.javascriptcore.JSContext;
-import org.liquidplayer.webkit.javascriptcore.JSException;
-import org.liquidplayer.webkit.javascriptcore.JSFunction;
-import org.liquidplayer.webkit.javascriptcore.JSON;
-import org.liquidplayer.webkit.javascriptcore.JSObject;
-import org.liquidplayer.webkit.javascriptcore.JSValue;
 
-public class JasonParser implements JSContext.IJSExceptionHandler {
+public class JasonParser {
     static JSONObject res;
     private static Context context;
 
@@ -42,11 +39,6 @@ public class JasonParser implements JSContext.IJSExceptionHandler {
     }
 
 
-    @Override
-    public void handle(JSException exception) {
-        Log.d("Error", exception.toString());
-    }
-
     public void parse(final String data_type, final JSONObject data, final Object template, final Context context){
 
         try{
@@ -54,23 +46,36 @@ public class JasonParser implements JSContext.IJSExceptionHandler {
                 @Override public void run() {
                     try {
                         String js = JasonHelper.read_file("parser", context);
-                        JSContext jscontext = new JSContext();
-                        jscontext.setExceptionHandler(JasonParser.getInstance());
-                        jscontext.evaluateScript(js);
-                        JSObject parser = jscontext.property("parser").toObject();
-                        JSFunction json = parser.property(data_type).toFunction();
-                        JSValue val;
-                        if(data_type.equalsIgnoreCase("json")){
-                            val = json.call(null, JSON.parse(jscontext, template.toString()), JSON.parse(jscontext, data.toString()));
+
+                        V8 runtime = V8.createV8Runtime();
+                        runtime.executeVoidScript(js);
+                        V8Object parser = runtime.getObject("parser");
+
+                        String templateJson = template.toString();
+                        String dataJson = data.toString();
+                        String val = "{}";
+
+                        if(data_type.equalsIgnoreCase("json")) {
+                            V8Array parameters = new V8Array(runtime).push(templateJson);
+                            parameters.push(dataJson);
+                            parameters.push(true);
+                            val = parser.executeStringFunction("json", parameters);
+                            parameters.release();
                         } else {
                             String raw_data = data.getString("$jason");
-
-                            // fix for emoji bug
-                            raw_data = escape_unicode(raw_data);
-                            val = json.call(null, JSON.parse(jscontext, template.toString()), raw_data);
+                            V8Array parameters = new V8Array(runtime).push(templateJson);
+                            parameters.push(raw_data);
+                            parameters.push(true);
+                            //raw_data = escape_unicode(raw_data);
+                            val = parser.executeStringFunction("html", parameters);
+                            parameters.release();
                         }
-                        res = new JSONObject(val.toJSON());
+                        parser.release();
+                        runtime.release();
+
+                        res = new JSONObject(val);
                         listener.onFinished(res);
+
                     } catch (Exception e){
                         Log.d("Error", e.toString());
                     }
