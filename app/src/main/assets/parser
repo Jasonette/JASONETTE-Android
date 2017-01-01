@@ -22231,21 +22231,8 @@ var fillout = function(options){
       if(data){
         var func;
 
-        // use 'this' only when it's a leaf node and there is absolutely no other way to refer to it
-        // for example: {{#each ["a", "b"]}} => the only way to refer to these is 'this'
-
-        // Before we go into merge with merge & evaluation, we substitute 'this' out with data
-        // we must do this because otherwise the merging with root will result in the entire resulting object
-        // being recognized as 'this'
-        slot = slot.replace('this', JSON.stringify(data));
-        if(typeof data == 'object'){
-          // merge data with root for closure
-          for(var key in root){
-            if(!(key in data)){
-              data[key] = JSON.parse(JSON.stringify(root[key]));
-            }
-          }
-        }
+				// Attach $root to each node so that we can reference it from anywhere
+				data["$root"] = root;
 
         // If the pattern ends with a return statement, but is NOT wrapped inside another function ([^}]*$), it's a function expression
         if(/\breturn [^;]+;?[ ]*$/.test(slot) && /return[^}]*$/.test(slot)){
