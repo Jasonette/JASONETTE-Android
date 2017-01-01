@@ -52,7 +52,7 @@ public class JasonComponent {
             if(style.has("opacity"))
             {
                 try {
-                    float opacity = (float) style.get("opacity");
+                    float opacity = (float) style.getDouble("opacity");
                     view.setAlpha(opacity);
                 }
                 catch (Exception ex) {
