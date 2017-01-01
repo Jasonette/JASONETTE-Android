@@ -690,7 +690,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     Object new_options = options.get("options");
 
                     // take the options and parse it with current model.state
-                    JasonParser.getInstance().setParserListener(new JasonParser.JasonParserListener() {
+                    JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
                         @Override
                         public void onFinished(JSONObject parsed_options) {
                             try {
@@ -702,7 +702,7 @@ public class JasonViewActivity extends AppCompatActivity{
                             }
                         }
                     });
-                    JasonParser.getInstance().parse("json", model.state, new_options, context);
+                    JasonParser.getInstance(this).parse("json", model.state, new_options, context);
 
                 }
 
