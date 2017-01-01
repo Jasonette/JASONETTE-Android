@@ -553,6 +553,164 @@ public class JasonViewActivity extends AppCompatActivity{
      * @param {JSONObject} data - the data object to render
      */
 
+    public void lambda(final JSONObject action, JSONObject data, Context context){
+
+        /*
+
+        # Similar to `trigger` keyword, but with a few differences:
+        1. Trigger was just for one-off triggering and finish. Lambda waits until the subroutine returns and continues where it left off.
+        2. `trigger` was a keyword, but lambda itself is just another type of action. `{"type": "$lambda"}`
+        3. Lambda can pass arguments via `options`
+
+        # How it works
+        1. Triggers another action by name
+        2. Waits for the subroutine to return via `$return.success` or `$return.error`
+        3. When the subroutine calls `$return.success`, continue executing from `success` action, using the return value from the subroutine
+        4. When the subroutine calls `$return.error`, continue executing from `error` action, using the return value from the subroutine
+
+        # Example 1: Basic lambda (Same as trigger)
+        {
+            "type": "$lambda",
+            "options": {
+                "name": "fetch"
+            }
+        }
+
+
+        # Example 2: Basic lambda with success/error handlers
+        {
+            "type": "$lambda",
+            "options": {
+                "name": "fetch"
+            }
+            "success": {
+                "type": "$render"
+            },
+            "error": {
+                "type": "$util.toast",
+                "options": {
+                    "text": "Error"
+                }
+            }
+        }
+
+
+        # Example 3: Passing arguments
+        {
+            "type": "$lambda",
+            "options": {
+                "name": "fetch",
+                "options": {
+                    "url": "https://www.jasonbase.com/things/73g"
+                }
+            },
+            "success": {
+                "type": "$render"
+            },
+            "error": {
+                "type": "$util.toast",
+                "options": {
+                    "text": "Error"
+                }
+            }
+        }
+
+        # Example 4: Using the previous action's return value
+
+        {
+            "type": "$network.request",
+            "options": {
+                "url": "https://www.jasonbase.com/things/73g"
+            },
+            "success": {
+                "type": "$lambda",
+                "options": {
+                    "name": "draw"
+                },
+                "success": {
+                    "type": "$render"
+                },
+                "error": {
+                    "type": "$util.toast",
+                    "options": {
+                        "text": "Error"
+                    }
+                }
+            }
+        }
+
+        # Example 5: Using the previous action's return value as well as custom options
+
+        {
+            "type": "$network.request",
+            "options": {
+                "url": "https://www.jasonbase.com/things/73g"
+            },
+            "success": {
+                "type": "$lambda",
+                "options": {
+                    "name": "draw",
+                    "options": {
+                        "p1": "another param",
+                        "p2": "yet another param"
+                    }
+                },
+                "success": {
+                    "type": "$render"
+                },
+                "error": {
+                    "type": "$util.toast",
+                    "options": {
+                        "text": "Error"
+                    }
+                }
+            }
+        }
+
+         */
+
+        try{
+            if(action.has("options")){
+                JSONObject options = action.getJSONObject("options");
+                // 1. Resolve the action by looking up from $jason.head.actions
+                String event_name = options.getString("name");
+                JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                JSONObject events = head.getJSONObject("actions");
+                final Object lambda = events.get(event_name);
+
+                // 2. If `options` exists, use that as the data to pass to the next action
+                if(options.has("options")){
+                    Object new_options = options.get("options");
+
+                    // take the options and parse it with current model.state
+                    JasonParser.getInstance().setParserListener(new JasonParser.JasonParserListener() {
+                        @Override
+                        public void onFinished(JSONObject parsed_options) {
+                            try {
+                                JSONObject wrapped = new JSONObject();
+                                wrapped.put("$jason", parsed_options);
+                                call(lambda.toString(), wrapped.toString(), JasonViewActivity.this);
+                            } catch (Exception e){
+                                JasonHelper.next("error", action, new JSONObject(), JasonViewActivity.this);
+                            }
+                        }
+                    });
+                    JasonParser.getInstance().parse("json", model.state, new_options, context);
+
+                }
+
+                // 3. If `options` doesn't exist, forward the data from the previous action
+                else {
+                    call(lambda.toString(), data.toString(), JasonViewActivity.this);
+                }
+            }
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+            JasonHelper.next("error", action, new JSONObject(), JasonViewActivity.this);
+        }
+
+    }
+
 
     public void render(final JSONObject action, JSONObject data, Context context){
         JasonViewActivity activity = (JasonViewActivity) context;
