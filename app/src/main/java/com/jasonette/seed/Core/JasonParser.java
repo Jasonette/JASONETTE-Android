@@ -24,16 +24,25 @@ public class JasonParser {
         public void onFinished(JSONObject json);
     }
     private JasonParserListener listener;
+    private V8 juice;
     public void setParserListener(JasonParserListener listener){
         this.listener = listener;
     }
 
 
 
-    public static JasonParser getInstance(){
+    public static JasonParser getInstance(Context context){
         if(instance == null)
         {
             instance = new JasonParser();
+            try {
+                String js = JasonHelper.read_file("parser", context);
+                instance.juice = V8.createV8Runtime();
+                instance.juice.executeVoidScript(js);
+                instance.juice.getLocker().release();
+            } catch (Exception e){
+                Log.d("Error", e.toString());
+            }
         }
         return instance;
     }
@@ -44,34 +53,33 @@ public class JasonParser {
         try{
             new Thread(new Runnable(){
                 @Override public void run() {
-                    try {
-                        String js = JasonHelper.read_file("parser", context);
 
-                        V8 runtime = V8.createV8Runtime();
-                        runtime.executeVoidScript(js);
-                        V8Object parser = runtime.getObject("parser");
+                    try {
+                        // thread handling - acquire handle
+                        juice.getLocker().acquire();
+
+                        V8Object parser = juice.getObject("parser");
 
                         String templateJson = template.toString();
                         String dataJson = data.toString();
                         String val = "{}";
 
                         if(data_type.equalsIgnoreCase("json")) {
-                            V8Array parameters = new V8Array(runtime).push(templateJson);
+                            V8Array parameters = new V8Array(juice).push(templateJson);
                             parameters.push(dataJson);
                             parameters.push(true);
                             val = parser.executeStringFunction("json", parameters);
                             parameters.release();
                         } else {
                             String raw_data = data.getString("$jason");
-                            V8Array parameters = new V8Array(runtime).push(templateJson);
+                            V8Array parameters = new V8Array(juice).push(templateJson);
                             parameters.push(raw_data);
                             parameters.push(true);
-                            //raw_data = escape_unicode(raw_data);
                             val = parser.executeStringFunction("html", parameters);
                             parameters.release();
                         }
                         parser.release();
-                        runtime.release();
+
 
                         res = new JSONObject(val);
                         listener.onFinished(res);
@@ -79,26 +87,14 @@ public class JasonParser {
                     } catch (Exception e){
                         Log.d("Error", e.toString());
                     }
+
+                    // thread handling - release handle
+                    juice.getLocker().release();
                }
             }).start();
         } catch (Exception e){
             Log.d("Error", e.toString());
         }
-    }
-
-    public static String escape_unicode(String input) {
-        if (input == null) return null;
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < input.length(); i++) {
-            if (i < (input.length() - 1)) {
-                if (Character.isSurrogatePair(input.charAt(i), input.charAt(i + 1))) {
-                    i += 1;
-                    continue;
-                }
-            }
-            sb.append(input.charAt(i));
-        }
-        return sb.toString();
     }
 }
 
