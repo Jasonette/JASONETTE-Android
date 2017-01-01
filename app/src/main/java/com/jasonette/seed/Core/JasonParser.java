@@ -53,10 +53,11 @@ public class JasonParser {
         try{
             new Thread(new Runnable(){
                 @Override public void run() {
-                    try {
 
+                    try {
                         // thread handling - acquire handle
                         juice.getLocker().acquire();
+
                         V8Object parser = juice.getObject("parser");
 
                         String templateJson = template.toString();
@@ -79,8 +80,6 @@ public class JasonParser {
                         }
                         parser.release();
 
-                        // thread handling - release handle
-                        juice.getLocker().release();
 
                         res = new JSONObject(val);
                         listener.onFinished(res);
@@ -88,6 +87,9 @@ public class JasonParser {
                     } catch (Exception e){
                         Log.d("Error", e.toString());
                     }
+
+                    // thread handling - release handle
+                    juice.getLocker().release();
                }
             }).start();
         } catch (Exception e){
