@@ -27,11 +27,6 @@ public class JasonLabelComponent {
                     int color = JasonHelper.parse_color(style.getString("color"));
                     ((TextView)view).setTextColor(color);
                 }
-                if (style.has("background")) {
-                    int color = JasonHelper.parse_color(style.getString("background"));
-                    ((TextView)view).setBackgroundColor(color);
-                }
-
                 if (style.has("font:android")){
                     String f = style.getString("font:android");
                     if(f.equalsIgnoreCase("bold")){
