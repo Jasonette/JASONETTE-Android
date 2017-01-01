@@ -1748,8 +1748,8 @@ exports.update = function(arr, parent) {
 
 // module.exports = $.extend(exports);
 
-}).call(this,{"isBuffer":require("../../../../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js")})
-},{"../../../../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js":76,"htmlparser2":48}],9:[function(require,module,exports){
+}).call(this,{"isBuffer":require("../../../../../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js")})
+},{"../../../../../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js":76,"htmlparser2":48}],9:[function(require,module,exports){
 /**
  * Module dependencies
  */
@@ -1786,7 +1786,7 @@ exports.load = function(content, options) {
   // Mimic jQuery's prototype alias for plugin authors.
   initialize.fn = initialize.prototype;
 
-  // Keep a reference to the top-level scope so we can chain methods that implicitly
+  // Keep a reference to the top-level scope so we can chain methods that implicitly 
   // resolve selectors; e.g. $("<span>").(".bar"), which otherwise loses ._root
   initialize.prototype._originalRoot = root;
 
@@ -2169,7 +2169,7 @@ var attributeRules = {
 		if(len === 0){
 			return falseFunc;
 		}
-
+		
 		if(data.ignoreCase){
 			value = value.toLowerCase();
 
@@ -3632,7 +3632,7 @@ exports.prepend = function(elem, prev){
 	if(elem.prev){
 		elem.prev.next = prev;
 	}
-
+	
 	prev.parent = parent;
 	prev.prev = elem.prev;
 	prev.next = elem;
@@ -22138,9 +22138,9 @@ var isTemplate = function(str){
 }
 var isArray = function(item){
   return (
-      Array.isArray(item) ||
+      Array.isArray(item) || 
       (!!item &&
-        typeof item === "object" && typeof (item.length) === "number" &&
+        typeof item === "object" && typeof (item.length) === "number" && 
         (item.length === 0 || (item.length > 0 && (item.length - 1) in item))
       )
   );
@@ -22163,7 +22163,7 @@ var getFunction = function(str){
       // => func: "#each" or "#if"
       // => tokens: ['$jason.items', '&&', '$jason.items.length', '>', '0']
 
-      var expression = tokens.join(' ');
+      var expression = tokens.join(' '); 
       // => expression: '$jason.items && $jason.items.length > 0'
 
       return {name: func, expression: expression};
@@ -22230,13 +22230,30 @@ var fillout = function(options){
       // data must exist. Otherwise replace with blank
       if(data){
         var func;
+
+        // use 'this' only when it's a leaf node and there is absolutely no other way to refer to it
+        // for example: {{#each ["a", "b"]}} => the only way to refer to these is 'this'
+
+        // Before we go into merge with merge & evaluation, we substitute 'this' out with data
+        // we must do this because otherwise the merging with root will result in the entire resulting object
+        // being recognized as 'this'
+        slot = slot.replace('this', JSON.stringify(data));
+        if(typeof data == 'object'){
+          // merge data with root for closure
+          for(var key in root){
+            if(!(key in data)){
+              data[key] = JSON.parse(JSON.stringify(root[key]));
+            }
+          }
+        }
+
         // If the pattern ends with a return statement, but is NOT wrapped inside another function ([^}]*$), it's a function expression
         if(/\breturn [^;]+;?[ ]*$/.test(slot) && /return[^}]*$/.test(slot)){
           // Function expression with explicit "return" expression
           func = Function("with(this){return (function(){" + slot + "})()}").bind(data);
         } else {
           // Function expression with explicit "return" expression
-          // Ordinary simple expression that
+          // Ordinary simple expression that 
           func = Function("with(this){return (" + slot + ")}").bind(data);
         }
         var evaluated = func();
@@ -22260,7 +22277,7 @@ var fillout = function(options){
               // And if the evaluated value is an object or an array, we return the object itself instead of
               // replacing it into template via string replace, since that will turn it into a string.
               if(full_re.test(template)){
-                return evaluated;
+                return evaluated; 
               } else {
                 return template.replace(variable, evaluated);
               }
@@ -22274,7 +22291,7 @@ var fillout = function(options){
               // And if the evaluated value is an object or an array, we return the object itself instead of
               // replacing it into template via string replace, since that will turn it into a string.
               if(full_re.test(template)){
-                return evaluated;
+                return evaluated; 
               } else {
                 return template.replace(variable, "");
               }
@@ -22334,13 +22351,13 @@ var isIf = function(template){
     var item = template[0];
     if(typeof item !== "object"){
       containsValidObjects = false;
-      break;
+      break; 
     }
     if(Object.keys(item).length != 1){
       // first item in the array has multiple key value pairs, so invalid.
       containsValidObjects = false;
       break;
-    }
+    } 
   }
   if(!containsValidObjects){
     return false;
@@ -22371,7 +22388,7 @@ var isIf = function(template){
   }
 
   if(template.length == 1){
-    // If we got this far and the template has only one item, it means
+    // If we got this far and the template has only one item, it means 
     // template had one item which was "#if" so it's valid
     return true;
   }
@@ -22524,7 +22541,7 @@ var run = function(template, data){
             } else {
               // In case it's not an array, it's an exception, since it was prefixed by #each.
               // This probably means this #each is not for the current variable
-              // For example {{#each items}} may not be an array, but just leave it be, so
+              // For example {{#each items}} may not be an array, but just leave it be, so 
               // But don't get rid of it,
               // Instead, just leave it as template
               // So some other parse run could fill it in later.
@@ -22548,6 +22565,8 @@ var run = function(template, data){
   return result;
 };
 
+var root; // root context
+
 var xml = function(template, data, json){
   var cheerio = require('cheerio')
   $ = cheerio.load(data, {xmlMode: true});
@@ -22567,12 +22586,30 @@ var html = function(template, data, json){
   }
 }
 var json = function(template, data, json){
+	root = data;
   if(json) {
-    return JSON.stringify(run(JSON.parse(template), JSON.parse(data)));
+		// Exception handling
+		// => the template expression itself can look like JSON object, so we need to handle this is na special manner
+		// "{{$jason}}" => This is not a JSON object and needs to be treated as such
+		var template_object;
+		var data_object;
+		try{
+			template_object = JSON.parse(template);
+		} catch (error){
+			template_object - template;
+		}
+		try{
+			data_object = JSON.parse(data);
+		} catch (error){
+			data_object = data;
+		}
+
+    return JSON.stringify(run(template_object, data_object));
   } else {
     return run(template, data);
   }
 }
+
 
 
 var DEBUG = false;
@@ -22582,9 +22619,10 @@ if(DEBUG){
   exports.getFunction = getFunction;
   exports.isIf = isIf;
   exports.runIf = runIf;
-  exports.run = run;
+  exports.run = json;
   exports.xml = xml;
   exports.html = html;
+  exports.json = json;
 } else {
   module.exports = {
     xml: xml,
