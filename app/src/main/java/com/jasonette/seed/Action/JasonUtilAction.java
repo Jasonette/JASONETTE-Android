@@ -13,7 +13,7 @@ import com.jasonette.seed.Core.JasonViewActivity;
 import org.json.JSONObject;
 
 public class JasonUtilAction {
-    public void banner(final JSONObject action, final JSONObject data, final Context context) {
+    public void banner(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -27,12 +27,12 @@ public class JasonUtilAction {
             }
         });
         try {
-            JasonHelper.next("success", action, new JSONObject(), context);
+            JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
     }
-    public void toast(final JSONObject action, final JSONObject data, final Context context) {
+    public void toast(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -47,12 +47,12 @@ public class JasonUtilAction {
             }
         });
         try {
-            JasonHelper.next("success", action, new JSONObject(), context);
+            JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception err) {
             Log.d("Error", err.toString());
         }
     }
-    public void alert(final JSONObject action, final JSONObject data, final Context context){
+    public void alert(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
@@ -73,7 +73,7 @@ public class JasonUtilAction {
                                                     int which) {
                                     try {
                                         if (action.has("success")) {
-                                            JasonHelper.next("success", action, new JSONObject(), context);
+                                            JasonHelper.next("success", action, new JSONObject(), event, context);
                                         }
                                     } catch (Exception err) {
 

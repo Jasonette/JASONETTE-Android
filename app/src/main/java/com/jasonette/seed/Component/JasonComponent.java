@@ -95,11 +95,11 @@ public class JasonComponent {
                 try {
                     if (component.has("action")) {
                         JSONObject action = component.getJSONObject("action");
-                        ((JasonViewActivity) root_context).call(action.toString(), new JSONObject().toString(), v.getContext());
+                        ((JasonViewActivity) root_context).call(action.toString(), new JSONObject().toString(), "{}", v.getContext());
                     } else if (component.has("href")) {
                         JSONObject href = component.getJSONObject("href");
                         JSONObject action = new JSONObject().put("type", "$href").put("options", href);
-                        ((JasonViewActivity) root_context).call(action.toString(), new JSONObject().toString(), v.getContext());
+                        ((JasonViewActivity) root_context).call(action.toString(), new JSONObject().toString(), "{}",  v.getContext());
                     } else {
                         // NONE Explicitly stated.
                         // Need to bubble up all the way to the root viewholder.

@@ -69,11 +69,11 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
             try {
                 if (item.has("action")) {
                     JSONObject action = item.getJSONObject("action");
-                    ((JasonViewActivity)root_context).call(action.toString(), new JSONObject().toString(), view.getContext());
+                    ((JasonViewActivity)root_context).call(action.toString(), new JSONObject().toString(), "{}", view.getContext());
                 } else if (item.has("href")){
                     JSONObject href = item.getJSONObject("href");
                     JSONObject action = new JSONObject().put("type", "$href").put("options", href);
-                    ((JasonViewActivity)root_context).call(action.toString(), new JSONObject().toString(), view.getContext());
+                    ((JasonViewActivity)root_context).call(action.toString(), new JSONObject().toString(), "{}", view.getContext());
                 }
             } catch (Exception e){ }
         }

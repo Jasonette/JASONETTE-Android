@@ -8,7 +8,7 @@ import org.json.JSONObject;
 import java.net.URI;
 
 public class JasonSessionAction {
-    public void set(final JSONObject action, final JSONObject data, final Context context){
+    public void set(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         try {
             JSONObject options = action.getJSONObject("options");
             String domain;
@@ -39,7 +39,7 @@ public class JasonSessionAction {
             editor.putString(domain, stringified_session);
             editor.commit();
 
-            JasonHelper.next("success", action, new JSONObject(), context);
+            JasonHelper.next("success", action, new JSONObject(), event, context);
 
         } catch (Exception e){
             Log.d("Error", e.toString());
@@ -47,7 +47,7 @@ public class JasonSessionAction {
 
 
     }
-    public void reset(final JSONObject action, final JSONObject data, final Context context){
+    public void reset(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         try {
             JSONObject options = action.getJSONObject("options");
             String domain;
@@ -74,7 +74,7 @@ public class JasonSessionAction {
             editor.remove(domain);
             editor.commit();
 
-            JasonHelper.next("success", action, new JSONObject(), context);
+            JasonHelper.next("success", action, new JSONObject(), event, context);
 
         } catch (Exception e){
             Log.d("Error", e.toString());
