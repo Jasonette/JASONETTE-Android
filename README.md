@@ -1,6 +1,7 @@
 [![logo](https://raw.githubusercontent.com/gliechtenstein/images/master/jasonette.png)](http://www.jasonette.com)
 [![Code Climate](https://codeclimate.com/github/Jasonette/JASONETTE-Android/badges/gpa.svg)](https://codeclimate.com/github/Jasonette/JASONETTE-Android)
 [![Issue Count](https://codeclimate.com/github/Jasonette/JASONETTE-Android/badges/issue_count.svg)](https://codeclimate.com/github/Jasonette/JASONETTE-Android)
+[![codebeat badge](https://codebeat.co/badges/14fec9aa-70dc-4459-8d62-e64c2c5e750f)](https://codebeat.co/projects/github-com-jasonette-jasonette-android)
 # [Jasonette](https://www.jasonette.com)
 
 [https://www.jasonette.com](https://www.jasonette.com)
