@@ -1,9 +1,15 @@
 engines:
   fixme:
     enabled: true
+  pmd:
+    enabled: true
+    channel: "beta"
+
 ratings:
-  paths: []
+  paths:
+  - "**.java"
+
 exclude_paths:
 - "/.idea/"
 - "/app/.idea/"
-- "/app/src/assets/"
+- "/app/src/main/assets/"
