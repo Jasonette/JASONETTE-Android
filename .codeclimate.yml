@@ -1,0 +1,9 @@
+engines:
+  fixme:
+    enabled: true
+ratings:
+  paths: []
+exclude_paths:
+- "/.idea/"
+- "/app/.idea/"
+- "/app/src/assets/"
