@@ -60,6 +60,7 @@ public class JasonViewActivity extends AppCompatActivity{
 
 
     private boolean firstResume = true;
+    private boolean loaded;
 
     private int header_height;
     private ImageView logoView;
@@ -90,6 +91,10 @@ public class JasonViewActivity extends AppCompatActivity{
 
         super.onCreate(savedInstanceState);
 
+        loaded = false;
+
+        // Initialize Parser instance
+        JasonParser.getInstance(this);
 
         layer_items = new ArrayList<View>();
         // Setup Layouts
@@ -273,6 +278,7 @@ public class JasonViewActivity extends AppCompatActivity{
 
      *************************************************************/
     void onShow(){
+        loaded = true;
         try {
             JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
             JSONObject events = head.getJSONObject("actions");
@@ -284,6 +290,7 @@ public class JasonViewActivity extends AppCompatActivity{
         }
     }
     void onLoad(){
+        loaded = true;
         trigger("$load", new JSONObject(), this);
         onShow();
     }
@@ -319,14 +326,14 @@ public class JasonViewActivity extends AppCompatActivity{
 
             if (action instanceof JSONArray) {
                 // resolve
-                JasonParser.getInstance().setParserListener(new JasonParser.JasonParserListener() {
+                JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
                     @Override
                     public void onFinished(JSONObject reduced_action) {
                         final_call(reduced_action, data, context);
                     }
                 });
 
-                JasonParser.getInstance().parse("json", model.state, action, context);
+                JasonParser.getInstance(this).parse("json", model.state, action, context);
 
             } else {
                 final_call((JSONObject)action, data, context);
@@ -346,7 +353,7 @@ public class JasonViewActivity extends AppCompatActivity{
                 if(action.has("options")){
                     // if action has options, we need to parse out the options first
                     Object options = action.get("options");
-                    JasonParser.getInstance().setParserListener(new JasonParser.JasonParserListener() {
+                    JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
                         @Override
                         public void onFinished(JSONObject parsed_options) {
                             try {
@@ -358,7 +365,7 @@ public class JasonViewActivity extends AppCompatActivity{
                             }
                         }
                     });
-                    JasonParser.getInstance().parse("json", model.state, options, context);
+                    JasonParser.getInstance(this).parse("json", model.state, options, context);
                 } else {
                     // otherwise we can just call immediately
                     exec(action, model.state, context);
@@ -577,14 +584,22 @@ public class JasonViewActivity extends AppCompatActivity{
             JSONObject templates = head.getJSONObject("templates");
 
             JSONObject template = templates.getJSONObject(template_name);
-            JasonParser.getInstance().setParserListener(new JasonParser.JasonParserListener() {
+            JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
                 @Override
                 public void onFinished(JSONObject body) {
+                    // in case we had $jason.head.data, need to trigger onLoad here
+                    // instead of inside build()
+                    // since on Load() gets triggered after everything has loaded
+                    // In this case, model.rendered will be null here since it hasn't been rendered yet.
+                    if(!loaded){
+                        onLoad();
+                    }
+
                     setup_body(body);
                 }
             });
 
-            JasonParser.getInstance().parse(type, data, template, getApplicationContext());
+            JasonParser.getInstance(this).parse(type, data, template, context);
 
         } catch (Exception e){
             Log.d("Error", e.toString());
@@ -715,6 +730,10 @@ public class JasonViewActivity extends AppCompatActivity{
                             if (head.getJSONObject("templates").has("body")) {
                                 model.set("state", new JSONObject());
                                 render(new JSONObject(), model.state, this);
+
+                                // return here so onLoad() below will NOT betriggered.
+                                // onLoad() will be triggered after render has finished
+                                return;
                             }
                         }
                     }
