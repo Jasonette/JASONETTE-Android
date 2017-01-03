@@ -8,6 +8,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
 import android.util.Log;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -19,6 +21,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+
+import static android.media.CamcorderProfile.get;
 
 public class JasonUtilAction {
     public void banner(final JSONObject action, final JSONObject data, final Context context) {
@@ -80,6 +84,7 @@ public class JasonUtilAction {
                         {
                             LinearLayout lay = new LinearLayout(context);
                             lay.setOrientation(LinearLayout.VERTICAL);
+                            lay.setPadding(20,5,20,5);
                             JSONArray formArr =  options.getJSONArray("form");
                             for (int i=0; i<formArr.length();i++) {
                                 JSONObject obj = formArr.getJSONObject(i);
@@ -98,6 +103,17 @@ public class JasonUtilAction {
                                 textFields.add(textBox);
                                 builder.setView(lay);
                             }
+                            // Set focous on first text field
+                            final EditText focousedTextField = (EditText)textFields.get(0);
+                            focousedTextField.post(new Runnable() {
+                                public void run() {
+                                    focousedTextField.requestFocus();
+                                    InputMethodManager lManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                                    lManager.showSoftInput(focousedTextField, 0);
+                                }
+                            });
+
+
                         }
 
 
@@ -108,13 +124,12 @@ public class JasonUtilAction {
                                                     int which) {
                                     try {
                                         if (action.has("success")) {
-                                            JSONArray postObject = new JSONArray();
+                                            JSONObject postObject = new JSONObject();
                                             if(action.getJSONObject("options").has("form")){
                                                 for(int i = 0; i<textFields.size();i++){
-                                                    JSONObject obj = new JSONObject();
+
                                                     EditText textField = (EditText) textFields.get(i);
-                                                    obj.put(textField.getTag().toString(),textField.getText().toString());
-                                                    postObject.put(obj);
+                                                    postObject.put(textField.getTag().toString(),textField.getText().toString());
                                                 }
                                             }
                                             JasonHelper.next("success", action, postObject, context);
