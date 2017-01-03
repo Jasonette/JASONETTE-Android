@@ -6,11 +6,19 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
+import android.text.InputType;
 import android.util.Log;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
-import com.jasonette.seed.Helper.JasonHelper;
+
 import com.jasonette.seed.Core.JasonViewActivity;
+import com.jasonette.seed.Helper.JasonHelper;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import static android.R.id.edit;
 
 public class JasonUtilAction {
     public void banner(final JSONObject action, final JSONObject data, final Context context) {
@@ -66,6 +74,30 @@ public class JasonUtilAction {
                         String description = options.getString("description");
                         builder.setTitle(title);
                         builder.setMessage(description);
+
+                        if(options.has("form"))
+                        {
+                            LinearLayout lay = new LinearLayout(context);
+                            lay.setOrientation(LinearLayout.VERTICAL);
+                            JSONArray formArr =  options.getJSONArray("form");
+                            for (int i=0; i<formArr.length();i++) {
+                                JSONObject obj = formArr.getJSONObject(i);
+                                final EditText textBox = new EditText(context);
+                                if(obj.has("placeholder")){
+                                    textBox.setHint(obj.getString("placeholder"));
+                                }
+                                if(obj.has("type") && obj.getString("type").equals("secure")){
+                                    textBox.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                                }
+                                if(obj.has("value")){
+                                    textBox.setText(obj.getString("value"));
+                                }
+                                lay.addView(textBox);
+                                builder.setView(lay);
+                            }
+                        }
+
+
                     }
                     builder.setPositiveButton("OK",
                             new DialogInterface.OnClickListener() {
