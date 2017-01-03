@@ -18,7 +18,7 @@ import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import static android.R.id.edit;
+import java.util.ArrayList;
 
 public class JasonUtilAction {
     public void banner(final JSONObject action, final JSONObject data, final Context context) {
@@ -68,6 +68,7 @@ public class JasonUtilAction {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 try {
                     JSONObject options = new JSONObject();
+                    final ArrayList<EditText> textFields = new ArrayList<EditText>();
                     if (action.has("options")) {
                         options = action.getJSONObject("options");
                         String title = options.getString("title");
@@ -92,7 +93,9 @@ public class JasonUtilAction {
                                 if(obj.has("value")){
                                     textBox.setText(obj.getString("value"));
                                 }
+                                textBox.setTag(obj.get("name"));
                                 lay.addView(textBox);
+                                textFields.add(textBox);
                                 builder.setView(lay);
                             }
                         }
@@ -105,7 +108,16 @@ public class JasonUtilAction {
                                                     int which) {
                                     try {
                                         if (action.has("success")) {
-                                            JasonHelper.next("success", action, new JSONObject(), context);
+                                            JSONArray postObject = new JSONArray();
+                                            if(action.getJSONObject("options").has("form")){
+                                                for(int i = 0; i<textFields.size();i++){
+                                                    JSONObject obj = new JSONObject();
+                                                    EditText textField = (EditText) textFields.get(i);
+                                                    obj.put(textField.getTag().toString(),textField.getText().toString());
+                                                    postObject.put(obj);
+                                                }
+                                            }
+                                            JasonHelper.next("success", action, postObject, context);
                                         }
                                     } catch (Exception err) {
 
