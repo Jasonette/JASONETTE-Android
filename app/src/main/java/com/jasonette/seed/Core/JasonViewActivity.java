@@ -316,7 +316,6 @@ public class JasonViewActivity extends AppCompatActivity{
 
     //public void call(final Object action, final JSONObject data, final Context context) {
     public void call(final String action_json, final String data_json, final String event_json, final Context context) {
-
         try {
 
             Object action = JasonHelper.objectify(action_json);
@@ -447,16 +446,47 @@ public class JasonViewActivity extends AppCompatActivity{
         try {
 
             // construct options
-            JSONObject options = new JSONObject();
-            options.put("name", action.getString("trigger"));
+
             if(action.has("options")) {
-                options.put("options", action.get("options"));
+                Object options = action.get("options");
+                JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
+                    @Override
+                    public void onFinished(JSONObject parsed_options) {
+                        try {
+                            invoke_lambda(action, data, parsed_options, context);
+                        } catch (Exception e) {
+                            Log.d("Error", e.toString());
+                        }
+                    }
+                });
+                JasonParser.getInstance(this).parse("json", model.state, options, context);
+            } else {
+                JSONObject options = new JSONObject();
+                invoke_lambda(action, data, null, context);
             }
 
+
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+        }
+
+
+
+    }
+    private void invoke_lambda(final JSONObject action, final JSONObject data, final JSONObject options, final Context context) {
+
+        try {
             // construct lambda
             JSONObject lambda = new JSONObject();
             lambda.put("type", "$lambda");
-            lambda.put("options", options);
+
+            JSONObject args = new JSONObject();
+            args.put("name", action.getString("trigger"));
+            if(options!=null) {
+                args.put("options", options);
+            }
+            lambda.put("options", args);
+
             if(action.has("success")) {
                 lambda.put("success", action.get("success"));
             }
@@ -465,12 +495,9 @@ public class JasonViewActivity extends AppCompatActivity{
             }
 
             call(lambda.toString(), data.toString(), "{}", context);
-
         } catch (Exception e){
             Log.d("Error", e.toString());
         }
-
-
 
     }
 
@@ -765,6 +792,43 @@ public class JasonViewActivity extends AppCompatActivity{
                         "p2": "yet another param"
                     }
                 },
+                "success": {
+                    "type": "$render"
+                },
+                "error": {
+                    "type": "$util.toast",
+                    "options": {
+                        "text": "Error"
+                    }
+                }
+            }
+        }
+
+        # Example 6: Using the previous action's return value as well as custom options
+
+        {
+            "type": "$network.request",
+            "options": {
+                "url": "https://www.jasonbase.com/things/73g"
+            },
+            "success": {
+                "type": "$lambda",
+                "options": [{
+                    "{{#if $jason}}": {
+                        "name": "draw",
+                        "options": {
+                            "p1": "another param",
+                            "p2": "yet another param"
+                        }
+                    }
+                }, {
+                    "{{#else}}": {
+                        "name": "err",
+                        "options": {
+                            "text": "No content to render"
+                        }
+                    }
+                }],
                 "success": {
                     "type": "$render"
                 },
