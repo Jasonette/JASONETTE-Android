@@ -307,7 +307,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
 
                         // When wrapping, we set the padding on the wrapper to 0, since it will be taken care of on the component
                         JSONObject style = new JSONObject();
-                        style.put("padding", 0);
+                        style.put("padding", type.equalsIgnoreCase("html") ? 1 : 0);
                         wrapper.put("style", style);
 
                         // Instead, we set the component's padding to 10
