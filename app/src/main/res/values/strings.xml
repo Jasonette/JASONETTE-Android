@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Jasonette</string>
     <string name="url">https://raw.githubusercontent.com/Jasonette/Jasonpedia/gh-pages/hello.json</string>
+    <string name="google_maps_key" translatable="false" templateMergeStrategy="preserve">
+        YOUR_API_KEY
+    </string>
 </resources>
