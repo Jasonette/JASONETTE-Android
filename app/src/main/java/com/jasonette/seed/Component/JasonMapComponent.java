@@ -42,7 +42,22 @@ public class JasonMapComponent {
             try {
                 MapsInitializer.initialize(context);
                 GoogleMapOptions options = new GoogleMapOptions();
-                options.camera(new CameraPosition(new LatLng(0, 0), 0, 0, 0));
+
+                // Calculate latitude and longitude
+                double latitude = 0.0;
+                double longitude = 0.0;
+                if(component.has("region")){
+                    JSONObject region = component.getJSONObject("region");
+                    if(region.has("coord")){
+                        String[]r = region.getString("coord").split(",");
+                        if(r.length == 2) {
+                            latitude = Double.parseDouble(r[0]);
+                            longitude = Double.parseDouble(r[1]);
+                        }
+                    }
+                }
+
+                options.camera(new CameraPosition(new LatLng(latitude, longitude), 16, 0, 0));
                 JSONObject style = component.getJSONObject("style");
                 if (style.has("type")) {
                     switch ((String) style.get("type")) {
@@ -58,8 +73,11 @@ public class JasonMapComponent {
                         default:
                             options.mapType(GoogleMap.MAP_TYPE_NORMAL);
                     }
+                } else {
+                    options.mapType(GoogleMap.MAP_TYPE_NORMAL);
                 }
                 MapView mapview = new MapView(context, options);
+                mapview.onCreate(null); // Trigger onCreate
                 return mapview;
             } catch (Exception err) {
                 Log.d("Error", err.toString());
@@ -70,6 +88,7 @@ public class JasonMapComponent {
 
                 JasonComponent.addListener(view, context);
                 view.requestLayout();
+                ((MapView)view).onResume(); // Trigger onResume
                 return view;
             } catch (Exception err){
                 Log.d("Error", err.toString());
