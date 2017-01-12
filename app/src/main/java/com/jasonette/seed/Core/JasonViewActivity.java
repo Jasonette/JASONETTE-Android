@@ -58,6 +58,7 @@ public class JasonViewActivity extends AppCompatActivity{
     public JasonModel model;
     private ProgressBar loading;
 
+    private ArrayList<RecyclerView.OnItemTouchListener> listViewOnItemTouchListeners;
 
     private boolean firstResume = true;
     private boolean loaded;
@@ -95,6 +96,8 @@ public class JasonViewActivity extends AppCompatActivity{
 
         // Initialize Parser instance
         JasonParser.getInstance(this);
+
+        listViewOnItemTouchListeners = new ArrayList<RecyclerView.OnItemTouchListener>();
 
         layer_items = new ArrayList<View>();
         // Setup Layouts
@@ -1405,4 +1408,19 @@ public class JasonViewActivity extends AppCompatActivity{
         }
     }
 
+    /******************
+     * Event listeners
+     ******************/
+
+    /**
+     * Enables components, or anyone with access to this activity, to listen for item touch events
+     * on listView. If the same listener is passed more than once, only the first listener is added.
+     * @param listener
+     */
+    public void addListViewOnItemTouchListener(RecyclerView.OnItemTouchListener listener) {
+        if(!listViewOnItemTouchListeners.contains(listener)) {
+            listViewOnItemTouchListeners.add(listener);
+            listView.addOnItemTouchListener(listener);
+        }
+    }
 }
