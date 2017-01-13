@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -49,6 +50,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import static android.R.attr.action;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity{
@@ -198,9 +201,7 @@ public class JasonViewActivity extends AppCompatActivity{
 
                 listState = savedInstanceState.getParcelable("listState");
 
-                JSONObject options = new JSONObject();
-                options.put("silent", true);
-                build(options);
+                setup_body(model.rendered);
             } catch (Exception e){
                 Log.d("Error", e.toString());
             }
@@ -220,6 +221,26 @@ public class JasonViewActivity extends AppCompatActivity{
         LocalBroadcastManager.getInstance(this).unregisterReceiver(onError);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(onCall);
 
+        // Store model to shared preference
+        SharedPreferences pref = getSharedPreferences("model", 0);
+        SharedPreferences.Editor editor = pref.edit();
+
+        JSONObject temp_model = new JSONObject();
+        try {
+            if (model.url != null) temp_model.put("url", model.url);
+            if (model.jason != null) temp_model.put("jason", model.jason);
+            if (model.rendered != null) temp_model.put("rendered", model.rendered);
+            if (model.state != null) temp_model.put("state", model.state);
+            if (model.var != null) temp_model.put("var", model.var);
+            if (model.cache != null) temp_model.put("cache", model.cache);
+            if (model.params != null) temp_model.put("params", model.params);
+            if (model.session != null) temp_model.put("session", model.session);
+            editor.putString("temp", temp_model.toString());
+            editor.commit();
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+
         super.onPause();
     }
 
@@ -231,6 +252,24 @@ public class JasonViewActivity extends AppCompatActivity{
         LocalBroadcastManager.getInstance(this).registerReceiver(onSuccess, new IntentFilter("success"));
         LocalBroadcastManager.getInstance(this).registerReceiver(onError, new IntentFilter("error"));
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));
+
+        SharedPreferences pref = getSharedPreferences("model", 0);
+        if(pref.contains("temp")){
+            String str = pref.getString("temp", null);
+            try {
+                JSONObject temp_model = new JSONObject(str);
+                model.url = temp_model.getString("url");
+                model.jason = temp_model.getJSONObject("jason");
+                model.rendered = temp_model.getJSONObject("rendered");
+                model.state = temp_model.getJSONObject("state");
+                model.var = temp_model.getJSONObject("var");
+                model.cache = temp_model.getJSONObject("cache");
+                model.params = temp_model.getJSONObject("params");
+                model.session = temp_model.getJSONObject("session");
+            } catch (Exception e) {
+                Log.d("Error", e.toString());
+            }
+        }
 
 
         if (!firstResume) {
@@ -714,7 +753,7 @@ public class JasonViewActivity extends AppCompatActivity{
      *
      ************************************************************/
 
-    public void build(JSONObject options){
+    public void build(){
         if(model.jason!=null) {
             try {
 
@@ -742,13 +781,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     }
                 }
 
-                if(options!=null && options.has("silent") && options.getBoolean("silent")){
-                    // silent build
-                } else {
-                    // non-silent build => trigger events
-                    onLoad();
-                }
-
+                onLoad();
 
             } catch (JSONException e) {
                 Log.d("Error", e.toString());
