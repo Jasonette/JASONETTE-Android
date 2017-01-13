@@ -1,12 +1,16 @@
 package com.jasonette.seed.Component;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapView;
@@ -24,6 +28,8 @@ import org.json.JSONObject;
 
 
 public class JasonMapComponent {
+    static int EQUATOR_LENGTH = 40075004;
+
     public static View build(View view, final JSONObject component, final JSONObject parent, final Context context) {
         if(view == null){
             try {
@@ -32,7 +38,7 @@ public class JasonMapComponent {
 
                 LatLng latlng = new LatLng(0, 0);
                 if(component.has("region")) {
-                    latlng = GetCoordinates(component.getJSONObject("region"));
+                    latlng = getCoordinates(component.getJSONObject("region"));
                 }
                 options.camera(new CameraPosition(latlng, 16, 0, 0));
                 JSONObject style = component.getJSONObject("style");
@@ -57,7 +63,7 @@ public class JasonMapComponent {
                 mapview.onCreate(null); // Trigger onCreate
                 ((JasonViewActivity)context).addListViewOnItemTouchListener(touchListener);
                 // Add pins when the map is ready
-                mapview.getMapAsync(new MapReadyHandler(component));
+                mapview.getMapAsync(new MapReadyHandler(component, mapview, context));
                 return mapview;
             } catch (Exception err) {
                 Log.d("Error", err.toString());
@@ -70,6 +76,7 @@ public class JasonMapComponent {
 
                 JasonComponent.addListener(view, context);
                 view.requestLayout();
+
                 ((MapView)view).onResume(); // Trigger onResume
                 return view;
             } catch (Exception err){
@@ -79,7 +86,7 @@ public class JasonMapComponent {
         return new View(context);
     }
 
-    public static LatLng GetCoordinates(JSONObject position) {
+    private static LatLng getCoordinates(JSONObject position) {
         // Calculate latitude and longitude
         double latitude = 0.0;
         double longitude = 0.0;
@@ -97,13 +104,27 @@ public class JasonMapComponent {
 
     static class MapReadyHandler implements OnMapReadyCallback {
         private JSONObject component;
+        private MapView view;
+        private Context context;
 
-        MapReadyHandler(JSONObject component) {
+        MapReadyHandler(JSONObject component, MapView view, Context context) {
             this.component = component;
+            this.view = view;
+            this.context = context;
+        }
+
+        private double getZoomForMetersWide(final double meters, final double width, final double lat) {
+            // Converts metes wide to a zoom level for a google map, got this nice formula from
+            // http://stackoverflow.com/a/21034310/1034194
+            final double latAdjust = Math.cos(Math.PI * lat / 180.0);
+
+            final double arg = EQUATOR_LENGTH * width * latAdjust / (meters * 256.0);
+
+            return Math.log(arg) / Math.log(2.0);
         }
 
         @Override
-        public void onMapReady(GoogleMap googleMap) {
+        public void onMapReady(GoogleMap map) {
             try {
                 // Add pins to the map
                 if (component.has("pins")) {
@@ -111,14 +132,14 @@ public class JasonMapComponent {
                     for (int i = 0; i < pins.length(); i++) {
                         JSONObject pin = pins.getJSONObject(i);
                         MarkerOptions options = new MarkerOptions();
-                        options.position(GetCoordinates(pin));
+                        options.position(getCoordinates(pin));
                         if (pin.has("title")) {
                             options.title(pin.getString("title"));
                         }
                         if (pin.has("description")) {
                             options.snippet(pin.getString("description"));
                         }
-                        Marker marker = googleMap.addMarker(options);
+                        Marker marker = map.addMarker(options);
                         if (pin.has("style")) {
                             JSONObject style = pin.getJSONObject("style");
                             if (style.has("selected") && style.getBoolean("selected")) {
@@ -127,12 +148,34 @@ public class JasonMapComponent {
                         }
                     }
                 }
+
+                // Move the camera to the zoom level that shows at least the desired region
+                if(component.has("region")) {
+                    JSONObject region = component.getJSONObject("region");
+                    if(region.has("width") && region.has("height")) {
+                        double width = region.getDouble("width");
+                        double height = region.getDouble("height");
+                        JasonViewActivity activity = ((JasonViewActivity) context);
+                        DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
+                        double viewWidth = view.getLayoutParams().width / metrics.density;
+                        double viewHeight = view.getLayoutParams().height / metrics.density;
+                        double meters = width;
+                        if(height > width && viewHeight > viewWidth) {
+                            // Widen the zoom in order to see the requested height
+                            meters = height;
+                        }
+                        double lat = map.getCameraPosition().target.latitude;
+                        float zoom = (float)getZoomForMetersWide(meters, viewWidth, lat);
+                        map.moveCamera(CameraUpdateFactory.zoomTo(zoom));
+                    }
+                }
             } catch (Exception err) {
                 Log.d("Error", err.toString());
             }
         }
     }
 
+    // Intercept touch events on the RecyclerView to make sure they don't interfere with map moves
     static RecyclerView.SimpleOnItemTouchListener touchListener = new RecyclerView.SimpleOnItemTouchListener() {
         // Intercept touch events on the recycler view, and if they are over a mapview, make sure
         // to let the mapview handle them
