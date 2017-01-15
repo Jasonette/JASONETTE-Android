@@ -229,4 +229,24 @@ public class JasonHelper {
         inputStream.close();
         return stringBuilder.toString();
     }
+    public static JSONObject read_json(String fn, Context context) throws IOException {
+
+        // we're expecting a filename that looks like "file://..."
+        String filename = fn.replace("file://", "file/");
+
+        String jr = null;
+        try {
+            InputStream is = context.getAssets().open(filename);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            jr = new String(buffer, "UTF-8");
+            return new JSONObject(jr);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+            return new JSONObject();
+        }
+
+    }
 }

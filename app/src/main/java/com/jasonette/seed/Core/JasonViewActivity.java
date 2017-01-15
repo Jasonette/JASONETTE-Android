@@ -466,7 +466,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     String resolved_classname = null;
                     String jr = null;
                     try {
-                        InputStream is = getAssets().open("jr/$" + className + ".json");
+                        InputStream is = getAssets().open("file/$" + className + ".json");
                         int size = is.available();
                         byte[] buffer = new byte[size];
                         is.read(buffer);

@@ -26,12 +26,12 @@ public class Launcher extends Application {
 
         // Look for all extensions and initialize them if they have initialize class methods
         try {
-            String[] fileList = getAssets().list("jr");
+            String[] fileList = getAssets().list("file");
             for(int i = 0 ; i < fileList.length; i++){
                String filename = fileList[i];
                 String jr = null;
                 try {
-                    InputStream is = getAssets().open("jr/" + filename);
+                    InputStream is = getAssets().open("file/" + filename);
                     int size = is.available();
                     byte[] buffer = new byte[size];
                     is.read(buffer);
