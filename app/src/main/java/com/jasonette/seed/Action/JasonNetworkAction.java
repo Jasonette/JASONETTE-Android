@@ -22,7 +22,7 @@ public class JasonNetworkAction {
         try{
             final JSONObject options = action.getJSONObject("options");
             if(options.has("url")){
-                String url = options.getString("url");
+                String url = JasonHelper.url(options.getString("url"), context);
 
                 // method
                 String method = "GET";

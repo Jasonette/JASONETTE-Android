@@ -19,6 +19,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -228,5 +230,14 @@ public class JasonHelper {
         reader.close();
         inputStream.close();
         return stringBuilder.toString();
+    }
+    public static String url(String url, Context context) throws MalformedURLException {
+        try {
+            // Validate the URL
+            return new URL(url).toString();
+        } catch(MalformedURLException e) {
+            // The URL might be relative, try to build it based on the current URL
+            return new URL(new URL(((JasonViewActivity)context).url), url).toString();
+        }
     }
 }
