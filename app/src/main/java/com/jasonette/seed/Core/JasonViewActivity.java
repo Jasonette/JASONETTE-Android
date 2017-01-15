@@ -46,6 +46,9 @@ import com.jasonette.seed.Section.ItemAdapter;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -232,8 +235,10 @@ public class JasonViewActivity extends AppCompatActivity{
             if (model.cache != null) temp_model.put("cache", model.cache);
             if (model.params != null) temp_model.put("params", model.params);
             if (model.session != null) temp_model.put("session", model.session);
-            editor.putString("temp", temp_model.toString());
-            editor.commit();
+            if (model.url!= null){
+                editor.putString(model.url, temp_model.toString());
+                editor.commit();
+            }
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
@@ -251,20 +256,28 @@ public class JasonViewActivity extends AppCompatActivity{
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));
 
         SharedPreferences pref = getSharedPreferences("model", 0);
-        if(pref.contains("temp")){
-            String str = pref.getString("temp", null);
-            try {
-                JSONObject temp_model = new JSONObject(str);
-                model.url = temp_model.getString("url");
-                model.jason = temp_model.getJSONObject("jason");
-                model.rendered = temp_model.getJSONObject("rendered");
-                model.state = temp_model.getJSONObject("state");
-                model.var = temp_model.getJSONObject("var");
-                model.cache = temp_model.getJSONObject("cache");
-                model.params = temp_model.getJSONObject("params");
-                model.session = temp_model.getJSONObject("session");
-            } catch (Exception e) {
-                Log.d("Error", e.toString());
+        if(model.url!=null) {
+            if (pref.contains(model.url)) {
+                String str = pref.getString(model.url, null);
+                try {
+                    JSONObject temp_model = new JSONObject(str);
+                    model.url = temp_model.getString("url");
+                    model.jason = temp_model.getJSONObject("jason");
+                    model.rendered = temp_model.getJSONObject("rendered");
+                    model.state = temp_model.getJSONObject("state");
+                    model.var = temp_model.getJSONObject("var");
+                    model.cache = temp_model.getJSONObject("cache");
+                    model.params = temp_model.getJSONObject("params");
+                    model.session = temp_model.getJSONObject("session");
+
+                    // Delete shared preference after resuming
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.remove(model.url);
+                    editor.commit();
+
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
             }
         }
 
@@ -445,8 +458,35 @@ public class JasonViewActivity extends AppCompatActivity{
                     Method method = JasonViewActivity.class.getMethod(methodName, JSONObject.class, JSONObject.class, Context.class);
                     method.invoke(this, action, model.state, context);
                 } else {
+
                     className = type.substring(1, type.lastIndexOf('.'));
-                    fileName = "com.jasonette.seed.Action.Jason" + className.toUpperCase().charAt(0) + className.substring(1) + "Action";
+
+
+                    // Resolve classname by looking up the json files
+                    String resolved_classname = null;
+                    String jr = null;
+                    try {
+                        InputStream is = getAssets().open("jr/$" + className + ".json");
+                        int size = is.available();
+                        byte[] buffer = new byte[size];
+                        is.read(buffer);
+                        is.close();
+                        jr = new String(buffer, "UTF-8");
+                        JSONObject jrjson = new JSONObject(jr);
+                        if(jrjson.has("classname")){
+                            resolved_classname = jrjson.getString("classname");
+                        }
+                    } catch (Exception e) {
+                        Log.d("Error", e.toString());
+                    }
+
+
+                    if(resolved_classname != null) {
+                        fileName = "com.jasonette.seed.Action." + resolved_classname;
+                    } else {
+                        fileName = "com.jasonette.seed.Action.Jason" + className.toUpperCase().charAt(0) + className.substring(1) + "Action";
+                    }
+
                     methodName = type.substring(type.lastIndexOf('.') + 1);
 
                     // Turn on Loading indicator if it's an async action
