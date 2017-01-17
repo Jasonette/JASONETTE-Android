@@ -43,7 +43,7 @@
                 },
                 {
                   "type": "label",
-                  "text": "This is a demo app. You can make your own app by changing the url inside settings.plist",
+                  "text": "This is a demo app. You can make your own app by changing the url inside strings.xml",
                   "style": {
                     "align": "center",
                     "font": "Courier",
