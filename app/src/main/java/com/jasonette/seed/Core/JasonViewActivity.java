@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -45,10 +46,15 @@ import com.jasonette.seed.Section.ItemAdapter;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import static android.R.attr.action;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity{
@@ -195,9 +201,7 @@ public class JasonViewActivity extends AppCompatActivity{
 
                 listState = savedInstanceState.getParcelable("listState");
 
-                JSONObject options = new JSONObject();
-                options.put("silent", true);
-                build(options);
+                setup_body(model.rendered);
             } catch (Exception e){
                 Log.d("Error", e.toString());
             }
@@ -217,6 +221,28 @@ public class JasonViewActivity extends AppCompatActivity{
         LocalBroadcastManager.getInstance(this).unregisterReceiver(onError);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(onCall);
 
+        // Store model to shared preference
+        SharedPreferences pref = getSharedPreferences("model", 0);
+        SharedPreferences.Editor editor = pref.edit();
+
+        JSONObject temp_model = new JSONObject();
+        try {
+            if (model.url != null) temp_model.put("url", model.url);
+            if (model.jason != null) temp_model.put("jason", model.jason);
+            if (model.rendered != null) temp_model.put("rendered", model.rendered);
+            if (model.state != null) temp_model.put("state", model.state);
+            if (model.var != null) temp_model.put("var", model.var);
+            if (model.cache != null) temp_model.put("cache", model.cache);
+            if (model.params != null) temp_model.put("params", model.params);
+            if (model.session != null) temp_model.put("session", model.session);
+            if (model.url!= null){
+                editor.putString(model.url, temp_model.toString());
+                editor.commit();
+            }
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+
         super.onPause();
     }
 
@@ -228,6 +254,32 @@ public class JasonViewActivity extends AppCompatActivity{
         LocalBroadcastManager.getInstance(this).registerReceiver(onSuccess, new IntentFilter("success"));
         LocalBroadcastManager.getInstance(this).registerReceiver(onError, new IntentFilter("error"));
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));
+
+        SharedPreferences pref = getSharedPreferences("model", 0);
+        if(model.url!=null) {
+            if (pref.contains(model.url)) {
+                String str = pref.getString(model.url, null);
+                try {
+                    JSONObject temp_model = new JSONObject(str);
+                    model.url = temp_model.getString("url");
+                    model.jason = temp_model.getJSONObject("jason");
+                    model.rendered = temp_model.getJSONObject("rendered");
+                    model.state = temp_model.getJSONObject("state");
+                    model.var = temp_model.getJSONObject("var");
+                    model.cache = temp_model.getJSONObject("cache");
+                    model.params = temp_model.getJSONObject("params");
+                    model.session = temp_model.getJSONObject("session");
+
+                    // Delete shared preference after resuming
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.remove(model.url);
+                    editor.commit();
+
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
+            }
+        }
 
 
         if (!firstResume) {
@@ -529,8 +581,35 @@ public class JasonViewActivity extends AppCompatActivity{
                     Method method = JasonViewActivity.class.getMethod(methodName, JSONObject.class, JSONObject.class, JSONObject.class, Context.class);
                     method.invoke(this, action, model.state, event, context);
                 } else {
+
                     className = type.substring(1, type.lastIndexOf('.'));
-                    fileName = "com.jasonette.seed.Action.Jason" + className.toUpperCase().charAt(0) + className.substring(1) + "Action";
+
+
+                    // Resolve classname by looking up the json files
+                    String resolved_classname = null;
+                    String jr = null;
+                    try {
+                        InputStream is = getAssets().open("file/$" + className + ".json");
+                        int size = is.available();
+                        byte[] buffer = new byte[size];
+                        is.read(buffer);
+                        is.close();
+                        jr = new String(buffer, "UTF-8");
+                        JSONObject jrjson = new JSONObject(jr);
+                        if(jrjson.has("classname")){
+                            resolved_classname = jrjson.getString("classname");
+                        }
+                    } catch (Exception e) {
+                        Log.d("Error", e.toString());
+                    }
+
+
+                    if(resolved_classname != null) {
+                        fileName = "com.jasonette.seed.Action." + resolved_classname;
+                    } else {
+                        fileName = "com.jasonette.seed.Action.Jason" + className.toUpperCase().charAt(0) + className.substring(1) + "Action";
+                    }
+
                     methodName = type.substring(type.lastIndexOf('.') + 1);
 
                     // Turn on Loading indicator if it's an async action
@@ -1040,7 +1119,7 @@ public class JasonViewActivity extends AppCompatActivity{
      *
      ************************************************************/
 
-    public void build(JSONObject options){
+    public void build(){
         if(model.jason!=null) {
             try {
 
@@ -1068,13 +1147,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     }
                 }
 
-                if(options!=null && options.has("silent") && options.getBoolean("silent")){
-                    // silent build
-                } else {
-                    // non-silent build => trigger events
-                    onLoad();
-                }
-
+                onLoad();
 
             } catch (JSONException e) {
                 Log.d("Error", e.toString());

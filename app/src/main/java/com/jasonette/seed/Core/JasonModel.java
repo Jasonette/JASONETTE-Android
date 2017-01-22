@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
+
+import com.jasonette.seed.Helper.JasonHelper;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -75,9 +78,28 @@ public class JasonModel{
 
 
 
-    public void fetch(){
+    public void fetch() {
+        if(url.startsWith("file://")) {
+            fetch_local();
+        } else {
+            fetch_http();
+        }
+    }
 
+    private void fetch_local(){
+        try {
+            jason = JasonHelper.read_json(url, this.view);
+            if(jason.has("$jason")){
+                view.build();
+            } else {
+                Log.d("Error", "Invalid jason");
+            }
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+    }
 
+    private void fetch_http(){
         try{
             Request request;
             Request.Builder builder = new Request.Builder();
@@ -128,7 +150,7 @@ public class JasonModel{
                         String res = response.body().string();
                         jason = new JSONObject(res);
                         if(jason.has("$jason")){
-                            view.build(null);
+                            view.build();
                         } else {
 
                         }

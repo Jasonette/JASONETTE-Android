@@ -38,8 +38,11 @@ Looking for an iOS version? [See here](https://www.github.com/Jasonette/JASONETT
 
 <br>
 
-# [Quickstart](https://www.jasonette.com)
-Visit [the website](http://www.jasonette.com) to get started.
+# [Quickstart](https://jasonette.github.io/documentation/#quickstart)
+Visit [the website](http://www.jasonette.com) to get started, or visit [the docs](https://jasonette.github.io/documentation) to learn more about how to use Jasonette.
+
+# Download
+Download latest release [here](https://github.com/Jasonette/JASONETTE-Android/archive/master.zip).
 
 <br>
 
