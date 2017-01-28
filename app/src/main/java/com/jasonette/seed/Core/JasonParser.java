@@ -57,6 +57,12 @@ public class JasonParser {
                     try {
                         // thread handling - acquire handle
                         juice.getLocker().acquire();
+                        Console console = new Console();
+                        V8Object v8Console = new V8Object(juice);
+                        juice.add("console", v8Console);
+                        v8Console.registerJavaMethod(console, "log", "log", new Class<?>[] { String.class });
+                        v8Console.registerJavaMethod(console, "error", "error", new Class<?>[] { String.class });
+                        v8Console.registerJavaMethod(console, "trace", "trace", new Class<?>[] {});
 
                         V8Object parser = juice.getObject("parser");
 
@@ -79,6 +85,7 @@ public class JasonParser {
                             parameters.release();
                         }
                         parser.release();
+                        v8Console.release();
 
 
                         res = new JSONObject(val);
@@ -99,4 +106,17 @@ public class JasonParser {
 }
 
 
-
+/**
+ * Override for console to print javascript debug output in the Android Studio console
+ */
+class Console {
+    public void log(final String message) {
+        Log.d("console.log", message);
+    }
+    public void error(final String message) {
+        Log.e("console.error", message);
+    }
+    public void trace() {
+        Log.e("console.trace", "Unable to reproduce JS stacktrace");
+    }
+}
