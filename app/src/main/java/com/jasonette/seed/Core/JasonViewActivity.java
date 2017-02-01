@@ -979,6 +979,9 @@ public class JasonViewActivity extends AppCompatActivity{
                     template_name = options.getString("template");
                 }
                 // parse the template with JSON
+                if(options.has("data")){
+                    data.put("$jason", options.get("data"));
+                }
 
 
                 if(options.has("type")){
