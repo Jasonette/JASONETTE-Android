@@ -231,7 +231,7 @@ public class JasonModel{
 
 
     private void require(String res){
-        String regex =  "\"(\\+)\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
+        String regex =  "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
         Pattern require_pattern = Pattern.compile(regex);
         Matcher matcher = require_pattern.matcher(res);
 
@@ -279,7 +279,7 @@ public class JasonModel{
             // 1. check if it contains "+": "..."
             // 2. if it does, need to resolve it first.
             // 3. if it doesn't, just build the view immediately
-            String regex = "\"(\\+)\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
+            String regex = "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
             Pattern require_pattern = Pattern.compile(regex);
             Matcher matcher = require_pattern.matcher(res);
             if (matcher.find()) {
@@ -307,17 +307,17 @@ public class JasonModel{
 
             Log.d("str_jason = ", str_jason);
 
-            String local_pattern_str = "\"\\+\"[ ]*:[ ]*\"[ ]*(\\$document[^\"]*)\"";
+            String local_pattern_str = "\"@\"[ ]*:[ ]*\"[ ]*(\\$document[^\"]*)\"";
             Pattern local_pattern = Pattern.compile(local_pattern_str);
             Matcher local_matcher = local_pattern.matcher(str_jason);
             str_jason = local_matcher.replaceAll("\"{{#include \\$root.$1}}\": {}");
 
-            String remote_pattern_with_path_str = "\"(\\+)\"[ ]*:[ ]*\"(([^\"@]+)(@))([^\"]+)\"";
+            String remote_pattern_with_path_str = "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))([^\"]+)\"";
             Pattern remote_pattern_with_path = Pattern.compile(remote_pattern_with_path_str);
             Matcher remote_with_path_matcher = remote_pattern_with_path.matcher(str_jason);
             str_jason = remote_with_path_matcher.replaceAll("\"{{#include \\$root[\\\\\"$5\\\\\"].$3}}\": {}");
 
-            String remote_pattern_without_path_str = "\"(\\+)\"[ ]*:[ ]*\"([^\"]+)\"";
+            String remote_pattern_without_path_str = "\"(@)\"[ ]*:[ ]*\"([^\"]+)\"";
             Pattern remote_pattern_without_path = Pattern.compile(remote_pattern_without_path_str);
             Matcher remote_without_path_matcher = remote_pattern_without_path.matcher(str_jason);
             str_jason = remote_without_path_matcher.replaceAll("\"{{#include \\$root[\\\\\"$2\\\\\"]}}\": {}");
