@@ -1,5 +1,6 @@
 package com.jasonette.seed.Core;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -179,53 +180,95 @@ public class JasonModel{
     class RequireTask implements Runnable{
         final String URL;
         final CountDownLatch latch;
-        public RequireTask(String url, CountDownLatch latch) {
+        final Context context;
+        public RequireTask(String url, CountDownLatch latch, Context context) {
             this.URL = url;
             this.latch = latch;
+            this.context = context;
         }
         public void run(){
-            System.out.println("URL: " + this.URL);
             Request request;
             Request.Builder builder = new Request.Builder();
 
-            request = builder
-                    .url(this.URL)
-                    .build();
-
-
-
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    latch.countDown();
-                    e.printStackTrace();
+            // Session Handling
+            try {
+                SharedPreferences pref = context.getSharedPreferences("session", 0);
+                JSONObject session = null;
+                URI uri_for_session = new URI(this.URL.toLowerCase());
+                String session_domain = uri_for_session.getHost();
+                if(pref.contains(session_domain)){
+                    String str = pref.getString(session_domain, null);
+                    session = new JSONObject(str);
                 }
 
-                @Override
-                public void onResponse(Call call, final Response response) throws IOException {
-                    if (!response.isSuccessful()) {
-                        latch.countDown();
-                        throw new IOException("Unexpected code " + response);
+                // session.header
+                if(session != null && session.has("header")) {
+                    Iterator<?> keys = session.getJSONObject("header").keys();
+                    while (keys.hasNext()) {
+                        String key = (String) keys.next();
+                        String val = session.getJSONObject("header").getString(key);
+                        builder.addHeader(key, val);
                     }
-                    try {
-                        String res = response.body().string();
-                        // store the res under
-                        if(res.trim().startsWith("[")) {
-                            // array
-                            refs.put(URL, new JSONArray(res));
-                        } else if(res.trim().startsWith("{")){
-                            // object
-                            refs.put(URL, new JSONObject(res));
-                        } else {
-                            // string
-                            refs.put(URL, res);
+                }
+
+                // session.body
+                Uri.Builder b = Uri.parse(this.URL).buildUpon();
+                // Attach Params from Session
+                if(session != null && session.has("body")) {
+                    Iterator<?> keys = session.getJSONObject("body").keys();
+                    while (keys.hasNext()) {
+                        String key = (String) keys.next();
+                        String val = session.getJSONObject("body").getString(key);
+                        b.appendQueryParameter(key, val);
+                    }
+                }
+
+                Uri uri = b.build();
+                String url_with_session = uri.toString();
+                request = builder
+                        .url(url_with_session)
+                        .build();
+
+
+                // Actual call
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        latch.countDown();
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onResponse(Call call, final Response response) throws IOException {
+                        if (!response.isSuccessful()) {
+                            latch.countDown();
+                            throw new IOException("Unexpected code " + response);
                         }
-                        latch.countDown();
-                    } catch (JSONException e) {
-                        Log.d("Error", e.toString());
+                        try {
+                            String res = response.body().string();
+                            // store the res under
+                            if(res.trim().startsWith("[")) {
+                                // array
+                                refs.put(URL, new JSONArray(res));
+                            } else if(res.trim().startsWith("{")){
+                                // object
+                                refs.put(URL, new JSONObject(res));
+                            } else {
+                                // string
+                                refs.put(URL, res);
+                            }
+                            latch.countDown();
+                        } catch (JSONException e) {
+                            Log.d("Error", e.toString());
+                        }
                     }
-                }
-            });
+                });
+
+            } catch (Exception e){
+                Log.d("Error", e.toString());
+            }
+
+
         }
     }
 
@@ -250,7 +293,7 @@ public class JasonModel{
             CountDownLatch latch = new CountDownLatch(urls.size());
             ExecutorService taskExecutor = Executors.newFixedThreadPool(urls.size());
             for (int i = 0; i < urls.size(); i++) {
-                taskExecutor.submit(new RequireTask(urls.get(i), latch));
+                taskExecutor.submit(new RequireTask(urls.get(i), latch, view));
             }
             try {
                 latch.await();
