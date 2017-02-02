@@ -53,6 +53,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static android.R.attr.action;
 import static com.bumptech.glide.Glide.with;
@@ -966,6 +971,89 @@ public class JasonViewActivity extends AppCompatActivity{
 
     }
 
+    public void require(final JSONObject action, JSONObject data, final JSONObject event, final Context context){
+        /*
+
+         {
+            "type": "$require",
+            "options": {
+                "items": ["https://...", "https://...", ....],
+                "item": "https://...."
+            }
+         }
+
+         Crawl all the items in the array and assign it to the key
+
+         */
+
+        try {
+            if (action.has("options")) {
+                JSONObject options = action.getJSONObject("options");
+
+                ArrayList<String> urlSet = new ArrayList<>();
+                Iterator<?> keys = options.keys();
+                while (keys.hasNext()) {
+                    String key = (String) keys.next();
+                    Object val = options.get(key);
+
+                    // must be either array or string
+                    if(val instanceof JSONArray){
+                        for (int i = 0; i < ((JSONArray)val).length(); i++) {
+                            if(!urlSet.contains(((JSONArray) val).getString(i))){
+                                urlSet.add(((JSONArray) val).getString(i));
+                            }
+                        }
+                    } else if(val instanceof String){
+                        if(!urlSet.contains(val)){
+                            urlSet.add(((String)val));
+                        }
+                    }
+                }
+                if(urlSet.size()>0) {
+                    JSONObject refs = new JSONObject();
+
+                    CountDownLatch latch = new CountDownLatch(urlSet.size());
+                    ExecutorService taskExecutor = Executors.newFixedThreadPool(urlSet.size());
+                    for (String key : urlSet) {
+                        taskExecutor.submit(new JasonRequire(key, latch, refs, model.client, this));
+                    }
+                    try {
+                        latch.await();
+                    } catch (Exception e) {
+                        Log.d("Error", e.toString());
+                    }
+
+                    JSONObject res = new JSONObject();
+
+                    Iterator<?> ks = options.keys();
+                    while (ks.hasNext()) {
+                        String key = (String) ks.next();
+                        Object val = options.get(key);
+                        if(val instanceof JSONArray){
+                            JSONArray ret = new JSONArray();
+                            for (int i = 0; i < ((JSONArray)val).length(); i++) {
+                                String url = ((JSONArray) val).getString(i);
+                                ret.put(refs.get(url));
+                            }
+                            res.put(key, ret);
+                        } else if(val instanceof String){
+                            String ret = ((String)val);
+                            res.put(key, ret);
+                        }
+                    }
+                    JasonHelper.next("success", action, res, event, context);
+                }
+            } else {
+                JasonHelper.next("error", action, new JSONObject(), event, context);
+            }
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+            JasonHelper.next("error", action, new JSONObject(), event, context);
+        }
+
+        // get all urls
+
+    }
 
     public void render(final JSONObject action, JSONObject data, final JSONObject event, final Context context){
         JasonViewActivity activity = (JasonViewActivity) context;
