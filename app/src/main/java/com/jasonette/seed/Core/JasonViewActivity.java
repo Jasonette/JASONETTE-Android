@@ -235,6 +235,7 @@ public class JasonViewActivity extends AppCompatActivity{
             if (model.cache != null) temp_model.put("cache", model.cache);
             if (model.params != null) temp_model.put("params", model.params);
             if (model.session != null) temp_model.put("session", model.session);
+            if (model.action != null) temp_model.put("action", model.action);
             if (model.url!= null){
                 editor.putString(model.url, temp_model.toString());
                 editor.commit();
@@ -269,6 +270,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     model.cache = temp_model.getJSONObject("cache");
                     model.params = temp_model.getJSONObject("params");
                     model.session = temp_model.getJSONObject("session");
+                    model.action = temp_model.getJSONObject("action");
 
                     // Delete shared preference after resuming
                     SharedPreferences.Editor editor = pref.edit();
@@ -281,11 +283,47 @@ public class JasonViewActivity extends AppCompatActivity{
             }
         }
 
-
         if (!firstResume) {
             onShow();
         }
         firstResume = false;
+
+        Uri uri = getIntent().getData();
+        if(uri != null && uri.getHost().contains("oauth")) {
+            try {
+                JSONObject oauth_callback = new JSONObject();
+                JSONObject oauth_callback_options = new JSONObject();
+
+                oauth_callback.put("type", "$oauth.oauth_callback");
+                oauth_callback.put("uri", uri.toString());
+
+                JSONObject auth_options = model.action.getJSONObject("options");
+
+                oauth_callback_options.put("authorize", auth_options.getJSONObject("authorize"));
+
+                if(auth_options.has("access")) {
+                    oauth_callback_options.put("access", auth_options.getJSONObject("access"));
+                }
+
+                if(auth_options.has("version")) {
+                    oauth_callback_options.put("version", auth_options.getString("version"));
+                }
+
+                if(model.action.has("success")) {
+                    oauth_callback.put("success", model.action.getJSONObject("success"));
+                }
+
+                if(model.action.has("error")) {
+                    oauth_callback.put("error", model.action.getJSONObject("error"));
+                }
+
+                oauth_callback.put("options", oauth_callback_options);
+
+                exec(oauth_callback, model.action, JasonViewActivity.this);
+            } catch(JSONException e) {
+                Log.d("Error", e.toString());
+            }
+        }
 
         super.onResume();
 
@@ -305,6 +343,7 @@ public class JasonViewActivity extends AppCompatActivity{
         if(model.cache!=null) savedInstanceState.putString("cache", model.cache.toString());
         if(model.params!=null) savedInstanceState.putString("params", model.params.toString());
         if(model.session!=null) savedInstanceState.putString("session", model.session.toString());
+        if(model.action!=null) savedInstanceState.putString("action", model.action.toString());
 
         // Store RecyclerView state
         listState = listView.getLayoutManager().onSaveInstanceState();
@@ -519,8 +558,8 @@ public class JasonViewActivity extends AppCompatActivity{
                     }
 
                     Method method = module.getClass().getMethod(methodName, JSONObject.class, JSONObject.class, Context.class);
+                    model.action = action;
                     method.invoke(module, action, model.state, context);
-
                 }
 
 

@@ -32,6 +32,8 @@ public class JasonModel{
     public JSONObject params;   // $params
     public JSONObject session;
 
+    public JSONObject action;   // latest executed action
+
     public JasonModel(String url, Intent intent, JasonViewActivity view){
         this.url = url;
         this.view = view;
