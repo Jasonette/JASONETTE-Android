@@ -729,6 +729,12 @@ public class JasonViewActivity extends AppCompatActivity{
                     params = action.getJSONObject("options").getJSONObject("params").toString();
                 }
 
+                // Reset SharedPreferences so it doesn't overwrite the model onResume
+                SharedPreferences pref = getSharedPreferences("model", 0);
+                SharedPreferences.Editor editor = pref.edit();
+                editor.remove(url);
+                editor.commit();
+
                 if(transition.equalsIgnoreCase("replace")){
                     Intent intent = new Intent(this, JasonViewActivity.class);
                     if(params!=null) {
