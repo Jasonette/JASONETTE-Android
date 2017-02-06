@@ -1694,9 +1694,9 @@ public class JasonViewActivity extends AppCompatActivity{
                                 href.put("transition", "replace");
                             }
                             action.put("options", href);
-                            href(action, new JSONObject(), JasonViewActivity.this);
+                            href(action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
                         } else if(item.has("action")){
-                            call(item.get("action").toString(), "{}", JasonViewActivity.this);
+                            call(item.get("action").toString(), "{}", "{}", JasonViewActivity.this);
                             return false;
                         } else if(item.has("url")) {
                             String url = item.getString("url");
