@@ -57,7 +57,7 @@ import java.util.HashMap;
 import static android.R.attr.action;
 import static com.bumptech.glide.Glide.with;
 
-public class JasonViewActivity extends AppCompatActivity{
+public class JasonViewActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private RecyclerView listView;
     public String url;

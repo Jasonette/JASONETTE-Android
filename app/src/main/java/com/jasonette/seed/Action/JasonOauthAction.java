@@ -6,6 +6,9 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 
+import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.core.oauth.OAuth20Service;
 import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONException;
@@ -13,7 +16,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Iterator;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -25,6 +27,7 @@ public class JasonOauthAction {
     public void auth(final JSONObject action, final JSONObject data, final Context context) {
         try{
             final JSONObject options = action.getJSONObject("options");
+
             if(options.getString("version").equals("1")) {
                 //OAuth 1 - TODO
                 JasonHelper.next("error", action, data, context);
@@ -36,27 +39,43 @@ public class JasonOauthAction {
                     view = options.getString("view");
                 }
 
-                JSONObject access_options = null;
-                if(options.has("access")) {
-                    access_options = options.getJSONObject("access");
+                JSONObject authorize_options = null;
+                if(options.has("authorize")) {
+                    authorize_options = options.getJSONObject("authorize");
+                } else {
+                    JSONObject error = new JSONObject();
+                    error.put("data", "Authorize data missing");
+                    JasonHelper.next("error", action, error, context);
                 }
 
-                if(access_options != null && access_options.has("data") && access_options.getJSONObject("data").getString("grant_type").equals("password")) {
+                JSONObject authorize_options_data = null;
+
+                if(authorize_options.has("data")) {
+                    authorize_options_data = authorize_options.getJSONObject("data");
+                } else {
+                    JSONObject error = new JSONObject();
+                    error.put("data", "Authorize data missing");
+                    JasonHelper.next("error", action, error, context);
+                }
+
+                if(authorize_options_data.has("response_type") && authorize_options_data.getString("response_type").equals("password")) {
                     //Password auth - TODO
                     JasonHelper.next("error", action, data, context);
                 } else {
                     //Assuming code auth
-                    JSONObject authorize_options = options.getJSONObject("authorize");
-
                     if(authorize_options == null || authorize_options.length() == 0) {
                         JasonHelper.next("error", action, data, context);
                     } else {
                         String client_id = authorize_options.getString("client_id");
                         String client_secret = "";
+                        String redirect_uri = "";
 
-                        //Secret could not be used
+                        //Secret can be missing in implicit authentication
                         if(authorize_options.has("client_secret")) {
                             client_secret = authorize_options.getString("client_secret");
+                        }
+                        if(authorize_options_data.has("redirect_uri")) {
+                            redirect_uri = authorize_options_data.getString("redirect_uri");
                         }
 
                         if(!authorize_options.has("scheme") || authorize_options.getString("scheme").length() == 0
@@ -80,27 +99,35 @@ public class JasonOauthAction {
                                 }
                             }
 
-                            builder.appendQueryParameter("client_id", client_id);
-                            if(client_secret.length() > 0) {
-                                builder.appendQueryParameter("client_secret", client_secret);
+                            final Uri uri = builder.build();
+
+                            DefaultApi20 oauthApi = new DefaultApi20() {
+                                @Override
+                                public String getAccessTokenEndpoint() {
+                                    return null;
+                                }
+
+                                @Override
+                                protected String getAuthorizationBaseUrl() {
+                                    return uri.toString();
+                                }
+                            };
+
+                            ServiceBuilder serviceBuilder = new ServiceBuilder();
+                            serviceBuilder.apiKey(client_id);
+
+                            if(client_secret != "") {
+                                serviceBuilder.apiSecret(client_secret);
                             }
+                            serviceBuilder.callback(redirect_uri);
 
-                            JSONObject options_data = authorize_options.getJSONObject("data");
-                            Iterator<?> keys =  options_data.keys();
-                            while( keys.hasNext() ) {
-                                String key = (String)keys.next();
-                                builder.appendQueryParameter(key, options_data.getString(key));
-                            }
-
-                            Uri uri = builder.build();
-
-                            OkHttpClient client = new OkHttpClient();
+                            OAuth20Service oauthService = serviceBuilder.build(oauthApi);
 
                             if(view.equals("app")) {
                                 //error here
                             } else {
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setData(uri);
+                                intent.setData(Uri.parse(oauthService.getAuthorizationUrl()));
                                 context.startActivity(intent);
                             }
                         }
