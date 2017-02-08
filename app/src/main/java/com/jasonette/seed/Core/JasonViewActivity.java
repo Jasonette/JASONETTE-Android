@@ -9,7 +9,9 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ScaleDrawable;
 import android.net.Uri;
 import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
@@ -55,6 +57,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static android.R.attr.action;
+import static android.R.attr.bottom;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity {
@@ -765,8 +768,18 @@ public class JasonViewActivity extends AppCompatActivity {
                     params = action.getJSONObject("options").getJSONObject("params").toString();
                 }
 
+                // Reset SharedPreferences so it doesn't overwrite the model onResume
+                SharedPreferences pref = getSharedPreferences("model", 0);
+                SharedPreferences.Editor editor = pref.edit();
+                editor.remove(url);
+                editor.commit();
+
                 if(transition.equalsIgnoreCase("replace")){
-                    model = new JasonModel(url, null, this);
+                    Intent intent = new Intent(this, JasonViewActivity.class);
+                    if(params!=null) {
+                        intent.putExtra("params", params);
+                    }
+                    model = new JasonModel(url, intent, this);
                     model.fetch();
                 } else {
                     Intent intent = new Intent(this, JasonViewActivity.class);
@@ -1156,7 +1169,6 @@ public class JasonViewActivity extends AppCompatActivity {
 
     private void setup_tabs(JSONObject tabs){
         try {
-            JSONObject style = tabs.getJSONObject("style");
             final JSONArray items = tabs.getJSONArray("items");
             if(bottomNavigation == null) {
                 bottomNavigation = new AHBottomNavigation(this);
@@ -1170,18 +1182,23 @@ public class JasonViewActivity extends AppCompatActivity {
             bottomNavigation.setBehaviorTranslationEnabled(true);
 
             bottomNavigation.setDefaultBackgroundColor(Color.parseColor("#FEFEFE"));
-            if (style.has("color")) {
-                int color = JasonHelper.parse_color(style.getString("color"));
-                bottomNavigation.setAccentColor(color);
-            }
-            if (style.has("color:disabled")) {
-                int disabled_color = JasonHelper.parse_color(style.getString("color:disabled"));
-                bottomNavigation.setInactiveColor(disabled_color);
-            }
-            if (style.has("background")) {
-                int background = JasonHelper.parse_color(style.getString("background"));
-                bottomNavigation.setDefaultBackgroundColor(background);
-                bottomNavigation.setBackgroundColor(background);
+            JSONObject style;
+
+            if(tabs.has("style")){
+                style = tabs.getJSONObject("style");
+                if (style.has("color")) {
+                    int color = JasonHelper.parse_color(style.getString("color"));
+                    bottomNavigation.setAccentColor(color);
+                }
+                if (style.has("color:disabled")) {
+                    int disabled_color = JasonHelper.parse_color(style.getString("color:disabled"));
+                    bottomNavigation.setInactiveColor(disabled_color);
+                }
+                if (style.has("background")) {
+                    int background = JasonHelper.parse_color(style.getString("background"));
+                    bottomNavigation.setDefaultBackgroundColor(background);
+                    bottomNavigation.setBackgroundColor(background);
+                }
             }
 
 
@@ -1203,18 +1220,32 @@ public class JasonViewActivity extends AppCompatActivity {
                                         try {
                                             if (item.has("text")) {
                                                 text = item.getString("text");
+                                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                                             }
                                         } catch (Exception e) {
                                             Log.d("Error", e.toString());
                                         }
-                                        AHBottomNavigationItem item = bottomNavigation.getItem(index);
-                                        bottomNavigationItems.put(Integer.valueOf(index), item);
+                                        AHBottomNavigationItem tab_item = bottomNavigation.getItem(index);
+                                        bottomNavigationItems.put(Integer.valueOf(index), tab_item);
                                         Drawable drawable = new BitmapDrawable(getResources(), resource);
-                                        item.setDrawable(drawable);
-                                        item.setTitle(text);
+                                        tab_item.setDrawable(drawable);
+                                        tab_item.setTitle(text);
                                     }
                                 });
 
+                    } else if(item.has("text")){
+                        String text = "";
+                        try {
+                            text = item.getString("text");
+                            bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
+                        } catch (Exception e) {
+                            Log.d("Error", e.toString());
+                        }
+                        AHBottomNavigationItem tab_item = bottomNavigation.getItem(i);
+                        bottomNavigationItems.put(Integer.valueOf(i), tab_item);
+                        ColorDrawable d = new ColorDrawable(Color.TRANSPARENT);
+                        tab_item.setDrawable(d);
+                        tab_item.setTitle(text);
                     }
                 }
             } else {
@@ -1234,6 +1265,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                         try {
                                             if (item.has("text")) {
                                                 text = item.getString("text");
+                                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                                             }
                                         } catch (Exception e) {
                                             Log.d("Error", e.toString());
@@ -1249,6 +1281,25 @@ public class JasonViewActivity extends AppCompatActivity {
                                     }
                                 });
 
+                    } else if(item.has("text")){
+                        String text = "";
+                        try {
+                            if (item.has("text")) {
+                                text = item.getString("text");
+                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
+                            }
+                        } catch (Exception e) {
+                            Log.d("Error", e.toString());
+                        }
+
+                        ColorDrawable d = new ColorDrawable(Color.TRANSPARENT);
+                        AHBottomNavigationItem tab_item = new AHBottomNavigationItem(text,d);
+                        bottomNavigationItems.put(Integer.valueOf(index), tab_item);
+                        if(bottomNavigationItems.size() >= items.length()){
+                            for(int j = 0; j < bottomNavigationItems.size(); j++){
+                                bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
+                            }
+                        }
                     }
                 }
 
@@ -1257,8 +1308,22 @@ public class JasonViewActivity extends AppCompatActivity {
                 @Override
                 public boolean onTabSelected(int position, boolean wasSelected) {
                     try {
+                        int current = bottomNavigation.getCurrentItem();
                         JSONObject item = items.getJSONObject(position);
-                        if(item.has("url")) {
+                        if(item.has("href")) {
+                            JSONObject action = new JSONObject();
+                            JSONObject href = item.getJSONObject("href");
+                            if (href.has("transition")) {
+                                // nothing
+                            } else {
+                                href.put("transition", "replace");
+                            }
+                            action.put("options", href);
+                            href(action, new JSONObject(), JasonViewActivity.this);
+                        } else if(item.has("action")){
+                            call(item.get("action").toString(), "{}", JasonViewActivity.this);
+                            return false;
+                        } else if(item.has("url")) {
                             String url = item.getString("url");
                             JSONObject action = new JSONObject();
                             JSONObject options = new JSONObject();
