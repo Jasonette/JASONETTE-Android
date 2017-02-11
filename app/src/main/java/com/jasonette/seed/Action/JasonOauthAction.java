@@ -38,7 +38,11 @@ public class JasonOauthAction {
                 //
 
                 JSONObject access_options = options.getJSONObject("access");
-                JSONObject access_options_data = access_options.getJSONObject("data");
+
+                JSONObject access_options_data = new JSONObject();
+                if(access_options.has("data")) {
+                    access_options_data = access_options.getJSONObject("data");
+                }
 
                 if(access_options_data.has("grant_type") && access_options_data.getString("grant_type").equals("password")) {
                     String client_id = access_options.getString("client_id");
