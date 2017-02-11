@@ -25,43 +25,124 @@ import okhttp3.Response;
 
 public class JasonOauthAction {
     public void auth(final JSONObject action, final JSONObject data, final Context context) {
-        try{
+        try {
             final JSONObject options = action.getJSONObject("options");
 
             if(options.getString("version").equals("1")) {
                 //OAuth 1 - TODO
+
                 JasonHelper.next("error", action, data, context);
             } else {
+                //
                 //OAuth 2
-                String view = "";
+                //
 
-                if(options.has("view")) {
-                    view = options.getString("view");
-                }
+                JSONObject access_options = options.getJSONObject("access");
+                JSONObject access_options_data = access_options.getJSONObject("data");
 
-                JSONObject authorize_options = null;
-                if(options.has("authorize")) {
-                    authorize_options = options.getJSONObject("authorize");
+                if(access_options_data.has("grant_type") && access_options_data.getString("grant_type").equals("password")) {
+                    String client_id = access_options.getString("client_id");
+                    String client_secret = "";
+
+                    if(access_options.has("client_secret")) {
+                        client_secret = access_options.getString("client_secret");
+                    }
+
+                    if(!access_options.has("scheme") || access_options.getString("scheme").length() == 0
+                        || !access_options.has("host") || access_options.getString("host").length() == 0
+                        || !access_options.has("path") || access_options.getString("path").length() == 0
+                        || !access_options_data.has("username") || access_options_data.getString("username").length() == 0
+                        || !access_options_data.has("password") || access_options_data.getString("password").length() == 0
+                    ) {
+                        JasonHelper.next("error", action, data, context);
+                    } else {
+                        String username = access_options_data.getString("username");
+                        String password = access_options_data.getString("password");
+
+                        Uri.Builder builder = new Uri.Builder();
+
+                        builder.scheme(access_options.getString("scheme"))
+                                .authority(access_options.getString("host"));
+
+                        for(String fragment: access_options.getString("path").split("/")) {
+                            if(!fragment.equals("")) {
+                                builder.appendPath(fragment);
+                            }
+                        }
+
+                        final Uri uri = builder.build();
+
+                        DefaultApi20 oauthApi = new DefaultApi20() {
+                            @Override
+                            public String getAccessTokenEndpoint() {
+                                return uri.toString();
+                            }
+
+                            @Override
+                            protected String getAuthorizationBaseUrl() {
+                                return null;
+                            }
+                        };
+
+                        ServiceBuilder serviceBuilder = new ServiceBuilder();
+                        serviceBuilder.apiKey(client_id);
+                        serviceBuilder.apiSecret(client_secret);
+
+                        final OAuth20Service oauthService = serviceBuilder.build(oauthApi);
+
+                        new AsyncTask<String, Void, Void>() {
+                            @Override
+                            protected Void doInBackground(String... params) {
+                                try {
+                                    String username = params[0];
+                                    String password = params[1];
+                                    String client_id = params[2];
+
+                                    String access_token = oauthService.getAccessTokenPasswordGrant(username, password).getAccessToken();
+
+                                    SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
+                                    preferences.edit().putString(client_id, access_token).apply();
+
+                                    JSONObject result = new JSONObject();
+                                    try {
+                                        result.put("token", access_token);
+                                        JasonHelper.next("success", action, result, context);
+                                    } catch(JSONException e) {
+                                        handleError(e, action, context);
+                                    }
+                                } catch(Exception e) {
+                                    handleError(e, action, context);
+                                }
+                                return null;
+                            }
+                        }.execute(username, password, client_id);
+                    }
                 } else {
-                    JSONObject error = new JSONObject();
-                    error.put("data", "Authorize data missing");
-                    JasonHelper.next("error", action, error, context);
-                }
+                    String view = "";
 
-                JSONObject authorize_options_data = null;
+                    if(options.has("view")) {
+                        view = options.getString("view");
+                    }
 
-                if(authorize_options.has("data")) {
-                    authorize_options_data = authorize_options.getJSONObject("data");
-                } else {
-                    JSONObject error = new JSONObject();
-                    error.put("data", "Authorize data missing");
-                    JasonHelper.next("error", action, error, context);
-                }
+                    JSONObject authorize_options = null;
+                    if(options.has("authorize")) {
+                        authorize_options = options.getJSONObject("authorize");
+                    } else {
+                        JSONObject error = new JSONObject();
+                        error.put("data", "Authorize data missing");
+                        JasonHelper.next("error", action, error, context);
+                    }
 
-                if(authorize_options_data.has("response_type") && authorize_options_data.getString("response_type").equals("password")) {
-                    //Password auth - TODO
-                    JasonHelper.next("error", action, data, context);
-                } else {
+                    JSONObject authorize_options_data = null;
+
+                    if(authorize_options.has("data")) {
+                        authorize_options_data = authorize_options.getJSONObject("data");
+                    } else {
+                        JSONObject error = new JSONObject();
+                        error.put("data", "Authorize data missing");
+                        JasonHelper.next("error", action, error, context);
+                    }
+
                     //Assuming code auth
                     if(authorize_options == null || authorize_options.length() == 0) {
                         JasonHelper.next("error", action, data, context);
