@@ -8,7 +8,10 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.builder.api.DefaultApi10a;
 import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.core.model.OAuth1RequestToken;
+import com.github.scribejava.core.oauth.OAuth10aService;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.jasonette.seed.Helper.JasonHelper;
 
@@ -29,9 +32,92 @@ public class JasonOauthAction {
             final JSONObject options = action.getJSONObject("options");
 
             if(options.getString("version").equals("1")) {
-                //OAuth 1 - TODO
+                //
+                //OAuth 1
+                //
 
-                JasonHelper.next("error", action, data, context);
+                JSONObject request_options = options.getJSONObject("request");
+                JSONObject authorize_options = options.getJSONObject("authorize");
+
+                String client_id = request_options.getString("client_id");
+                String client_secret = request_options.getString("client_secret");
+
+                if(!request_options.has("scheme") || request_options.getString("scheme").length() == 0
+                    || !request_options.has("host") || request_options.getString("host").length() == 0
+                    || !request_options.has("path") || request_options.getString("path").length() == 0
+                    || !authorize_options.has("scheme") || authorize_options.getString("scheme").length() == 0
+                    || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
+                    || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
+                ) {
+                    JasonHelper.next("error", action, data, context);
+                } else {
+
+                    JSONObject request_options_data = request_options.getJSONObject("data");
+
+                    Uri.Builder uriBuilder = new Uri.Builder();
+                    uriBuilder.scheme(request_options.getString("scheme"))
+                            .encodedAuthority(request_options.getString("host"));
+                    for(String fragment: request_options.getString("path").split("/")) {
+                        if(!fragment.equals("")) {
+                            uriBuilder.appendPath(fragment);
+                        }
+                    }
+                    final String requestUri = uriBuilder.build().toString();
+
+                    final Uri.Builder authorizeUriBuilder = new Uri.Builder();
+                    authorizeUriBuilder.scheme(authorize_options.getString("scheme"))
+                            .encodedAuthority(authorize_options.getString("host"));
+                    for(String fragment: authorize_options.getString("path").split("/")) {
+                        if(!fragment.equals("")) {
+                            authorizeUriBuilder.appendPath(fragment);
+                        }
+                    }
+
+                    String callback_uri = request_options_data.getString("oauth_callback");
+
+                    DefaultApi10a oauthApi = new DefaultApi10a() {
+                        @Override
+                        public String getRequestTokenEndpoint() {
+                            return requestUri;
+                        }
+
+                        @Override
+                        public String getAccessTokenEndpoint() {
+                            return null;
+                        }
+
+                        @Override
+                        public String getAuthorizationUrl(OAuth1RequestToken requestToken) {
+                            return authorizeUriBuilder
+                                    .appendQueryParameter("oauth_token", requestToken.getToken())
+                                    .build()
+                                    .toString();
+                        }
+                    };
+
+                    final OAuth10aService oauthService = new ServiceBuilder()
+                            .apiKey(client_id)
+                            .apiSecret(client_secret)
+                            .callback(callback_uri)
+                            .build(oauthApi);
+
+                    new AsyncTask<Void, Void, Void>() {
+                        @Override
+                        protected Void doInBackground(Void... params) {
+                            try {
+                                OAuth1RequestToken request_token = oauthService.getRequestToken();
+                                String auth_url = oauthService.getAuthorizationUrl(request_token);
+
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setData(Uri.parse(auth_url));
+                                context.startActivity(intent);
+                            } catch(Exception e) {
+                                handleError(e, action, context);
+                            }
+                            return null;
+                        }
+                    }.execute();
+                }
             } else {
                 //
                 //OAuth 2
