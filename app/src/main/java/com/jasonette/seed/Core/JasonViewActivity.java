@@ -55,6 +55,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static android.R.attr.action;
 import static android.R.attr.bottom;
@@ -377,7 +382,7 @@ public class JasonViewActivity extends AppCompatActivity {
             JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
             JSONObject events = head.getJSONObject("actions");
             if(events!=null && !events.has("$load")){
-                trigger("$show", new JSONObject(), this);
+                simple_trigger("$show", new JSONObject(), this);
             }
         } catch (Exception e){
             Log.d("Error", e.toString());
@@ -385,7 +390,7 @@ public class JasonViewActivity extends AppCompatActivity {
     }
     void onLoad(){
         loaded = true;
-        trigger("$load", new JSONObject(), this);
+        simple_trigger("$load", new JSONObject(), this);
         onShow();
     }
     void onForeground(){
@@ -409,12 +414,19 @@ public class JasonViewActivity extends AppCompatActivity {
 
 
     //public void call(final Object action, final JSONObject data, final Context context) {
-    public void call(final String action_json, final String data_json, final Context context) {
-
+    public void call(final String action_json, final String data_json, final String event_json, final Context context) {
         try {
 
             Object action = JasonHelper.objectify(action_json);
             final JSONObject data = (JSONObject)JasonHelper.objectify(data_json);
+
+            JSONObject ev;
+            try {
+                ev = (JSONObject) JasonHelper.objectify(event_json);
+            } catch (Exception e){
+                ev = new JSONObject();
+            }
+            final JSONObject event = ev;
 
             model.set("state", (JSONObject)data);
 
@@ -423,25 +435,25 @@ public class JasonViewActivity extends AppCompatActivity {
                 JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
                     @Override
                     public void onFinished(JSONObject reduced_action) {
-                        final_call(reduced_action, data, context);
+                        final_call(reduced_action, data, event, context);
                     }
                 });
 
                 JasonParser.getInstance(this).parse("json", model.state, action, context);
 
             } else {
-                final_call((JSONObject)action, data, context);
+                final_call((JSONObject)action, data, event, context);
             }
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
     };
-    private void final_call(final JSONObject action, final JSONObject data, final Context context) {
+    private void final_call(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
 
         try {
             // Handle trigger first
             if (action.has("trigger")) {
-                trigger(action.getString("trigger"), data, context);
+                trigger(action, data, event, context);
             } else {
                 // If not trigger, regular call
                 if(action.has("options")){
@@ -453,7 +465,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             try {
                                 JSONObject action_with_parsed_options = new JSONObject(action.toString());
                                 action_with_parsed_options.put("options", parsed_options);
-                                exec(action_with_parsed_options, model.state, context);
+                                exec(action_with_parsed_options, model.state, event, context);
                             } catch (Exception e) {
                                 Log.d("Error", e.toString());
                             }
@@ -462,7 +474,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     JasonParser.getInstance(this).parse("json", model.state, options, context);
                 } else {
                     // otherwise we can just call immediately
-                    exec(action, model.state, context);
+                    exec(action, model.state, event, context);
                 }
             }
         } catch (Exception e) {
@@ -470,21 +482,137 @@ public class JasonViewActivity extends AppCompatActivity {
         }
     }
 
-    public void trigger(final String event_name, JSONObject data, Context context){
-        try{
-            JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
-            JSONObject events = head.getJSONObject("actions");
+    private void trigger(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
 
-            // Look up an action by event_name
-            Object action = events.get(event_name);
-            call(action.toString(), data.toString(), context);
-        } catch (Exception e) {
+        /****************************************************************************************
+
+        This method is a syntactic sugar for calling a $lambda action.
+        The syntax is as follows:
+
+        {
+            "trigger": "twitter.get",
+            "options": {
+                "endpoint": "timeline"
+            },
+            "success": {
+                "type": "$render"
+            },
+            "error": {
+                "type": "$util.toast",
+                "options": {
+                    "text": "Uh oh. Something went wrong"
+                 }
+            }
+        }
+
+        Above is a syntactic sugar for the below "$lambda" type action call:
+
+        $lambda action is a special purpose action that triggers another action by name and waits until it returns.
+        This way we can define a huge size action somewhere and simply call them as a subroutine and wait for its return value.
+        When the subroutine (the action that was triggered by name) returns via `"type": "$return.success"` action,
+        the $lambda action picks off where it left off and starts executing its "success" action with the value returned from the subroutine.
+
+        Notice that:
+        1. we get rid of the "trigger" field and turn it into a regular action of `"type": "$lambda"`.
+        2. the "trigger" value (`"twitter.get"`) gets mapped to "options.name"
+        3. the "options" value (`{"endpoint": "timeline"}`) gets mapped to "options.options"
+
+
+        {
+            "type": "$lambda",
+            "options": {
+                "name": "twitter.get",
+                "options": {
+                    "endpoint": "timeline"
+                }
+            },
+            "success": {
+                "type": "$render"
+            },
+            "error": {
+                "type": "$util.toast",
+                "options": {
+                    "text": "Uh oh. Something went wrong"
+                 }
+            }
+        }
+
+        The success / error actions get executed AFTER the triggered action has finished and returns with a return value.
+
+        ****************************************************************************************/
+
+
+        try {
+
+            // construct options
+
+            if(action.has("options")) {
+                Object options = action.get("options");
+                JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
+                    @Override
+                    public void onFinished(JSONObject parsed_options) {
+                        try {
+                            invoke_lambda(action, data, parsed_options, context);
+                        } catch (Exception e) {
+                            Log.d("Error", e.toString());
+                        }
+                    }
+                });
+                JasonParser.getInstance(this).parse("json", model.state, options, context);
+            } else {
+                JSONObject options = new JSONObject();
+                invoke_lambda(action, data, null, context);
+            }
+
+
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+        }
+
+
+
+    }
+    private void invoke_lambda(final JSONObject action, final JSONObject data, final JSONObject options, final Context context) {
+
+        try {
+            // construct lambda
+            JSONObject lambda = new JSONObject();
+            lambda.put("type", "$lambda");
+
+            JSONObject args = new JSONObject();
+            args.put("name", action.getString("trigger"));
+            if(options!=null) {
+                args.put("options", options);
+            }
+            lambda.put("options", args);
+
+            if(action.has("success")) {
+                lambda.put("success", action.get("success"));
+            }
+            if(action.has("error")) {
+                lambda.put("error", action.get("error"));
+            }
+
+            call(lambda.toString(), data.toString(), "{}", context);
+        } catch (Exception e){
             Log.d("Error", e.toString());
         }
 
     }
 
-    private void exec(final JSONObject action, final JSONObject data, final Context context){
+    public void simple_trigger(final String event_name, JSONObject data, Context context){
+        try{
+            JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+            JSONObject events = head.getJSONObject("actions");
+            // Look up an action by event_name
+            Object action = events.get(event_name);
+            call(action.toString(), data.toString(), "{}", context);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+    }
+
+    private void exec(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         try {
             String type = action.getString("type");
             if (type.startsWith("$") || type.startsWith("@")){
@@ -497,8 +625,8 @@ public class JasonViewActivity extends AppCompatActivity {
                 if(tokens.length == 1){
                     // Core
                     methodName = type.substring(1);
-                    Method method = JasonViewActivity.class.getMethod(methodName, JSONObject.class, JSONObject.class, Context.class);
-                    method.invoke(this, action, model.state, context);
+                    Method method = JasonViewActivity.class.getMethod(methodName, JSONObject.class, JSONObject.class, JSONObject.class, Context.class);
+                    method.invoke(this, action, model.state, event, context);
                 } else {
 
                     className = type.substring(1, type.lastIndexOf('.'));
@@ -560,9 +688,9 @@ public class JasonViewActivity extends AppCompatActivity {
                         modules.put(fileName, module);
                     }
 
-                    Method method = module.getClass().getMethod(methodName, JSONObject.class, JSONObject.class, Context.class);
+                    Method method = module.getClass().getMethod(methodName, JSONObject.class, JSONObject.class, JSONObject.class, Context.class);
                     model.action = action;
-                    method.invoke(module, action, model.state, context);
+                    method.invoke(module, action, model.state, event, context);
                 }
 
 
@@ -583,7 +711,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 alert_action.put("options", options);
 
 
-                call(alert_action.toString(), new JSONObject().toString(), JasonViewActivity.this);
+                call(alert_action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
 
             } catch (Exception err){
                 Log.d("Error", err.toString());
@@ -601,6 +729,7 @@ public class JasonViewActivity extends AppCompatActivity {
             try {
                 String action_string = intent.getStringExtra("action");
                 String data_string = intent.getStringExtra("data");
+                String event_string = intent.getStringExtra("event");
 
                 // Wrap return value with $jason
                 JSONObject data;
@@ -620,7 +749,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
 
                 // call next
-                call(action_string, data.toString(), JasonViewActivity.this);
+                call(action_string, data.toString(), event_string, JasonViewActivity.this);
             } catch (Exception e){
                 Log.d("Error", e.toString());
             }
@@ -632,6 +761,7 @@ public class JasonViewActivity extends AppCompatActivity {
             try {
                 String action_string = intent.getStringExtra("action");
                 String data_string = intent.getStringExtra("data");
+                String event_string = intent.getStringExtra("event");
 
                 // Wrap return value with $jason
                 JSONObject data;
@@ -644,7 +774,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
 
                 // call next
-                call(action_string, data.toString(), JasonViewActivity.this);
+                call(action_string, data.toString(), event_string, JasonViewActivity.this);
             } catch (Exception e){
                 Log.d("Error", e.toString());
             }
@@ -655,9 +785,14 @@ public class JasonViewActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             try {
                 String action_string = intent.getStringExtra("action");
+                String event_string = intent.getStringExtra("event");
+                String data_string = intent.getStringExtra("data");
+                if(data_string == null){
+                    data_string = new JSONObject().toString();
+                }
 
                 // call next
-                call(action_string, new JSONObject().toString(), JasonViewActivity.this);
+                call(action_string, data_string, event_string, JasonViewActivity.this);
             } catch (Exception e){
                 Log.d("Error", e.toString());
             }
@@ -681,8 +816,288 @@ public class JasonViewActivity extends AppCompatActivity {
      * @param {JSONObject} data - the data object to render
      */
 
+    public void lambda(final JSONObject action, JSONObject data, JSONObject event, Context context){
 
-    public void render(final JSONObject action, JSONObject data, Context context){
+        /*
+
+        # Similar to `trigger` keyword, but with a few differences:
+        1. Trigger was just for one-off triggering and finish. Lambda waits until the subroutine returns and continues where it left off.
+        2. `trigger` was a keyword, but lambda itself is just another type of action. `{"type": "$lambda"}`
+        3. Lambda can pass arguments via `options`
+
+        # How it works
+        1. Triggers another action by name
+        2. Waits for the subroutine to return via `$return.success` or `$return.error`
+        3. When the subroutine calls `$return.success`, continue executing from `success` action, using the return value from the subroutine
+        4. When the subroutine calls `$return.error`, continue executing from `error` action, using the return value from the subroutine
+
+        # Example 1: Basic lambda (Same as trigger)
+        {
+            "type": "$lambda",
+            "options": {
+                "name": "fetch"
+            }
+        }
+
+
+        # Example 2: Basic lambda with success/error handlers
+        {
+            "type": "$lambda",
+            "options": {
+                "name": "fetch"
+            }
+            "success": {
+                "type": "$render"
+            },
+            "error": {
+                "type": "$util.toast",
+                "options": {
+                    "text": "Error"
+                }
+            }
+        }
+
+
+        # Example 3: Passing arguments
+        {
+            "type": "$lambda",
+            "options": {
+                "name": "fetch",
+                "options": {
+                    "url": "https://www.jasonbase.com/things/73g"
+                }
+            },
+            "success": {
+                "type": "$render"
+            },
+            "error": {
+                "type": "$util.toast",
+                "options": {
+                    "text": "Error"
+                }
+            }
+        }
+
+        # Example 4: Using the previous action's return value
+
+        {
+            "type": "$network.request",
+            "options": {
+                "url": "https://www.jasonbase.com/things/73g"
+            },
+            "success": {
+                "type": "$lambda",
+                "options": {
+                    "name": "draw"
+                },
+                "success": {
+                    "type": "$render"
+                },
+                "error": {
+                    "type": "$util.toast",
+                    "options": {
+                        "text": "Error"
+                    }
+                }
+            }
+        }
+
+        # Example 5: Using the previous action's return value as well as custom options
+
+        {
+            "type": "$network.request",
+            "options": {
+                "url": "https://www.jasonbase.com/things/73g"
+            },
+            "success": {
+                "type": "$lambda",
+                "options": {
+                    "name": "draw",
+                    "options": {
+                        "p1": "another param",
+                        "p2": "yet another param"
+                    }
+                },
+                "success": {
+                    "type": "$render"
+                },
+                "error": {
+                    "type": "$util.toast",
+                    "options": {
+                        "text": "Error"
+                    }
+                }
+            }
+        }
+
+        # Example 6: Using the previous action's return value as well as custom options
+
+        {
+            "type": "$network.request",
+            "options": {
+                "url": "https://www.jasonbase.com/things/73g"
+            },
+            "success": {
+                "type": "$lambda",
+                "options": [{
+                    "{{#if $jason}}": {
+                        "name": "draw",
+                        "options": {
+                            "p1": "another param",
+                            "p2": "yet another param"
+                        }
+                    }
+                }, {
+                    "{{#else}}": {
+                        "name": "err",
+                        "options": {
+                            "text": "No content to render"
+                        }
+                    }
+                }],
+                "success": {
+                    "type": "$render"
+                },
+                "error": {
+                    "type": "$util.toast",
+                    "options": {
+                        "text": "Error"
+                    }
+                }
+            }
+        }
+
+         */
+
+        try{
+            if(action.has("options")){
+                JSONObject options = action.getJSONObject("options");
+                // 1. Resolve the action by looking up from $jason.head.actions
+                String event_name = options.getString("name");
+                JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                JSONObject events = head.getJSONObject("actions");
+                final Object lambda = events.get(event_name);
+
+                final String caller = action.toString();
+
+                // 2. If `options` exists, use that as the data to pass to the next action
+                if(options.has("options")){
+                    Object new_options = options.get("options");
+
+                    // take the options and parse it with current model.state
+                    JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
+                        @Override
+                        public void onFinished(JSONObject parsed_options) {
+                            try {
+                                JSONObject wrapped = new JSONObject();
+                                wrapped.put("$jason", parsed_options);
+                                call(lambda.toString(), wrapped.toString(), caller, JasonViewActivity.this);
+                            } catch (Exception e){
+                                JasonHelper.next("error", action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
+                            }
+                        }
+                    });
+                    JasonParser.getInstance(this).parse("json", model.state, new_options, context);
+
+                }
+
+                // 3. If `options` doesn't exist, forward the data from the previous action
+                else {
+                    call(lambda.toString(), data.toString(), caller, JasonViewActivity.this);
+                }
+            }
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+            JasonHelper.next("error", action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
+        }
+
+    }
+
+    public void require(final JSONObject action, JSONObject data, final JSONObject event, final Context context){
+        /*
+
+         {
+            "type": "$require",
+            "options": {
+                "items": ["https://...", "https://...", ....],
+                "item": "https://...."
+            }
+         }
+
+         Crawl all the items in the array and assign it to the key
+
+         */
+
+        try {
+            if (action.has("options")) {
+                JSONObject options = action.getJSONObject("options");
+
+                ArrayList<String> urlSet = new ArrayList<>();
+                Iterator<?> keys = options.keys();
+                while (keys.hasNext()) {
+                    String key = (String) keys.next();
+                    Object val = options.get(key);
+
+                    // must be either array or string
+                    if(val instanceof JSONArray){
+                        for (int i = 0; i < ((JSONArray)val).length(); i++) {
+                            if(!urlSet.contains(((JSONArray) val).getString(i))){
+                                urlSet.add(((JSONArray) val).getString(i));
+                            }
+                        }
+                    } else if(val instanceof String){
+                        if(!urlSet.contains(val)){
+                            urlSet.add(((String)val));
+                        }
+                    }
+                }
+                if(urlSet.size()>0) {
+                    JSONObject refs = new JSONObject();
+
+                    CountDownLatch latch = new CountDownLatch(urlSet.size());
+                    ExecutorService taskExecutor = Executors.newFixedThreadPool(urlSet.size());
+                    for (String key : urlSet) {
+                        taskExecutor.submit(new JasonRequire(key, latch, refs, model.client, this));
+                    }
+                    try {
+                        latch.await();
+                    } catch (Exception e) {
+                        Log.d("Error", e.toString());
+                    }
+
+                    JSONObject res = new JSONObject();
+
+                    Iterator<?> ks = options.keys();
+                    while (ks.hasNext()) {
+                        String key = (String) ks.next();
+                        Object val = options.get(key);
+                        if(val instanceof JSONArray){
+                            JSONArray ret = new JSONArray();
+                            for (int i = 0; i < ((JSONArray)val).length(); i++) {
+                                String url = ((JSONArray) val).getString(i);
+                                ret.put(refs.get(url));
+                            }
+                            res.put(key, ret);
+                        } else if(val instanceof String){
+                            String ret = ((String)val);
+                            res.put(key, ret);
+                        }
+                    }
+                    JasonHelper.next("success", action, res, event, context);
+                }
+            } else {
+                JasonHelper.next("error", action, new JSONObject(), event, context);
+            }
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+            JasonHelper.next("error", action, new JSONObject(), event, context);
+        }
+
+        // get all urls
+
+    }
+
+    public void render(final JSONObject action, JSONObject data, final JSONObject event, final Context context){
         JasonViewActivity activity = (JasonViewActivity) context;
         try{
             String template_name = "body";
@@ -694,6 +1109,9 @@ public class JasonViewActivity extends AppCompatActivity {
                     template_name = options.getString("template");
                 }
                 // parse the template with JSON
+                if(options.has("data")){
+                    data.put("$jason", options.get("data"));
+                }
 
 
                 if(options.has("type")){
@@ -717,6 +1135,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
 
                     setup_body(body);
+                    JasonHelper.next("success", action, new JSONObject(), event, context);
                 }
             });
 
@@ -724,22 +1143,23 @@ public class JasonViewActivity extends AppCompatActivity {
 
         } catch (Exception e){
             Log.d("Error", e.toString());
+            JasonHelper.next("error", action, new JSONObject(), event, context);
         }
     }
-    public void set(final JSONObject action, JSONObject data, Context context){
+    public void set(final JSONObject action, JSONObject data, JSONObject event, Context context){
         try{
             if(action.has("options")){
                 JSONObject options = action.getJSONObject("options");
                 model.var = JasonHelper.merge(model.var, options);
             }
-            JasonHelper.next("success", action, new JSONObject(), context);
+            JasonHelper.next("success", action, new JSONObject(), event, context);
 
         } catch (Exception e){
             Log.d("Error", e.toString());
         }
     }
 
-    public void href(final JSONObject action, JSONObject data, Context context){
+    public void href(final JSONObject action, JSONObject data, JSONObject event, Context context){
         try {
             if (action.has("options")) {
                 String url = action.getJSONObject("options").getString("url");
@@ -796,10 +1216,10 @@ public class JasonViewActivity extends AppCompatActivity {
         }
     }
 
-    public void close ( final JSONObject action, JSONObject data, Context context){
+    public void close ( final JSONObject action, JSONObject data, JSONObject event, Context context){
        finish();
     }
-    public void unlock ( final JSONObject action, JSONObject data, Context context){
+    public void unlock ( final JSONObject action, JSONObject data, JSONObject event, Context context){
         JasonViewActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -816,21 +1236,21 @@ public class JasonViewActivity extends AppCompatActivity {
     }
 
 
-    public void reload ( final JSONObject action, JSONObject data, Context context){
+    public void reload ( final JSONObject action, JSONObject data, JSONObject event, Context context){
         if(model != null){
             model.fetch();
             try {
-                JasonHelper.next("success", action, new JSONObject(), context);
+                JasonHelper.next("success", action, new JSONObject(), event, context);
             } catch (Exception e) {
                 Log.d("Error", e.toString());
             }
         }
     }
 
-    public void flush ( final JSONObject action, JSONObject data, Context context){
+    public void flush ( final JSONObject action, JSONObject data, JSONObject event, Context context){
         // there's no default caching on Android. So don't do anything for now
         try {
-            JasonHelper.next("success", action, new JSONObject(), context);
+            JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
@@ -860,9 +1280,9 @@ public class JasonViewActivity extends AppCompatActivity {
                         if (head.has("templates")) {
                             if (head.getJSONObject("templates").has("body")) {
                                 model.set("state", new JSONObject());
-                                render(new JSONObject(), model.state, this);
+                                render(new JSONObject(), model.state, new JSONObject(), this);
 
-                                // return here so onLoad() below will NOT betriggered.
+                                // return here so onLoad() below will NOT be triggered.
                                 // onLoad() will be triggered after render has finished
                                 return;
                             }
@@ -944,7 +1364,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             public void onRefresh() {
                                 try {
                                     JSONObject action = head.getJSONObject("actions").getJSONObject("$pull");
-                                    call(action.toString(), new JSONObject().toString(), JasonViewActivity.this);
+                                    call(action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
                                 } catch (Exception e) {
                                 }
                             }
@@ -1319,9 +1739,9 @@ public class JasonViewActivity extends AppCompatActivity {
                                 href.put("transition", "replace");
                             }
                             action.put("options", href);
-                            href(action, new JSONObject(), JasonViewActivity.this);
+                            href(action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
                         } else if(item.has("action")){
-                            call(item.get("action").toString(), "{}", JasonViewActivity.this);
+                            call(item.get("action").toString(), "{}", "{}", JasonViewActivity.this);
                             return false;
                         } else if(item.has("url")) {
                             String url = item.getString("url");
@@ -1330,7 +1750,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             options.put("url", url);
                             options.put("transition", "replace");
                             action.put("options", options);
-                            href(action, new JSONObject(), JasonViewActivity.this);
+                            href(action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
                         }
                     } catch (Exception e) {
                         Log.d("Error", e.toString());
@@ -1469,10 +1889,10 @@ public class JasonViewActivity extends AppCompatActivity {
                                 JSONObject header = model.rendered.getJSONObject("header");
                                 if (header.has("menu")) {
                                     if (header.getJSONObject("menu").has("action")) {
-                                        call(header.getJSONObject("menu").getJSONObject("action").toString(), new JSONObject().toString(), JasonViewActivity.this);
+                                        call(header.getJSONObject("menu").getJSONObject("action").toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
                                     } else if (header.getJSONObject("menu").has("href")) {
                                         JSONObject action = new JSONObject().put("type", "$href").put("options", header.getJSONObject("menu").getJSONObject("href"));
-                                        call(action.toString(), new JSONObject().toString(), JasonViewActivity.this);
+                                        call(action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
                                     }
                                 }
                             } catch (Exception e) {
