@@ -27,7 +27,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class JasonOauthAction {
-    public void auth(final JSONObject action, final JSONObject data, final Context context) {
+    public void auth(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         try {
             final JSONObject options = action.getJSONObject("options");
 
@@ -49,7 +49,8 @@ public class JasonOauthAction {
                     || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
                     || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
                 ) {
-                    JasonHelper.next("error", action, data, context);
+                    JasonHelper.next("error", action, data, event, context);
+                    JasonHelper.next("error", action, data, event, context);
                 } else {
 
                     JSONObject request_options_data = request_options.getJSONObject("data");
@@ -90,8 +91,7 @@ public class JasonOauthAction {
                         public String getAuthorizationUrl(OAuth1RequestToken requestToken) {
                             return authorizeUriBuilder
                                     .appendQueryParameter("oauth_token", requestToken.getToken())
-                                    .build()
-                                    .toString();
+                                    .build().toString();
                         }
                     };
 
@@ -112,7 +112,7 @@ public class JasonOauthAction {
                                 intent.setData(Uri.parse(auth_url));
                                 context.startActivity(intent);
                             } catch(Exception e) {
-                                handleError(e, action, context);
+                                handleError(e, action, event, context);
                             }
                             return null;
                         }
@@ -144,7 +144,7 @@ public class JasonOauthAction {
                         || !access_options_data.has("username") || access_options_data.getString("username").length() == 0
                         || !access_options_data.has("password") || access_options_data.getString("password").length() == 0
                     ) {
-                        JasonHelper.next("error", action, data, context);
+                        JasonHelper.next("error", action, data, event, context);
                     } else {
                         String username = access_options_data.getString("username");
                         String password = access_options_data.getString("password");
@@ -196,12 +196,12 @@ public class JasonOauthAction {
                                     JSONObject result = new JSONObject();
                                     try {
                                         result.put("token", access_token);
-                                        JasonHelper.next("success", action, result, context);
+                                        JasonHelper.next("success", action, result, event, context);
                                     } catch(JSONException e) {
-                                        handleError(e, action, context);
+                                        handleError(e, action, event, context);
                                     }
                                 } catch(Exception e) {
-                                    handleError(e, action, context);
+                                    handleError(e, action, event, context);
                                 }
                                 return null;
                             }
@@ -220,7 +220,7 @@ public class JasonOauthAction {
                     } else {
                         JSONObject error = new JSONObject();
                         error.put("data", "Authorize data missing");
-                        JasonHelper.next("error", action, error, context);
+                        JasonHelper.next("error", action, error, event, context);
                     }
 
                     JSONObject authorize_options_data = null;
@@ -230,12 +230,12 @@ public class JasonOauthAction {
                     } else {
                         JSONObject error = new JSONObject();
                         error.put("data", "Authorize data missing");
-                        JasonHelper.next("error", action, error, context);
+                        JasonHelper.next("error", action, error, event, context);
                     }
 
                     //Assuming code auth
                     if(authorize_options == null || authorize_options.length() == 0) {
-                        JasonHelper.next("error", action, data, context);
+                        JasonHelper.next("error", action, data, event, context);
                     } else {
                         String client_id = authorize_options.getString("client_id");
                         String client_secret = "";
@@ -253,7 +253,7 @@ public class JasonOauthAction {
                             || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
                             || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
                         ) {
-                            JasonHelper.next("error", action, data, context);
+                            JasonHelper.next("error", action, data, event, context);
                         } else {
                             // TODO
                             //CHECK IF CREDENTIALS EXISTS
@@ -309,14 +309,14 @@ public class JasonOauthAction {
             try {
                 JSONObject error = new JSONObject();
                 error.put("data", e.toString());
-                JasonHelper.next("error", action, error, context);
+                JasonHelper.next("error", action, error, event, context);
             } catch(JSONException error) {
                 Log.d("Error", error.toString());
             }
         }
     }
 
-    public void access_token(final JSONObject action, final JSONObject data, final Context context) {
+    public void access_token(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         try {
             final JSONObject options = action.getJSONObject("options");
             if (options.has("version") && options.getString("version").equals("1")) {
@@ -330,30 +330,30 @@ public class JasonOauthAction {
                 if(access_token != null) {
                     JSONObject result = new JSONObject();
                     result.put("token", access_token);
-                    JasonHelper.next("success", action, result, context);
+                    JasonHelper.next("success", action, result, event, context);
                 } else {
                     JSONObject error = new JSONObject();
                     error.put("data", "access token not found");
-                    JasonHelper.next("error", action, error, context);
+                    JasonHelper.next("error", action, error, event, context);
                 }
             }
         } catch(JSONException e) {
             try {
                 JSONObject error = new JSONObject();
                 error.put("data", e.toString());
-                JasonHelper.next("error", action, error, context);
+                JasonHelper.next("error", action, error, event, context);
             } catch(JSONException error) {
                 Log.d("Error", error.toString());
             }
         }
     }
 
-    public void oauth_callback(final JSONObject action, final JSONObject data, final Context context) {
+    public void oauth_callback(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         try {
             final JSONObject options = action.getJSONObject("options");
             if (options.has("version") && options.getString("version").equals("1")) {
                 //OAuth 1
-                JasonHelper.next("error", action, data, context);
+                JasonHelper.next("error", action, data, event, context);
             } else {
                 // OAuth 2
                 Uri uri = Uri.parse(action.getString("uri"));
@@ -371,7 +371,7 @@ public class JasonOauthAction {
                     JSONObject result = new JSONObject();
                     result.put("token", access_token);
 
-                    JasonHelper.next("success", action, result, context);
+                    JasonHelper.next("success", action, result, event, context);
                 } else {
 
                     JSONObject access_options = options.getJSONObject("access");
@@ -391,7 +391,7 @@ public class JasonOauthAction {
                         || !access_options.has("host") || access_options.getString("host").length() == 0
                         || !access_options.has("path") || access_options.getString("path").length() == 0
                     ) {
-                        JasonHelper.next("error", action, data, context);
+                        JasonHelper.next("error", action, data, event, context);
                     } else {
                         final Uri.Builder builder = new Uri.Builder();
                         builder.scheme(access_options.getString("scheme"))
@@ -436,13 +436,13 @@ public class JasonOauthAction {
                                     try {
                                         result.put("token", access_token);
                                     } catch(JSONException e) {
-                                        handleError(e, action, context);
+                                        handleError(e, action, event, context);
                                     }
 
-                                    JasonHelper.next("success", action, result, context);
+                                    JasonHelper.next("success", action, result, event, context);
 
                                 } catch(Exception e) {
-                                    handleError(e, action, context);
+                                    handleError(e, action, event, context);
                                 }
                                 return null;
                             }
@@ -455,14 +455,14 @@ public class JasonOauthAction {
             try {
                 JSONObject error = new JSONObject();
                 error.put("data", e.toString());
-                JasonHelper.next("error", action, error, context);
+                JasonHelper.next("error", action, error, event, context);
             } catch(JSONException error) {
                 Log.d("Error", error.toString());
             }
         }
     }
 
-    public void reset(final JSONObject action, final JSONObject data, final Context context) {
+    public void reset(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         try {
             final JSONObject options = action.getJSONObject("options");
 
@@ -473,14 +473,14 @@ public class JasonOauthAction {
             } else {
                 SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
                 preferences.edit().remove(client_id).apply();
-                JasonHelper.next("success", action, data, context);
+                JasonHelper.next("success", action, data, event, context);
             }
         } catch(JSONException e) {
-            handleError(e, action, context);
+            handleError(e, action, event, context);
         }
     }
 
-    public void request(final JSONObject action, final JSONObject data, final Context context) {
+    public void request(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         try {
             JSONObject options = action.getJSONObject("options");
 
@@ -525,7 +525,7 @@ public class JasonOauthAction {
                             if(action.has("error")) {
                                 JSONObject error = new JSONObject();
                                 error.put("data", e.toString());
-                                JasonHelper.next("error", action, error, context);
+                                JasonHelper.next("error", action, error, event, context);
                             }
                         } catch (Exception err) {
                             Log.d("Error", err.toString());
@@ -539,11 +539,11 @@ public class JasonOauthAction {
                                 if(action.has("error")){
                                     JSONObject error = new JSONObject();
                                     error.put("data", response.toString());
-                                    JasonHelper.next("error", action, error, context);
+                                    JasonHelper.next("error", action, error, event, context);
                                 }
                             } else {
                                 String jsonData = response.body().string();
-                                JasonHelper.next("success", action, jsonData, context);
+                                JasonHelper.next("success", action, jsonData, event, context);
                             }
                         } catch(Exception err) {
                             Log.d("Error", err.toString());
@@ -551,18 +551,18 @@ public class JasonOauthAction {
                     }
                 });
             } else {
-                JasonHelper.next("error", action, data, context);
+                JasonHelper.next("error", action, data, event, context);
             }
         } catch(JSONException e) {
-            handleError(e, action, context);
+            handleError(e, action, event, context);
         }
     }
 
-    private void handleError(Exception e, JSONObject action, Context context) {
+    private void handleError(Exception e, JSONObject action, JSONObject event, Context context) {
         try {
             JSONObject error = new JSONObject();
             error.put("data", e.toString());
-            JasonHelper.next("error", action, error, context);
+            JasonHelper.next("error", action, error, event, context);
         } catch(JSONException error) {
             Log.d("Error", error.toString());
         }

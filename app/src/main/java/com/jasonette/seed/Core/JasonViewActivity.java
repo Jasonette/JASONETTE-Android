@@ -327,7 +327,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
                 oauth_callback.put("options", oauth_callback_options);
 
-                exec(oauth_callback, model.action, JasonViewActivity.this);
+                exec(oauth_callback, model.action, new JSONObject(), JasonViewActivity.this);
             } catch(JSONException e) {
                 Log.d("Error", e.toString());
             }
