@@ -24,7 +24,7 @@ public class JasonTimerAction {
         timers = new HashMap<String, Runnable>();
         handler = new Handler(thread.getLooper());
     }
-    public void start(final JSONObject action, final JSONObject data, final Context context){
+    public void start(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         try {
             if (action.has("options")) {
                 JSONObject options = action.getJSONObject("options");
@@ -79,14 +79,14 @@ public class JasonTimerAction {
             }
 
             // Go on to the next success action
-            JasonHelper.next("success", action, data, context);
+            JasonHelper.next("success", action, data, event, context);
 
         } catch (Exception e){
             Log.d("Error", e.toString());
         }
     }
 
-    public void stop(final JSONObject action, final JSONObject data, final Context context){
+    public void stop(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         try {
             if (action.has("options")) {
                 JSONObject options = action.getJSONObject("options");
@@ -100,7 +100,7 @@ public class JasonTimerAction {
             }
 
             // Go on to the next success action
-            JasonHelper.next("success", action, data, context);
+            JasonHelper.next("success", action, data, event, context);
         } catch (Exception e){
             Log.d("Error", e.toString());
         }
