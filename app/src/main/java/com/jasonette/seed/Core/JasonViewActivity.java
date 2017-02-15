@@ -193,6 +193,13 @@ public class JasonViewActivity extends AppCompatActivity {
         // Create model
         model = new JasonModel(url, intent, this);
 
+        Uri uri = getIntent().getData();
+        if(uri != null) {
+            if(uri.getHost().contains("oauth")) {
+                return;
+            }
+        }
+
         if(savedInstanceState != null) {
             // Restore model and url
             // Then rebuild the view
@@ -265,20 +272,20 @@ public class JasonViewActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));
 
         SharedPreferences pref = getSharedPreferences("model", 0);
-        if(model.url!=null) {
-            if (pref.contains(model.url)) {
-                String str = pref.getString(model.url, null);
+        if(url!=null) {
+            if (pref.contains(url)) {
+                String str = pref.getString(url, null);
                 try {
                     JSONObject temp_model = new JSONObject(str);
-                    model.url = temp_model.getString("url");
-                    model.jason = temp_model.getJSONObject("jason");
-                    model.rendered = temp_model.getJSONObject("rendered");
-                    model.state = temp_model.getJSONObject("state");
-                    model.var = temp_model.getJSONObject("var");
-                    model.cache = temp_model.getJSONObject("cache");
-                    model.params = temp_model.getJSONObject("params");
-                    model.session = temp_model.getJSONObject("session");
-                    model.action = temp_model.getJSONObject("action");
+                    if(temp_model.has("url")) model.url = temp_model.getString("url");
+                    if(temp_model.has("jason")) model.jason = temp_model.getJSONObject("jason");
+                    if(temp_model.has("rendered")) model.rendered = temp_model.getJSONObject("rendered");
+                    if(temp_model.has("state")) model.state = temp_model.getJSONObject("state");
+                    if(temp_model.has("var")) model.var = temp_model.getJSONObject("var");
+                    if(temp_model.has("cache")) model.cache = temp_model.getJSONObject("cache");
+                    if(temp_model.has("params")) model.params = temp_model.getJSONObject("params");
+                    if(temp_model.has("session")) model.session = temp_model.getJSONObject("session");
+                    if(temp_model.has("action")) model.action = temp_model.getJSONObject("action");
 
                     // Delete shared preference after resuming
                     SharedPreferences.Editor editor = pref.edit();
