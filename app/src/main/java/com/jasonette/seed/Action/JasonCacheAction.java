@@ -9,7 +9,7 @@ import com.jasonette.seed.Core.JasonViewActivity;
 import org.json.JSONObject;
 
 public class JasonCacheAction {
-    public void set(final JSONObject action, final JSONObject data, final Context context){
+    public void set(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         try {
             JasonViewActivity activity = (JasonViewActivity) context;
             SharedPreferences pref = context.getSharedPreferences("cache", 0);
@@ -29,7 +29,7 @@ public class JasonCacheAction {
             ((JasonViewActivity)context).model.cache = new_cache;
 
             // Execute next
-            JasonHelper.next("success", action, new_cache, context);
+            JasonHelper.next("success", action, new_cache, event, context);
 
         } catch (Exception e){
             Log.d("Error", e.toString());
@@ -37,7 +37,7 @@ public class JasonCacheAction {
 
 
     }
-    public void reset(final JSONObject action, final JSONObject data, final Context context){
+    public void reset(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         try {
             // Update SharedPreferences
             JasonViewActivity activity = (JasonViewActivity) context;
@@ -50,7 +50,7 @@ public class JasonCacheAction {
             ((JasonViewActivity)context).model.cache = new JSONObject();
 
             // Execute next
-            JasonHelper.next("success", action, new JSONObject(), context);
+            JasonHelper.next("success", action, new JSONObject(), event, context);
 
         } catch (Exception e){
             Log.d("Error", e.toString());

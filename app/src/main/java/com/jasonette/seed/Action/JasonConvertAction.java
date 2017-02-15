@@ -16,8 +16,9 @@ import java.lang.Thread;
 public class JasonConvertAction {
     private JSONObject action;
     private Context context;
+    private JSONObject event;
 
-    public void csv(final JSONObject action, final JSONObject data, final Context context){
+    public void csv(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         this.action = action;
         this.context = context;
         try{
@@ -40,13 +41,13 @@ public class JasonConvertAction {
                     runtime.release();
                 }
             }
-            JasonHelper.next("success", action, result, context);
+            JasonHelper.next("success", action, result, event, context);
         } catch (Exception e){
             handle_exception(e);
         }
     }
 
-    public void rss(final JSONObject action, final JSONObject data, final Context context){
+    public void rss(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         this.action = action;
         this.context = context;
         try{
@@ -104,7 +105,7 @@ public class JasonConvertAction {
         try {
             JSONObject error = new JSONObject();
             error.put("data", exc.toString());
-            JasonHelper.next("error", action, error, context);
+            JasonHelper.next("error", action, error, event, context);
         } catch (Exception err){
             Log.d("Error", err.toString());
         }
@@ -136,7 +137,7 @@ public class JasonConvertAction {
                 V8Array rss_data = (V8Array) parameters.get(0);
                 String result = stringify(receiver.getRuntime(), rss_data);
 
-                JasonHelper.next("success", action, result, context);
+                JasonHelper.next("success", action, result, event, context);
             } catch (Exception e) {
                 handle_exception(e);
             }
