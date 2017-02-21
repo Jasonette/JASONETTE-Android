@@ -22234,7 +22234,10 @@ var fillout = function(options){
         data["$root"] = root;
 
         // If the pattern ends with a return statement, but is NOT wrapped inside another function ([^}]*$), it's a function expression
-        if(/\breturn [^;]+;?[ ]*$/.test(slot) && /return[^}]*$/.test(slot)){
+        var match = /function\([ ]*\)[ ]*\{(.*)\}[ ]*$/g.exec(slot);
+        if(match){
+          func = Function("with(this){" + match[1] + "}").bind(data);
+        } else if(/\breturn [^;]+;?[ ]*$/.test(slot) && /return[^}]*$/.test(slot)){
           // Function expression with explicit "return" expression
           func = Function("with(this){" + slot + "}").bind(data);
         } else {
@@ -22512,7 +22515,7 @@ var run = function(template, data){
         }
       }
     }
-  } else {
+  } else if(Object.prototype.toString.call(template) == "[object Object]"){
     // template is an object
     result = {};
 
@@ -22580,6 +22583,15 @@ var run = function(template, data){
         }
       }
     }
+  } else {
+    // number, boolean, etc => Just turn them into string!
+		if(template === null){
+			return "null";
+		} else if(template === undefined){
+			return "undefined";
+		} else {
+			return run(template.toString(), data);
+		}
   }
   return result;
 };
@@ -22605,6 +22617,24 @@ var html = function(template, data, json){
   }
 }
 var json = function(template, data, json){
+
+  var _stringify = JSON.stringify;
+  JSON.stringify = function(val, replacer, spaces){
+		if(!replacer){
+			return _stringify(val, function(key, val){
+				if(key == "$root"){
+					return undefined;
+				} else {
+					return val;
+				}
+			}, spaces);
+		} else {
+			return _stringify(val, replacer, spaces);
+		}
+  };
+	
+	var res;
+
   if(json) {
 		// Exception handling
 		// => the template expression itself can look like JSON object, so we need to handle this is na special manner
@@ -22629,14 +22659,14 @@ var json = function(template, data, json){
 
     if(template_is_string){
       // if string, just parse
-      return JSON.stringify(run(template_object, data_object));
+      res = JSON.stringify(run(template_object, data_object));
     } else {
       // otherwise
       // if there's any "#include", resolve it instead of parsing
       if(/#include/.test(template)) {
-        return JSON.stringify(include(template_object, data_object));
+        res = JSON.stringify(include(template_object, data_object));
       } else {
-        return JSON.stringify(run(template_object, data_object));
+        res = JSON.stringify(run(template_object, data_object));
       }
     }
   } else {
@@ -22646,16 +22676,22 @@ var json = function(template, data, json){
 
     if(typeof template == "string"){
       // if string, just parse
-      return run(template, data);
+      res = run(template, data);
     } else {
       // if there's any "#include", resolve it instead of parsing
       if(/#include/.test(JSON.stringify(template))) {
-        return include(template, data);
+        res = include(template, data);
       } else {
-        return run(template, data);
+        res =  run(template, data);
       }
     }
   }
+	return JSON.parse(JSON.stringify(res));
+	//return res;
+}
+
+function isObject(obj) {
+  return Object.prototype.toString.call(obj) == "[object Object]";
 }
 
 var include = function(template, data){
@@ -22781,6 +22817,7 @@ var manipulator = function(template){
       */
       String.prototype.$root = data;
       Array.prototype.$root = data;
+
       root = data;
 
       if(!o.$selected){
