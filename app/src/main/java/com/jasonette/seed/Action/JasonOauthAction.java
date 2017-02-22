@@ -10,7 +10,10 @@ import android.util.Log;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi10a;
 import com.github.scribejava.core.builder.api.DefaultApi20;
+import com.github.scribejava.core.model.OAuth1AccessToken;
 import com.github.scribejava.core.model.OAuth1RequestToken;
+import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth10aService;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.jasonette.seed.Helper.JasonHelper;
@@ -49,7 +52,6 @@ public class JasonOauthAction {
                     || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
                     || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
                 ) {
-                    JasonHelper.next("error", action, data, event, context);
                     JasonHelper.next("error", action, data, event, context);
                 } else {
 
@@ -101,11 +103,17 @@ public class JasonOauthAction {
                             .callback(callback_uri)
                             .build(oauthApi);
 
-                    new AsyncTask<Void, Void, Void>() {
+                    new AsyncTask<String, Void, Void>() {
                         @Override
-                        protected Void doInBackground(Void... params) {
+                        protected Void doInBackground(String... params) {
                             try {
+                                String client_id = params[0];
+
                                 OAuth1RequestToken request_token = oauthService.getRequestToken();
+
+                                SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
+                                preferences.edit().putString(client_id + "token_secret", request_token.getTokenSecret()).apply();
+
                                 String auth_url = oauthService.getAuthorizationUrl(request_token);
 
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -116,7 +124,7 @@ public class JasonOauthAction {
                             }
                             return null;
                         }
-                    }.execute();
+                    }.execute(client_id);
                 }
             } else {
                 //
@@ -306,36 +314,26 @@ public class JasonOauthAction {
                 }
             }
         } catch(JSONException e)  {
-            try {
-                JSONObject error = new JSONObject();
-                error.put("data", e.toString());
-                JasonHelper.next("error", action, error, event, context);
-            } catch(JSONException error) {
-                Log.d("Error", error.toString());
-            }
+            handleError(e, action, event, context);
         }
     }
 
     public void access_token(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         try {
             final JSONObject options = action.getJSONObject("options");
-            if (options.has("version") && options.getString("version").equals("1")) {
-                //OAuth 1 - TODO
-            } else {
-                //OAuth 2
-                String client_id = options.getJSONObject("access").getString("client_id");
 
-                SharedPreferences sharedPreferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
-                String access_token = sharedPreferences.getString(client_id, null);
-                if(access_token != null) {
-                    JSONObject result = new JSONObject();
-                    result.put("token", access_token);
-                    JasonHelper.next("success", action, result, event, context);
-                } else {
-                    JSONObject error = new JSONObject();
-                    error.put("data", "access token not found");
-                    JasonHelper.next("error", action, error, event, context);
-                }
+            String client_id = options.getJSONObject("access").getString("client_id");
+
+            SharedPreferences sharedPreferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
+            String access_token = sharedPreferences.getString(client_id, null);
+            if(access_token != null) {
+                JSONObject result = new JSONObject();
+                result.put("token", access_token);
+                JasonHelper.next("success", action, result, event, context);
+            } else {
+                JSONObject error = new JSONObject();
+                error.put("data", "access token not found");
+                JasonHelper.next("error", action, error, event, context);
             }
         } catch(JSONException e) {
             try {
@@ -353,7 +351,91 @@ public class JasonOauthAction {
             final JSONObject options = action.getJSONObject("options");
             if (options.has("version") && options.getString("version").equals("1")) {
                 //OAuth 1
-                JasonHelper.next("error", action, data, event, context);
+
+                if(action.has("uri")) {
+                    Uri uri = Uri.parse(action.getString("uri"));
+
+                    String oauth_token = uri.getQueryParameter("oauth_token");
+                    String oauth_verifier = uri.getQueryParameter("oauth_verifier");
+
+                    JSONObject access_options = options.getJSONObject("access");
+
+                    if(
+                        oauth_token.length() > 0  && oauth_verifier.length() > 0
+                        && access_options.has("scheme") && access_options.getString("scheme").length() > 0
+                        && access_options.has("host") && access_options.getString("host").length() > 0
+                        && access_options.has("path") && access_options.getString("path").length() > 0
+                        && access_options.has("path") && access_options.getString("path").length() > 0
+                        && access_options.has("client_id") && access_options.getString("client_id").length() > 0
+                        && access_options.has("client_secret") && access_options.getString("client_secret").length() > 0
+                    ) {
+                        String client_id = access_options.getString("client_id");
+                        String client_secret = access_options.getString("client_secret");
+
+                        Uri.Builder uriBuilder = new Uri.Builder();
+                        uriBuilder.scheme(access_options.getString("scheme"))
+                                .encodedAuthority(access_options.getString("host"));
+                        for(String fragment: access_options.getString("path").split("/")) {
+                            if(!fragment.equals("")) {
+                                uriBuilder.appendPath(fragment);
+                            }
+                        }
+                        final String accessUri = uriBuilder.build().toString();
+
+                        DefaultApi10a oauthApi = new DefaultApi10a() {
+                            @Override
+                            public String getAuthorizationUrl(OAuth1RequestToken requestToken) { return null; }
+
+                            @Override
+                            public String getRequestTokenEndpoint() { return null; }
+
+                            @Override
+                            public String getAccessTokenEndpoint() {
+                                return accessUri.toString();
+                            }
+                        };
+
+                        final OAuth10aService oauthService = new ServiceBuilder()
+                                .apiKey(client_id)
+                                .apiSecret(client_secret)
+                                .build(oauthApi);
+
+                        new AsyncTask<String, Void, Void>() {
+
+                            @Override
+                            protected Void doInBackground(String... params) {
+                                try {
+                                    SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
+
+                                    String string_oauth_token = params[0];
+                                    String oauth_verifier = params[1];
+                                    String client_id = params[2];
+                                    String oauth_token_secret = preferences.getString(client_id + "token_secret", null);
+
+                                    OAuth1RequestToken oauthToken = new OAuth1RequestToken(string_oauth_token, oauth_token_secret);
+
+                                    String access_token = oauthService.getAccessToken(oauthToken, oauth_verifier).getToken();
+
+                                    preferences.edit().putString(client_id, access_token).apply();
+
+                                    JSONObject result = new JSONObject();
+                                    result.put("token", access_token);
+
+                                    JasonHelper.next("success", action, result, event, context);
+                                } catch(Exception e) {
+                                    handleError(e, action, event, context);
+                                }
+
+                                return null;
+                            }
+                        }.execute(oauth_token, oauth_verifier, client_id);
+
+                    } else {
+                        JasonHelper.next("error", action, data, event, context);
+                    }
+                } else {
+                    JasonHelper.next("error", action, data, event, context);
+                }
             } else {
                 // OAuth 2
                 Uri uri = Uri.parse(action.getString("uri"));
@@ -485,74 +567,127 @@ public class JasonOauthAction {
             JSONObject options = action.getJSONObject("options");
 
             String client_id = options.getString("client_id");
+            String client_secret = options.getString("client_secret");
 
             SharedPreferences sharedPreferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
             String access_token = sharedPreferences.getString(client_id, null);
 
+            String path = options.getString("path");
+            String scheme = options.getString("scheme");
+            String host = options.getString("host");
+
+            String method;
+            if(options.has("method")) {
+                method = options.getString("method");
+            } else {
+                method = "GET";
+            }
+
             if(access_token != null && access_token.length() > 0) {
-                String path = options.getString("path");
-                String scheme = options.getString("scheme");
-                String host = options.getString("host");
+                if(options.has("version") && options.getString("version").equals("1")) {
+                    String access_token_secret = sharedPreferences.getString(client_id + "token_secret", null);
 
-                String method = "";
-                if(options.has("method")) {
-                    method = options.getString("method");
-                } else {
-                    method = "get";
-                }
+                    DefaultApi10a oauthApi = new DefaultApi10a() {
+                        @Override
+                        public String getRequestTokenEndpoint() { return null; }
 
-                Request request;
-                Request.Builder requestBuilder = new Request.Builder();
+                        @Override
+                        public String getAccessTokenEndpoint() { return null; }
 
-                Uri.Builder uriBuilder = new Uri.Builder();
-                uriBuilder.scheme(scheme);
-                uriBuilder.encodedAuthority(host);
-                uriBuilder.path(path);
+                        @Override
+                        public String getAuthorizationUrl(OAuth1RequestToken requestToken) { return null; }
+                    };
 
-                Uri uri = uriBuilder.build();
-                String url = uri.toString();
+                    //Socket socket = new Socket(ip, port);
 
-                requestBuilder.url(url)
-                    .addHeader("AUTHORIZATION", "Bearer " + access_token);
-                request = requestBuilder.build();
+                    final OAuth10aService oauthService = new ServiceBuilder()
+                        .apiKey(client_id)
+                        .apiSecret(client_secret)
+                        //.debugStream(socket.getOutputStream())
+                        .build(oauthApi);
 
-                OkHttpClient client = new OkHttpClient();
-                client.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        e.printStackTrace();
-                        try {
-                            if(action.has("error")) {
-                                JSONObject error = new JSONObject();
-                                error.put("data", e.toString());
-                                JasonHelper.next("error", action, error, event, context);
+                    Uri.Builder uriBuilder = new Uri.Builder();
+                    uriBuilder.scheme(scheme);
+                    uriBuilder.encodedAuthority(host);
+                    uriBuilder.path(path);
+
+                    Uri uri = uriBuilder.build();
+                    String url = uri.toString();
+
+                    final OAuthRequest request = new OAuthRequest(Verb.valueOf(method), url);
+
+                    oauthService.signRequest(new OAuth1AccessToken(access_token, access_token_secret), request);
+
+                    new AsyncTask<Void, Void, Void>() {
+                        @Override
+                        protected Void doInBackground(Void... voids) {
+                            try {
+                                com.github.scribejava.core.model.Response response = oauthService.execute(request);
+
+                                JasonHelper.next("success", action, response.getBody(), event, context);
+                            } catch(Exception e) {
+                                handleError(e, action, event, context);
                             }
-                        } catch (Exception err) {
-                            Log.d("Error", err.toString());
-                        }
-                    }
 
-                    @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        try {
-                            if(!response.isSuccessful()) {
-                                if(action.has("error")){
+                            return null;
+                        }
+                    }.execute();
+                } else {
+
+                    Request request;
+                    Request.Builder requestBuilder = new Request.Builder();
+
+                    Uri.Builder uriBuilder = new Uri.Builder();
+                    uriBuilder.scheme(scheme);
+                    uriBuilder.encodedAuthority(host);
+                    uriBuilder.path(path);
+
+                    Uri uri = uriBuilder.build();
+                    String url = uri.toString();
+
+                    requestBuilder.url(url)
+                            .addHeader("AUTHORIZATION", "Bearer " + access_token);
+                    request = requestBuilder.build();
+
+                    OkHttpClient client = new OkHttpClient();
+                    client.newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            e.printStackTrace();
+                            try {
+                                if(action.has("error")) {
                                     JSONObject error = new JSONObject();
-                                    error.put("data", response.toString());
+                                    error.put("data", e.toString());
                                     JasonHelper.next("error", action, error, event, context);
                                 }
-                            } else {
-                                String jsonData = response.body().string();
-                                JasonHelper.next("success", action, jsonData, event, context);
+                            } catch (Exception err) {
+                                Log.d("Error", err.toString());
                             }
-                        } catch(Exception err) {
-                            Log.d("Error", err.toString());
                         }
-                    }
-                });
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            try {
+                                if(!response.isSuccessful()) {
+                                    if(action.has("error")){
+                                        JSONObject error = new JSONObject();
+                                        error.put("data", response.toString());
+                                        JasonHelper.next("error", action, error, event, context);
+                                    }
+                                } else {
+                                    String jsonData = response.body().string();
+                                    JasonHelper.next("success", action, jsonData, event, context);
+                                }
+                            } catch(Exception err) {
+                                Log.d("Error", err.toString());
+                            }
+                        }
+                    });
+                }
             } else {
                 JasonHelper.next("error", action, data, event, context);
             }
+            //change exception
         } catch(JSONException e) {
             handleError(e, action, event, context);
         }
