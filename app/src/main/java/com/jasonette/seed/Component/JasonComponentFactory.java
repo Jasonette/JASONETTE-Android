@@ -31,6 +31,8 @@ public class JasonComponentFactory {
                 view = JasonTextareaComponent.build(prototype, component, parent, context);
             } else if(type.equalsIgnoreCase("html")) {
                 view = JasonHtmlComponent.build(prototype, component, parent, context);
+            } else if(type.equalsIgnoreCase("slider")) {
+                view = JasonSliderComponent.build(prototype, component, parent, context);
             } else {
                 // Non-existent component warning
                 JSONObject error_component = new JSONObject(component.toString());
