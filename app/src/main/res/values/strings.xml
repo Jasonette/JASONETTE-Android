@@ -1,5 +1,4 @@
 <resources>
     <string name="app_name">WeatherMe</string>
-    <string name="url">http://www.jasonbase.com/things/1wn
-</string>
+    <string name="url">http://www.jasonbase.com/things/1wn</string>
 </resources>
