@@ -17,7 +17,19 @@ public class JasonSliderComponent {
             try {
                 view = JasonComponent.build(view, component, parent, context);
                 SeekBar seekBar = ((SeekBar) view);
-                JasonSliderComponent.addListener(seekBar, context);
+                if(component.has("name")){
+                    String val = "0.5";
+                    if(((JasonViewActivity) context).model.var.has(component.getString("name"))){
+                        val = ((JasonViewActivity) context).model.var.getString(component.getString("name"));
+                    } else {
+                        // default value
+                        if(component.has("value")){
+                            val = component.getString("value");
+                        }
+                    }
+                    seekBar.setProgress((int)Math.round(Double.parseDouble(val)*100.0));
+                    JasonSliderComponent.addListener(seekBar, context);
+                }
                 JSONObject style = JasonHelper.style(component, context);
                 if (style.has("color")) {
                     int color = JasonHelper.parse_color(style.getString("color"));
@@ -50,7 +62,7 @@ public class JasonSliderComponent {
                 JSONObject component = (JSONObject)seekBar.getTag();
                 try {
                     // don't work with int if progress == 0
-                    String progress = Integer.toString(seekBar.getProgress());
+                    String progress = Double.toString(seekBar.getProgress()/100.0);
                     ((JasonViewActivity) root_context).model.var.put(component.getString("name"), progress);
                     if (component.has("action")) {
                         JSONObject action = component.getJSONObject("action");
