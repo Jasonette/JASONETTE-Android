@@ -33,6 +33,8 @@ public class JasonComponentFactory {
                 view = JasonHtmlComponent.build(prototype, component, parent, context);
             } else if(type.equalsIgnoreCase("map")) {
                 view = JasonMapComponent.build(prototype, component, parent, context);
+            } else if(type.equalsIgnoreCase("slider")) {
+                view = JasonSliderComponent.build(prototype, component, parent, context);
             } else {
                 // Non-existent component warning
                 JSONObject error_component = new JSONObject(component.toString());

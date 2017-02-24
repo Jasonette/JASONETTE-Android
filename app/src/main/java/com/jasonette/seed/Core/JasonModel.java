@@ -1,14 +1,33 @@
 package com.jasonette.seed.Core;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
+
+import com.jasonette.seed.Helper.JasonHelper;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -21,6 +40,8 @@ public class JasonModel{
     public JSONObject rendered;
     public JSONObject state;
 
+    public JSONObject refs;
+
     JasonViewActivity view;
 
     // Variables
@@ -28,6 +49,8 @@ public class JasonModel{
     public JSONObject cache;    // $cache
     public JSONObject params;   // $params
     public JSONObject session;
+
+    public OkHttpClient client;
 
     public JasonModel(String url, Intent intent, JasonViewActivity view){
         this.url = url;
@@ -75,9 +98,28 @@ public class JasonModel{
 
 
 
-    public void fetch(){
+    public void fetch() {
+        if(url.startsWith("file://")) {
+            fetch_local();
+        } else {
+            fetch_http();
+        }
+    }
 
+    private void fetch_local(){
+        try {
+            jason = JasonHelper.read_json(url, this.view);
+            if(jason.has("$jason")){
+                view.build();
+            } else {
+                Log.d("Error", "Invalid jason");
+            }
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+    }
 
+    private void fetch_http(){
         try{
             Request request;
             Request.Builder builder = new Request.Builder();
@@ -112,7 +154,7 @@ public class JasonModel{
                     .build();
 
 
-            OkHttpClient client = new OkHttpClient();
+            client = new OkHttpClient();
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
@@ -124,22 +166,138 @@ public class JasonModel{
                     if (!response.isSuccessful()) {
                         throw new IOException("Unexpected code " + response);
                     }
-                    try {
-                        String res = response.body().string();
-                        jason = new JSONObject(res);
-                        if(jason.has("$jason")){
-                            view.build();
-                        } else {
-
-                        }
-                    } catch (JSONException e) {
-                        Log.d("Error", e.toString());
-                    }
+                    String res = response.body().string();
+                    refs = new JSONObject();
+                    resolve_and_build(res);
                 }
             });
         } catch (Exception e){
             Log.d("Error", e.toString());
         }
+    }
+
+
+
+    private void include(String res){
+        String regex =  "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
+        Pattern require_pattern = Pattern.compile(regex);
+        Matcher matcher = require_pattern.matcher(res);
+
+        ArrayList<String> urls = new ArrayList<String>();
+
+        while (matcher.find()) {
+            //System.out.println("Path: " + matcher.group(3));
+            // Fetch URL content and cache
+            String matched = matcher.group(5);
+            if(!matched.contains("$document")){
+                urls.add(matcher.group(5));
+            }
+        }
+
+        if(urls.size() > 0) {
+            CountDownLatch latch = new CountDownLatch(urls.size());
+            ExecutorService taskExecutor = Executors.newFixedThreadPool(urls.size());
+            for (int i = 0; i < urls.size(); i++) {
+                taskExecutor.submit(new JasonRequire(urls.get(i), latch, refs, client, view));
+            }
+            try {
+                latch.await();
+            } catch (Exception e) {
+                Log.d("Error", e.toString());
+            }
+        }
+
+        resolve_reference();
+    }
+
+    private void resolve_and_build(String res){
+        try {
+
+            jason = new JSONObject(res);
+
+            // "include" handling
+            // 1. check if it contains "+": "..."
+            // 2. if it does, need to resolve it first.
+            // 3. if it doesn't, just build the view immediately
+            String regex = "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
+            Pattern require_pattern = Pattern.compile(regex);
+            Matcher matcher = require_pattern.matcher(res);
+            if (matcher.find()) {
+                // if requires resolution, require first.
+                include(res);
+            } else {
+                // otherwise just render
+                if (jason.has("$jason")) {
+                    view.build();
+                } else {
+
+                }
+            }
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+        }
+    }
+
+    private void resolve_reference(){
+        // convert "+": "$document.blah.blah"
+        // to "{{#include $root.$document.blah.blah}}": {}
+        String str_jason = jason.toString();
+
+        try {
+
+            Log.d("str_jason = ", str_jason);
+
+            String local_pattern_str = "\"@\"[ ]*:[ ]*\"[ ]*(\\$document[^\"]*)\"";
+            Pattern local_pattern = Pattern.compile(local_pattern_str);
+            Matcher local_matcher = local_pattern.matcher(str_jason);
+            str_jason = local_matcher.replaceAll("\"{{#include \\$root.$1}}\": {}");
+
+            String remote_pattern_with_path_str = "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))([^\"]+)\"";
+            Pattern remote_pattern_with_path = Pattern.compile(remote_pattern_with_path_str);
+            Matcher remote_with_path_matcher = remote_pattern_with_path.matcher(str_jason);
+            str_jason = remote_with_path_matcher.replaceAll("\"{{#include \\$root[\\\\\"$5\\\\\"].$3}}\": {}");
+
+            String remote_pattern_without_path_str = "\"(@)\"[ ]*:[ ]*\"([^\"]+)\"";
+            Pattern remote_pattern_without_path = Pattern.compile(remote_pattern_without_path_str);
+            Matcher remote_without_path_matcher = remote_pattern_without_path.matcher(str_jason);
+            str_jason = remote_without_path_matcher.replaceAll("\"{{#include \\$root[\\\\\"$2\\\\\"]}}\": {}");
+
+            JSONObject to_resolve = new JSONObject(str_jason);
+
+            refs.put("$document", jason);
+            /*
+            Iterator<?> keys = refs.keys();
+            while(keys.hasNext()) {
+                String key = (String)keys.next();
+                if(!key.equalsIgnoreCase("$document")) {
+                    try {
+                        refs.put(key, refs.get(key));
+                    } catch (Exception e) {
+                        Log.d("Error", e.toString());
+                    }
+                }
+            }
+            */
+
+            // parse
+            JasonParser.getInstance(this.view).setParserListener(new JasonParser.JasonParserListener() {
+                @Override
+                public void onFinished(JSONObject resolved_jason) {
+                    try {
+                        Log.d("j", resolved_jason.toString(2));
+                        resolve_and_build(resolved_jason.toString());
+                    } catch (Exception e) {
+                        Log.d("Error", e.toString());
+                    }
+                }
+            });
+            Log.d("refs", refs.toString(2));
+            Log.d("to_resolve", to_resolve.toString(2));
+            JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+        }
+
     }
 
     public void set(String name, JSONObject data){

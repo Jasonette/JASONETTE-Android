@@ -6,17 +6,17 @@ import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONObject;
 
 public class JasonLogAction {
-    public void info(final JSONObject action, JSONObject data, Context context) {
-        log(action, data, context, "i");
+    public void info(final JSONObject action, JSONObject data, final JSONObject event, Context context) {
+        log(action, data, event, context, "i");
     }
-    public void debug(final JSONObject action, JSONObject data, Context context) {
-        log(action, data, context, "d");
+    public void debug(final JSONObject action, JSONObject data, final JSONObject event, Context context) {
+        log(action, data, event, context, "d");
     }
-    public void error(final JSONObject action, JSONObject data, Context context) {
-        log(action, data, context, "e");
+    public void error(final JSONObject action, JSONObject data, final JSONObject event, Context context) {
+        log(action, data, event, context, "e");
     }
 
-    private void log(final JSONObject action, JSONObject data, Context context, String mode) {
+    private void log(final JSONObject action, JSONObject data, JSONObject event, Context context, String mode) {
         try {
             if (action.has("options")) {
                 JSONObject options = action.getJSONObject("options");
@@ -30,7 +30,7 @@ public class JasonLogAction {
                     }
                 }
             }
-            JasonHelper.next("success", action, data, context);
+            JasonHelper.next("success", action, data, event, context);
         } catch (Exception e){
             Log.d("Error", e.toString());
         }

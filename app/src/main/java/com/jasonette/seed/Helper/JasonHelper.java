@@ -78,12 +78,13 @@ public class JasonHelper {
         }
     }
 
-    public static void next(String type, JSONObject action, Object data, Context context){
+    public static void next(String type, JSONObject action, Object data, final JSONObject event, Context context){
         try {
             if(action.has(type)){
                 Intent intent = new Intent(type);
                 intent.putExtra("action", action.get(type).toString());
                 intent.putExtra("data", data.toString());
+                intent.putExtra("event", event.toString());
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             } else {
                 // Release everything and finish
@@ -92,6 +93,7 @@ public class JasonHelper {
                 unlock_action.put("type", "$unlock");
 
                 intent.putExtra("action", unlock_action.toString());
+                intent.putExtra("event", event.toString());
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             }
         } catch (Exception e) {
@@ -228,5 +230,25 @@ public class JasonHelper {
         reader.close();
         inputStream.close();
         return stringBuilder.toString();
+    }
+    public static JSONObject read_json(String fn, Context context) throws IOException {
+
+        // we're expecting a filename that looks like "file://..."
+        String filename = fn.replace("file://", "file/");
+
+        String jr = null;
+        try {
+            InputStream is = context.getAssets().open(filename);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            jr = new String(buffer, "UTF-8");
+            return new JSONObject(jr);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+            return new JSONObject();
+        }
+
     }
 }

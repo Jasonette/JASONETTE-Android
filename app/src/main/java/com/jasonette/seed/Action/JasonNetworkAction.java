@@ -18,7 +18,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class JasonNetworkAction {
-    public void request(final JSONObject action, final JSONObject data, final Context context){
+    public void request(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         try{
             final JSONObject options = action.getJSONObject("options");
             if(options.has("url")){
@@ -139,7 +139,7 @@ public class JasonNetworkAction {
                                 JSONObject error = new JSONObject();
                                 error.put("data", e.toString());
 
-                                JasonHelper.next("error", action, error, context);
+                                JasonHelper.next("error", action, error, event, context);
                             }
                         } catch (Exception err){
                             Log.d("Error", err.toString());
@@ -153,7 +153,7 @@ public class JasonNetworkAction {
                                 if (action.has("error")) {
                                     JSONObject error = new JSONObject();
                                     error.put("data", response.toString());
-                                    JasonHelper.next("error", action, error, context);
+                                    JasonHelper.next("error", action, error, event, context);
                                 }
                             } catch (Exception err){
                                 Log.d("Error", err.toString());
@@ -161,7 +161,7 @@ public class JasonNetworkAction {
                         } else {
                             try {
                                 String jsonData = response.body().string();
-                                JasonHelper.next("success", action, jsonData, context);
+                                JasonHelper.next("success", action, jsonData, event, context);
 
                             } catch (Exception e) {
                                 Log.d("Error", e.toString());
