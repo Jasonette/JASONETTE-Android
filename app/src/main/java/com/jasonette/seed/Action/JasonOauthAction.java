@@ -112,7 +112,7 @@ public class JasonOauthAction {
                                 OAuth1RequestToken request_token = oauthService.getRequestToken();
 
                                 SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
-                                preferences.edit().putString(client_id + "token_secret", request_token.getTokenSecret()).apply();
+                                preferences.edit().putString(client_id + "_request_token_secret", request_token.getTokenSecret()).apply();
 
                                 String auth_url = oauthService.getAuthorizationUrl(request_token);
 
@@ -410,16 +410,17 @@ public class JasonOauthAction {
                                     String string_oauth_token = params[0];
                                     String oauth_verifier = params[1];
                                     String client_id = params[2];
-                                    String oauth_token_secret = preferences.getString(client_id + "token_secret", null);
+                                    String oauth_token_secret = preferences.getString(client_id + "_request_token_secret", null);
 
                                     OAuth1RequestToken oauthToken = new OAuth1RequestToken(string_oauth_token, oauth_token_secret);
 
-                                    String access_token = oauthService.getAccessToken(oauthToken, oauth_verifier).getToken();
+                                    OAuth1AccessToken access_token = oauthService.getAccessToken(oauthToken, oauth_verifier);
 
-                                    preferences.edit().putString(client_id, access_token).apply();
+                                    preferences.edit().putString(client_id, access_token.getToken()).apply();
+                                    preferences.edit().putString(client_id + "_access_token_secret", access_token.getTokenSecret()).apply();
 
                                     JSONObject result = new JSONObject();
-                                    result.put("token", access_token);
+                                    result.put("token", access_token.getToken());
 
                                     JasonHelper.next("success", action, result, event, context);
                                 } catch(Exception e) {
@@ -585,8 +586,6 @@ public class JasonOauthAction {
 
             if(access_token != null && access_token.length() > 0) {
                 if(options.has("version") && options.getString("version").equals("1")) {
-                    String access_token_secret = sharedPreferences.getString(client_id + "token_secret", null);
-
                     DefaultApi10a oauthApi = new DefaultApi10a() {
                         @Override
                         public String getRequestTokenEndpoint() { return null; }
@@ -598,12 +597,9 @@ public class JasonOauthAction {
                         public String getAuthorizationUrl(OAuth1RequestToken requestToken) { return null; }
                     };
 
-                    //Socket socket = new Socket(ip, port);
-
                     final OAuth10aService oauthService = new ServiceBuilder()
                         .apiKey(client_id)
                         .apiSecret(client_secret)
-                        //.debugStream(socket.getOutputStream())
                         .build(oauthApi);
 
                     Uri.Builder uriBuilder = new Uri.Builder();
@@ -615,6 +611,8 @@ public class JasonOauthAction {
                     String url = uri.toString();
 
                     final OAuthRequest request = new OAuthRequest(Verb.valueOf(method), url);
+
+                    String access_token_secret = sharedPreferences.getString(client_id + "_access_token_secret", null);
 
                     oauthService.signRequest(new OAuth1AccessToken(access_token, access_token_secret), request);
 
