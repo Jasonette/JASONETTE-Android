@@ -53,22 +53,14 @@ public class JasonOauthAction {
 
                     Uri.Builder uriBuilder = new Uri.Builder();
                     uriBuilder.scheme(request_options.getString("scheme"))
-                            .encodedAuthority(request_options.getString("host"));
-                    for(String fragment: request_options.getString("path").split("/")) {
-                        if(!fragment.equals("")) {
-                            uriBuilder.appendPath(fragment);
-                        }
-                    }
+                            .encodedAuthority(request_options.getString("host"))
+                            .encodedPath(request_options.getString("path"));
                     final String requestUri = uriBuilder.build().toString();
 
                     final Uri.Builder authorizeUriBuilder = new Uri.Builder();
                     authorizeUriBuilder.scheme(authorize_options.getString("scheme"))
-                            .encodedAuthority(authorize_options.getString("host"));
-                    for(String fragment: authorize_options.getString("path").split("/")) {
-                        if(!fragment.equals("")) {
-                            authorizeUriBuilder.appendPath(fragment);
-                        }
-                    }
+                            .encodedAuthority(authorize_options.getString("host"))
+                            .encodedPath(authorize_options.getString("path"));
 
                     String callback_uri = request_options_data.getString("oauth_callback");
 
@@ -154,13 +146,8 @@ public class JasonOauthAction {
                         Uri.Builder builder = new Uri.Builder();
 
                         builder.scheme(authorize_options.getString("scheme"))
-                                .authority(authorize_options.getString("host"));
-
-                        for(String fragment: authorize_options.getString("path").split("/")) {
-                            if(!fragment.equals("")) {
-                                builder.appendPath(fragment);
-                            }
-                        }
+                            .encodedAuthority(authorize_options.getString("host"))
+                            .encodedPath(authorize_options.getString("path"));
 
                         final Uri uri = builder.build();
 
@@ -253,13 +240,8 @@ public class JasonOauthAction {
                             Uri.Builder builder = new Uri.Builder();
 
                             builder.scheme(authorize_options.getString("scheme"))
-                                    .authority(authorize_options.getString("host"));
-
-                            for(String fragment: authorize_options.getString("path").split("/")) {
-                                if(!fragment.equals("")) {
-                                    builder.appendPath(fragment);
-                                }
-                            }
+                                    .encodedAuthority(authorize_options.getString("host"))
+                                    .encodedPath(authorize_options.getString("path"));
 
                             final Uri uri = builder.build();
 
@@ -357,12 +339,9 @@ public class JasonOauthAction {
 
                         Uri.Builder uriBuilder = new Uri.Builder();
                         uriBuilder.scheme(access_options.getString("scheme"))
-                                .encodedAuthority(access_options.getString("host"));
-                        for(String fragment: access_options.getString("path").split("/")) {
-                            if(!fragment.equals("")) {
-                                uriBuilder.appendPath(fragment);
-                            }
-                        }
+                            .encodedAuthority(access_options.getString("host"))
+                            .encodedPath(access_options.getString("path"));
+
                         final String accessUri = uriBuilder.build().toString();
 
                         DefaultApi10a oauthApi = new DefaultApi10a() {
@@ -647,7 +626,7 @@ public class JasonOauthAction {
                     Uri.Builder uriBuilder = new Uri.Builder();
                     uriBuilder.scheme(scheme);
                     uriBuilder.encodedAuthority(host);
-                    uriBuilder.path(path);
+                    uriBuilder.encodedPath(path);
 
                     Uri uri = uriBuilder.build();
                     String url = uri.toString();
