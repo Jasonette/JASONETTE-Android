@@ -14,6 +14,7 @@ import com.github.scribejava.core.model.OAuth1AccessToken;
 import com.github.scribejava.core.model.OAuth1RequestToken;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth10aService;
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -580,7 +581,7 @@ public class JasonOauthAction {
                         @Override
                         protected Void doInBackground(Void... voids) {
                             try {
-                                com.github.scribejava.core.model.Response response = oauthService.execute(request);
+                                Response response = oauthService.execute(request);
 
                                 JasonHelper.next("success", action, response.getBody(), event, context);
                             } catch(Exception e) {
@@ -627,7 +628,7 @@ public class JasonOauthAction {
                         @Override
                         protected Void doInBackground(Void... voids) {
                             try {
-                                com.github.scribejava.core.model.Response response = oauthService.execute(request);
+                                Response response = oauthService.execute(request);
 
                                 JasonHelper.next("success", action, response.getBody(), event, context);
                             } catch(Exception e) {
