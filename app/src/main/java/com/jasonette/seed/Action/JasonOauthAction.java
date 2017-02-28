@@ -1,6 +1,5 @@
 package com.jasonette.seed.Action;
 
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -165,7 +164,12 @@ public class JasonOauthAction {
 
                         ServiceBuilder serviceBuilder = new ServiceBuilder();
                         serviceBuilder.apiKey(client_id);
-                        serviceBuilder.apiSecret(client_secret);
+                        if(client_secret.length() > 0) {
+                            serviceBuilder.apiSecret(client_secret);
+                        }
+                        if(authorize_options_data.has("scope") && authorize_options_data.getString("scope").length() > 0) {
+                            serviceBuilder.scope(authorize_options_data.getString("scope"));
+                        }
 
                         final OAuth20Service oauthService = serviceBuilder.build(oauthApi);
 
@@ -197,12 +201,6 @@ public class JasonOauthAction {
                         }.execute(username, password, client_id);
                     }
                 } else {
-                    String view = "";
-
-                    if(options.has("view")) {
-                        view = options.getString("view");
-                    }
-
                     if(authorize_options.has("data")) {
                         authorize_options_data = authorize_options.getJSONObject("data");
                     } else {
@@ -210,14 +208,16 @@ public class JasonOauthAction {
                         error.put("data", "Authorize data missing");
                         JasonHelper.next("error", action, error, event, context);
                     }
-
+                    //
                     //Assuming code auth
+                    //
                     if(authorize_options == null || authorize_options.length() == 0) {
                         JasonHelper.next("error", action, data, event, context);
                     } else {
                         String client_id = authorize_options.getString("client_id");
                         String client_secret = "";
                         String redirect_uri = "";
+                        String scope = "";
 
                         //Secret can be missing in implicit authentication
                         if(authorize_options.has("client_secret")) {
@@ -233,15 +233,11 @@ public class JasonOauthAction {
                         ) {
                             JasonHelper.next("error", action, data, event, context);
                         } else {
-                            // TODO
-                            //CHECK IF CREDENTIALS EXISTS
-                            //REFRESH ACCESS TOKEN IF THAT IS THE CASE
-
                             Uri.Builder builder = new Uri.Builder();
 
                             builder.scheme(authorize_options.getString("scheme"))
-                                    .encodedAuthority(authorize_options.getString("host"))
-                                    .encodedPath(authorize_options.getString("path"));
+                                .encodedAuthority(authorize_options.getString("host"))
+                                .encodedPath(authorize_options.getString("path"));
 
                             final Uri uri = builder.build();
 
@@ -260,20 +256,19 @@ public class JasonOauthAction {
                             ServiceBuilder serviceBuilder = new ServiceBuilder();
                             serviceBuilder.apiKey(client_id);
 
-                            if(client_secret != "") {
+                            if(client_secret.length() > 0) {
                                 serviceBuilder.apiSecret(client_secret);
+                            }
+                            if(authorize_options_data.has("scope") && authorize_options_data.getString("scope").length() > 0) {
+                                serviceBuilder.scope(authorize_options_data.getString("scope"));
                             }
                             serviceBuilder.callback(redirect_uri);
 
                             OAuth20Service oauthService = serviceBuilder.build(oauthApi);
 
-                            if(view.equals("app")) {
-                                //error here
-                            } else {
-                                Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setData(Uri.parse(oauthService.getAuthorizationUrl()));
-                                context.startActivity(intent);
-                            }
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setData(Uri.parse(oauthService.getAuthorizationUrl()));
+                            context.startActivity(intent);
                         }
                     }
                 }
