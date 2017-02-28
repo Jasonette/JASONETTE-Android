@@ -31,7 +31,6 @@ public class JasonOauthAction {
                 //
                 //OAuth 1
                 //
-
                 JSONObject request_options = options.getJSONObject("request");
                 JSONObject authorize_options = options.getJSONObject("authorize");
 
@@ -47,7 +46,6 @@ public class JasonOauthAction {
                 ) {
                     JasonHelper.next("error", action, data, event, context);
                 } else {
-
                     JSONObject request_options_data = request_options.getJSONObject("data");
 
                     Uri.Builder uriBuilder = new Uri.Builder();
@@ -115,7 +113,6 @@ public class JasonOauthAction {
                 //
                 //OAuth 2
                 //
-
                 JSONObject authorize_options = options.getJSONObject("authorize");
 
                 JSONObject authorize_options_data = new JSONObject();
@@ -211,13 +208,12 @@ public class JasonOauthAction {
                     //
                     //Assuming code auth
                     //
-                    if(authorize_options == null || authorize_options.length() == 0) {
+                    if(authorize_options.length() == 0) {
                         JasonHelper.next("error", action, data, event, context);
                     } else {
                         String client_id = authorize_options.getString("client_id");
                         String client_secret = "";
                         String redirect_uri = "";
-                        String scope = "";
 
                         //Secret can be missing in implicit authentication
                         if(authorize_options.has("client_secret")) {
@@ -358,7 +354,6 @@ public class JasonOauthAction {
                                 .build(oauthApi);
 
                         new AsyncTask<String, Void, Void>() {
-
                             @Override
                             protected Void doInBackground(String... params) {
                                 try {
@@ -596,7 +591,6 @@ public class JasonOauthAction {
                         }
                     }.execute();
                 } else {
-
                     DefaultApi20 oauthApi = new DefaultApi20() {
                         @Override
                         public String getAccessTokenEndpoint() {
