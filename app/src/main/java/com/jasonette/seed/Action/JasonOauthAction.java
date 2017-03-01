@@ -23,6 +23,8 @@ import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Iterator;
+
 public class JasonOauthAction {
     public void auth(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         try {
@@ -542,6 +544,40 @@ public class JasonOauthAction {
             }
 
             if(access_token != null && access_token.length() > 0) {
+                JSONObject params = new JSONObject();
+                if(options.has("data")) {
+                    params = options.getJSONObject("data");
+                }
+
+                JSONObject headers = new JSONObject();
+                if(options.has("headers")) {
+                    headers = options.getJSONObject("headers");
+                }
+
+                Uri.Builder uriBuilder = new Uri.Builder();
+                uriBuilder.scheme(scheme);
+                uriBuilder.encodedAuthority(host);
+                uriBuilder.path(path);
+
+                Uri uri = uriBuilder.build();
+                String url = uri.toString();
+
+                final OAuthRequest request = new OAuthRequest(Verb.valueOf(method), url);
+
+                Iterator paramKeys = params.keys();
+                while(paramKeys.hasNext()) {
+                    String key = (String)paramKeys.next();
+                    String value = params.getString(key);
+                    request.addParameter(key, value);
+                }
+
+                Iterator headerKeys = headers.keys();
+                while(headerKeys.hasNext()) {
+                    String key = (String)headerKeys.next();
+                    String value = headers.getString(key);
+                    request.addHeader(key, value);
+                }
+
                 if(options.has("version") && options.getString("version").equals("1")) {
                     DefaultApi10a oauthApi = new DefaultApi10a() {
                         @Override
@@ -562,16 +598,6 @@ public class JasonOauthAction {
                     }
 
                     final OAuth10aService oauthService = serviceBuilder.build(oauthApi);
-
-                    Uri.Builder uriBuilder = new Uri.Builder();
-                    uriBuilder.scheme(scheme);
-                    uriBuilder.encodedAuthority(host);
-                    uriBuilder.path(path);
-
-                    Uri uri = uriBuilder.build();
-                    String url = uri.toString();
-
-                    final OAuthRequest request = new OAuthRequest(Verb.valueOf(method), url);
 
                     String access_token_secret = sharedPreferences.getString(client_id + "_access_token_secret", null);
 
@@ -613,15 +639,6 @@ public class JasonOauthAction {
 
                     final OAuth20Service oauthService = serviceBuilder.build(oauthApi);
 
-                    Uri.Builder uriBuilder = new Uri.Builder();
-                    uriBuilder.scheme(scheme);
-                    uriBuilder.encodedAuthority(host);
-                    uriBuilder.encodedPath(path);
-
-                    Uri uri = uriBuilder.build();
-                    String url = uri.toString();
-
-                    final OAuthRequest request = new OAuthRequest(Verb.valueOf(method), url);
                     oauthService.signRequest(new OAuth2AccessToken(access_token), request);
 
                     new AsyncTask<Void, Void, Void>() {
