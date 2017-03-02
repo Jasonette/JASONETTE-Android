@@ -30,7 +30,7 @@ public class JasonOauthAction {
         try {
             final JSONObject options = action.getJSONObject("options");
 
-            if(options.getString("version").equals("1")) {
+            if(options.has("version") && options.getString("version").equals("1")) {
                 //
                 //OAuth 1
                 //
