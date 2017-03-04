@@ -2,13 +2,14 @@ package com.jasonette.seed.Action;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
 import android.util.Log;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -21,8 +22,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-
-import static android.media.CamcorderProfile.get;
 
 public class JasonUtilAction {
     public void banner(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
@@ -152,5 +151,66 @@ public class JasonUtilAction {
                 }
             }
         });
+    }
+    public void picker(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    JSONObject options = action.getJSONObject("options");
+                    if(options.has("items")){
+                        final JSONArray items = options.getJSONArray("items");
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+                        ArrayList<String> listItems = new ArrayList<String>();
+                        for (int i = 0; i < items.length() ; i++) {
+                            JSONObject item = (JSONObject)items.get(i);
+                            if(item.has("text")){
+                               listItems.add(item.getString("text"));
+                            } else {
+                                listItems.add("");
+                            }
+                        }
+                        final CharSequence[] charSequenceItems = listItems.toArray(new CharSequence[listItems.size()]);
+                        builder.setItems(charSequenceItems, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int val) {
+                                JSONObject item;
+                                try {
+                                    item = items.getJSONObject(val);
+                                    if(item.has("action")){
+                                        Intent intent = new Intent("call");
+                                        intent.putExtra("action", item.get("action").toString());
+                                        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                    } else if(item.has("href")){
+                                        Intent intent = new Intent("call");
+                                        JSONObject href = new JSONObject();
+                                        href.put("type", "$href");
+                                        href.put("options", item.get("href").toString());
+                                        intent.putExtra("action", item.get("action").toString());
+                                        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                    }
+                                } catch (Exception e){
+                                    Log.d("Error", e.toString());
+                                }
+                            }
+                        });
+                        builder.setNeutralButton("CANCEL",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int val) {
+                                }
+                            }
+                        );
+                        builder.create().show();
+                    }
+                } catch (Exception e){
+                    Log.d("Error", e.toString());
+                }
+            }
+        });
+        try {
+            JasonHelper.next("success", action, new JSONObject(), event, context);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
     }
 }
