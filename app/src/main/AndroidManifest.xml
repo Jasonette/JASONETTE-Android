@@ -19,5 +19,7 @@
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Uncomment below line to enable $util.addressbook -->
+    <!-- <uses-permission android:name="android.permission.READ_CONTACTS"/> -->
 
 </manifest>

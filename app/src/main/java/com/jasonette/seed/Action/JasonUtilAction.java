@@ -1,10 +1,13 @@
 package com.jasonette.seed.Action;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.ContactsContract;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
@@ -24,6 +27,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 public class JasonUtilAction {
+    private int counter; // general purpose counter;
+
     public void banner(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
@@ -213,4 +218,72 @@ public class JasonUtilAction {
             Log.d("Error", e.toString());
         }
     }
+    public void addressbook(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getContacts(action, data, event, context);
+            }
+        }).start();
+    }
+    private void getContacts(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        JSONArray contactList = new JSONArray();
+        String phoneNumber = null;
+        String email = null;
+        ContentResolver contentResolver = ((JasonViewActivity)context).getContentResolver();
+        try {
+            final Cursor cursor = contentResolver.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+            if (cursor.getCount() > 0) {
+                counter = 0;
+                while (cursor.moveToNext()) {
+                    JSONObject contact = new JSONObject();
+                    String contact_id = cursor.getString(cursor.getColumnIndex( ContactsContract.Contacts._ID ));
+                    String name = cursor.getString(cursor.getColumnIndex( ContactsContract.Contacts.DISPLAY_NAME ));
+                    try {
+                        // name
+                        contact.put("name", name);
+
+                        // phone
+                        Cursor phoneCursor = contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?", new String[]{contact_id}, null);
+                        while (phoneCursor.moveToNext()) {
+                            phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            if(phoneNumber != null) {
+                                contact.put("phone", phoneNumber);
+                            }
+                        }
+                        if(!contact.has("phone")){
+                            contact.put("phone", "");
+                        }
+                        phoneCursor.close();
+
+                        // email
+                        Cursor emailCursor = contentResolver.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?", new String[]{contact_id}, null);
+                        while (emailCursor.moveToNext()) {
+                            email = emailCursor.getString(emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+                            if(email != null) {
+                                contact.put("email", email);
+                            }
+                        }
+                        if(!contact.has("email")){
+                            contact.put("email", "");
+                        }
+                        emailCursor.close();
+
+                        // Add to array
+                        contactList.put(contact);
+                    } catch (Exception e){
+                        Log.d("Error", e.toString());
+                    }
+                }
+                try {
+                    JasonHelper.next("success", action, contactList, event, context);
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
+            }
+        } catch (SecurityException e){
+            JasonHelper.permission_exception("$util.addressbook", context);
+        }
+    }
+
 }
