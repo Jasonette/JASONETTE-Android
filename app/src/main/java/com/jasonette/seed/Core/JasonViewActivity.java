@@ -1,18 +1,20 @@
 package com.jasonette.seed.Core;
 
+import android.app.SearchManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ScaleDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -20,6 +22,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
@@ -49,20 +52,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static android.R.attr.action;
-import static android.R.attr.bottom;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity{
@@ -87,6 +86,7 @@ public class JasonViewActivity extends AppCompatActivity{
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
+    private SearchView searchView;
     ArrayList<View> layer_items;
 
     Parcelable listState;
@@ -1791,6 +1791,84 @@ public class JasonViewActivity extends AppCompatActivity{
 
                 header_height = toolbar.getHeight();
                 setup_title(header);
+
+                if(header.has("search")){
+                    SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+                    final JSONObject search = header.getJSONObject("search");
+                    if(searchView == null) {
+                        searchView = new SearchView(this);
+                        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
+
+                        toolbar.addView(searchView);
+                    } else {
+                        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+                    }
+
+                    // styling
+
+                    // color
+                    int c;
+                    if(search.has("style") && search.getJSONObject("style").has("color")){
+                        c = JasonHelper.parse_color(search.getJSONObject("style").getString("color"));
+                    } else if(header.has("style") && header.getJSONObject("style").has("color")){
+                        c = JasonHelper.parse_color(header.getJSONObject("style").getString("color"));
+                    } else {
+                        c = -1;
+                    }
+                    if(c > 0) {
+                        ImageView searchButton = (ImageView) searchView.findViewById(android.support.v7.appcompat.R.id.search_button);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            searchButton.setImageTintList(ColorStateList.valueOf(JasonHelper.parse_color(header.getJSONObject("style").getString("color"))));
+                        }
+                    }
+
+                    // background
+                    if(search.has("style") && search.getJSONObject("style").has("background")){
+                        int bc = JasonHelper.parse_color(search.getJSONObject("style").getString("background"));
+                        searchView.setBackgroundColor(bc);
+                    }
+
+                    // placeholder
+                    if(search.has("placeholder")){
+                        searchView.setQueryHint(search.getString("placeholder"));
+                    }
+
+
+                    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
+                        @Override
+                        public boolean onQueryTextSubmit(String s) {
+                            // name
+                            if(search.has("name")){
+                                try {
+                                    JSONObject kv = new JSONObject();
+                                    kv.put(search.getString("name"), s);
+                                    model.var = JasonHelper.merge(model.var, kv);
+                                    if(search.has("action")){
+                                        call(search.getJSONObject("action").toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
+                                    }
+                                } catch (Exception e){
+                                    Log.d("Error", e.toString());
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onQueryTextChange(String s) {
+                            if(search.has("action")){
+                                return false;
+                            } else {
+                                if(listView != null){
+                                    ItemAdapter adapter = (ItemAdapter)listView.getAdapter();
+                                    adapter.filter(s);
+                                }
+                                return true;
+                            }
+                        }
+                    });
+                }
+
 
                 if (header.has("menu")) {
                     JSONObject json = header.getJSONObject("menu");

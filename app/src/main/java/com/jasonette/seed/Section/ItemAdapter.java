@@ -39,6 +39,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
     Context context;
     Context root_context;
     ArrayList<JSONObject> items;
+    ArrayList<JSONObject> cloned_items;
     Map<String, Integer> signature_to_type = new HashMap<String,Integer>();
     Map<Integer, String> type_to_signature = new HashMap<Integer, String>();
     ViewHolderFactory factory = new ViewHolderFactory();
@@ -83,8 +84,25 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
 
     public ItemAdapter(Context root_context, Context context, ArrayList<JSONObject> items) {
         this.items = items;
+        this.cloned_items = new ArrayList<JSONObject>();
+        this.cloned_items.addAll(items);
         this.context = context;
         this.root_context = root_context;
+    }
+
+    public void filter(String text) {
+        this.items.clear();
+        if(text.isEmpty()){
+            this.items.addAll(this.cloned_items);
+        } else{
+            text = text.toLowerCase();
+            for(JSONObject item: this.cloned_items){
+                if(item.toString().toLowerCase().contains(text)){
+                    this.items.add(item);
+                }
+            }
+        }
+        notifyDataSetChanged();
     }
 
     @Override
