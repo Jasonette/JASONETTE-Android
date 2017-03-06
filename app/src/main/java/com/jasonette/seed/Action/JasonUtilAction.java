@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.ContactsContract;
@@ -12,6 +13,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
+import android.util.Base64;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -20,14 +22,17 @@ import android.widget.Toast;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
+import com.jasonette.seed.Helper.JasonImageHelper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.concurrent.Exchanger;
 
 public class JasonUtilAction {
     private int counter; // general purpose counter;
+    private Intent callback_intent;  // general purpose intent;
 
     public void banner(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -286,4 +291,85 @@ public class JasonUtilAction {
         }
     }
 
+    public void share(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    JSONObject options = action.getJSONObject("options");
+                    if (options.has("items")) {
+                        callback_intent = new Intent();
+                        callback_intent.setAction(Intent.ACTION_SEND);
+
+                        final JSONArray items = options.getJSONArray("items");
+                        counter = 0;
+                        final int l = items.length();
+                        for (int i = 0; i < l; i++) {
+                            JSONObject item = (JSONObject) items.get(i);
+                            if (item.has("type")) {
+                                String type = item.getString("type");
+                                if (type.equalsIgnoreCase("text")) {
+                                    callback_intent.putExtra(Intent.EXTRA_TEXT, item.getString("text"));
+                                    if (callback_intent.getType() == null) {
+                                        callback_intent.setType("text/plain");
+                                    }
+                                    counter++;
+                                    if (counter == l) {
+                                        JasonHelper.next("success", action, new JSONObject(), event, context);
+                                        context.startActivity(Intent.createChooser(callback_intent, "Share"));
+                                    }
+                                } else if (type.equalsIgnoreCase("image")) {
+                                    // Fetch remote url
+                                    // Turn it into Bitmap
+                                    // Create a file
+                                    // Share the url
+                                    if (item.has("url")) {
+                                        JasonImageHelper helper = new JasonImageHelper(item.getString("url"), context);
+                                        helper.setListener(new JasonImageHelper.JasonImageDownloadListener() {
+                                            @Override
+                                            public void onLoaded(byte[] data, Uri uri) {
+                                                callback_intent.putExtra(Intent.EXTRA_STREAM, uri);
+                                                // override with image type if one of the items is an image
+                                                callback_intent.setType("image/*");
+                                                callback_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                                counter++;
+                                                if (counter == l) {
+                                                    JasonHelper.next("success", action, new JSONObject(), event, context);
+                                                    context.startActivity(Intent.createChooser(callback_intent, "Share"));
+                                                }
+                                            }
+                                        });
+                                        helper.fetch();
+                                    } else if (item.has("data")) {
+                                        // "data" is a byte[] stored as string
+                                        // so we need to restore it back to byte[] before working with it.
+                                        byte[] d = Base64.decode(item.getString("data"), Base64.DEFAULT);
+
+                                        JasonImageHelper helper = new JasonImageHelper(d, context);
+                                        helper.setListener(new JasonImageHelper.JasonImageDownloadListener() {
+                                            @Override
+                                            public void onLoaded(byte[] data, Uri uri) {
+                                                callback_intent.putExtra(Intent.EXTRA_STREAM, uri);
+                                                // override with image type if one of the items is an image
+                                                callback_intent.setType("image/*");
+                                                callback_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                                counter++;
+                                                if (counter == l) {
+                                                    JasonHelper.next("success", action, new JSONObject(), event, context);
+                                                    context.startActivity(Intent.createChooser(callback_intent, "Share"));
+                                                }
+                                            }
+                                        });
+                                        helper.load();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
+            }
+        }).start();
+    }
 }
