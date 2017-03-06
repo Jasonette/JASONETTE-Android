@@ -1362,7 +1362,9 @@ public class JasonViewActivity extends AppCompatActivity{
                             }
                         } else {
                             listView.removeItemDecoration(divider);
+                            int color = JasonHelper.parse_color("#eaeaea"); // default color
                             divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
+                                    .color(color)
                                     .showLastDivider()
                                     .positionInsideItem(true)
                                     .build();
