@@ -35,4 +35,5 @@ dependencies {
     compile 'com.aurelhubert:ahbottomnavigation:2.0.2'
     compile 'com.android.support:support-core-ui:25.0.1'
     compile 'commons-lang:commons-lang:2.6'
+    compile 'com.yqritc:recyclerview-flexibledivider:1.4.0'
 }

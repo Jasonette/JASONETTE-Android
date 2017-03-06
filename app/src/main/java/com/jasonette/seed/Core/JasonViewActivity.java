@@ -49,6 +49,8 @@ import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonSettings;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
+import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -90,6 +92,7 @@ public class JasonViewActivity extends AppCompatActivity{
     private LinearLayout footerInput;
     private View footer_input_textfield;
     private SearchView searchView;
+    private HorizontalDividerItemDecoration divider;
     ArrayList<View> layer_items;
 
     Parcelable listState;
@@ -1343,6 +1346,28 @@ public class JasonViewActivity extends AppCompatActivity{
                     // Set sections
                     if (body.has("sections")) {
                         setup_sections(body.getJSONArray("sections"));
+                        if(body.has("style") && body.getJSONObject("style").has("border")){
+                            String border = body.getJSONObject("style").getString("border");
+                            int color = JasonHelper.parse_color(border);
+                            if(border.equalsIgnoreCase("none")){
+
+                            } else {
+                                listView.removeItemDecoration(divider);
+                                divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
+                                            .color(color)
+                                            .showLastDivider()
+                                            .positionInsideItem(true)
+                                            .build();
+                                listView.addItemDecoration(divider);
+                            }
+                        } else {
+                            listView.removeItemDecoration(divider);
+                            divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
+                                    .showLastDivider()
+                                    .positionInsideItem(true)
+                                    .build();
+                            listView.addItemDecoration(divider);
+                        }
                     } else {
                         setup_sections(null);
                     }
