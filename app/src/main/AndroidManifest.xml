@@ -16,8 +16,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!--<meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR GOOGLE MAPS API KEY HERE"/>-->
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Uncomment below line to enable $util.addressbook -->
+    <!-- <uses-permission android:name="android.permission.READ_CONTACTS"/> -->
 
 </manifest>
