@@ -1,23 +1,31 @@
 package com.jasonette.seed.Action;
 
+import android.app.DatePickerDialog;
+import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.ContactsContract;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
+import android.text.format.DateFormat;
 import android.util.Base64;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.jasonette.seed.Core.JasonViewActivity;
@@ -28,7 +36,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.concurrent.Exchanger;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 public class JasonUtilAction {
     private int counter; // general purpose counter;
@@ -223,6 +232,70 @@ public class JasonUtilAction {
             Log.d("Error", e.toString());
         }
     }
+
+    public static class TimePickerFragment extends DialogFragment
+            implements TimePickerDialog.OnTimeSetListener {
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the current time as the default values for the picker
+            final Calendar c = Calendar.getInstance();
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int minute = c.get(Calendar.MINUTE);
+
+            // Create a new instance of TimePickerDialog and return it
+            return new TimePickerDialog(getActivity(), this, hour, minute,
+                    DateFormat.is24HourFormat(getActivity()));
+        }
+
+        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+            // Do something with the time chosen by the user
+        }
+    }
+
+    public static class DatePickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
+
+        private DatePickerDialog.OnDateSetListener externalListener;
+        public void setOnDateSetListener(DatePickerDialog.OnDateSetListener listener){
+            this.externalListener = listener;
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            final Calendar c = Calendar.getInstance();
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH);
+            int day = c.get(Calendar.DAY_OF_MONTH);
+            return new DatePickerDialog(getActivity(), this, year, month, day);
+        }
+
+        public void onDateSet(DatePicker view, int year, int month, int day) {
+            if(externalListener != null) {
+                externalListener.onDateSet(view, year, month, day);
+            }
+        }
+    }
+
+    public void datepicker(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        DatePickerFragment newFragment = new DatePickerFragment();
+        newFragment.setOnDateSetListener(new DatePickerDialog.OnDateSetListener(){
+            public void onDateSet(DatePicker view, int year, int month, int day){
+                try {
+                    Calendar calendar = new GregorianCalendar(year, month, day);
+                    long val = calendar.getTimeInMillis();
+                    JSONObject value = new JSONObject();
+                    value.put("value", val);
+                    JasonHelper.next("success", action, value, event, context);
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
+            }
+        });
+
+        newFragment.show(((JasonViewActivity)context).getSupportFragmentManager(), "datePicker");
+    }
+
+
     public void addressbook(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         new Thread(new Runnable() {
             @Override
