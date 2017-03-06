@@ -24,6 +24,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -52,6 +53,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -1215,6 +1217,33 @@ public class JasonViewActivity extends AppCompatActivity{
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
+    }
+
+    public void snapshot ( final JSONObject action, JSONObject data, final JSONObject event, final Context context){
+        View v1 = getWindow().getDecorView().getRootView();
+        v1.setDrawingCacheEnabled(true);
+        final Bitmap bitmap = Bitmap.createBitmap(v1.getDrawingCache());
+        v1.setDrawingCacheEnabled(false);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                byte[] byteArray = stream.toByteArray();
+                String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                String data_uri = "data:image/png;base64," + encoded;
+                try {
+                    JSONObject ret = new JSONObject();
+                    ret.put("data", encoded);
+                    ret.put("data_uri", data_uri);
+                    ret.put("content_type", "image/png");
+                    JasonHelper.next("success", action, ret, event, context);
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
+
+            }
+        }).start();
     }
 
     /*************************************************************
