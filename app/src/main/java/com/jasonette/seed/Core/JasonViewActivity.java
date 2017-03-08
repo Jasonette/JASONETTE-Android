@@ -196,6 +196,7 @@ public class JasonViewActivity extends AppCompatActivity {
         Uri uri = getIntent().getData();
         if(uri != null) {
             if(uri.getHost().contains("oauth")) {
+                loaded = true; // in case of oauth process we need to set loaded to true since we know it's already been loaded.
                 return;
             }
         }
