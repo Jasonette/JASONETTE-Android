@@ -32,13 +32,10 @@ import java.util.Map;
 import okhttp3.Authenticator;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.Credentials;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Route;
-import okio.BufferedSink;
 
 public class JasonOauthAction {
     public void auth(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
@@ -233,87 +230,103 @@ public class JasonOauthAction {
                     //
                     //Assuming code auth
                     //
-                    if(authorize_options.has("data")) {
-                        authorize_options_data = authorize_options.getJSONObject("data");
+                    String client_id = authorize_options.getString("client_id");
 
-                        if(authorize_options.length() == 0) {
-                            JasonHelper.next("error", action, data, event, context);
-                        } else {
-                            String client_id = authorize_options.getString("client_id");
-                            String client_secret = "";
-                            String redirect_uri = "";
+                    SharedPreferences sharedPreferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
 
-                            //Secret can be missing in implicit authentication
-                            if(authorize_options.has("client_secret")) {
-                                client_secret = authorize_options.getString("client_secret");
-                            }
-                            if(authorize_options_data.has("redirect_uri")) {
-                                redirect_uri = authorize_options_data.getString("redirect_uri");
-                            }
+                    if(
+                        sharedPreferences.contains(client_id) &&
+                        sharedPreferences.contains(client_id + "_refresh_token") &&
+                        (
+                            sharedPreferences.contains(client_id + "_expires_in") &&
+                            (sharedPreferences.getInt(client_id + "_created_at", 0) + sharedPreferences.getInt(client_id + "_expires_in", 0))
+                                    <
+                            (int)(System.currentTimeMillis() / 1000)
+                        )
+                    ) {
+                        request_oauth20_access_token(action, data, event, context, null, sharedPreferences.getString(client_id + "_refresh_token", null));
+                    } else {
+                        if(authorize_options.has("data")) {
+                            authorize_options_data = authorize_options.getJSONObject("data");
 
-                            if(!authorize_options.has("scheme") || authorize_options.getString("scheme").length() == 0
-                                    || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
-                                    || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
-                                    ) {
+                            if(authorize_options.length() == 0) {
                                 JasonHelper.next("error", action, data, event, context);
                             } else {
-                                Uri.Builder builder = new Uri.Builder();
+                                String client_secret = "";
+                                String redirect_uri = "";
 
-                                builder.scheme(authorize_options.getString("scheme"))
-                                        .encodedAuthority(authorize_options.getString("host"))
-                                        .encodedPath(authorize_options.getString("path"));
+                                //Secret can be missing in implicit authentication
+                                if(authorize_options.has("client_secret")) {
+                                    client_secret = authorize_options.getString("client_secret");
+                                }
+                                if(authorize_options_data.has("redirect_uri")) {
+                                    redirect_uri = authorize_options_data.getString("redirect_uri");
+                                }
 
-                                final Uri uri = builder.build();
+                                if(!authorize_options.has("scheme") || authorize_options.getString("scheme").length() == 0
+                                        || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
+                                        || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
+                                        ) {
+                                    JasonHelper.next("error", action, data, event, context);
+                                } else {
+                                    Uri.Builder builder = new Uri.Builder();
 
-                                DefaultApi20 oauthApi = new DefaultApi20() {
-                                    @Override
-                                    public String getAccessTokenEndpoint() {
-                                        return null;
+                                    builder.scheme(authorize_options.getString("scheme"))
+                                            .encodedAuthority(authorize_options.getString("host"))
+                                            .encodedPath(authorize_options.getString("path"));
+
+                                    final Uri uri = builder.build();
+
+                                    DefaultApi20 oauthApi = new DefaultApi20() {
+                                        @Override
+                                        public String getAccessTokenEndpoint() {
+                                            return null;
+                                        }
+
+                                        @Override
+                                        protected String getAuthorizationBaseUrl() {
+                                            return uri.toString();
+                                        }
+                                    };
+
+                                    ServiceBuilder serviceBuilder = new ServiceBuilder();
+                                    serviceBuilder.apiKey(client_id);
+
+                                    if(client_secret.length() > 0) {
+                                        serviceBuilder.apiSecret(client_secret);
+                                    }
+                                    if(authorize_options_data.has("scope") && authorize_options_data.getString("scope").length() > 0) {
+                                        serviceBuilder.scope(authorize_options_data.getString("scope"));
+                                    }
+                                    if(authorize_options_data.has("state") && authorize_options_data.getString("state").length() > 0) {
+                                        serviceBuilder.state(authorize_options_data.getString("state"));
+                                    }
+                                    serviceBuilder.callback(redirect_uri);
+
+                                    OAuth20Service oauthService = serviceBuilder.build(oauthApi);
+
+                                    Map<String, String> additionalParams = new HashMap<>();
+
+                                    Iterator paramKeys = authorize_options_data.keys();
+                                    while(paramKeys.hasNext()) {
+                                        String key = (String)paramKeys.next();
+                                        if(key != "redirect_uri" || key != "response_type" || key != "scope" || key != "state") {
+                                            String value = authorize_options_data.getString(key);
+                                            additionalParams.put(key, value);
+                                        }
                                     }
 
-                                    @Override
-                                    protected String getAuthorizationBaseUrl() {
-                                        return uri.toString();
-                                    }
-                                };
-
-                                ServiceBuilder serviceBuilder = new ServiceBuilder();
-                                serviceBuilder.apiKey(client_id);
-
-                                if(client_secret.length() > 0) {
-                                    serviceBuilder.apiSecret(client_secret);
+                                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                                    intent.setData(Uri.parse(oauthService.getAuthorizationUrl(additionalParams)));
+                                    context.startActivity(intent);
                                 }
-                                if(authorize_options_data.has("scope") && authorize_options_data.getString("scope").length() > 0) {
-                                    serviceBuilder.scope(authorize_options_data.getString("scope"));
-                                }
-                                if(authorize_options_data.has("state") && authorize_options_data.getString("state").length() > 0) {
-                                    serviceBuilder.state(authorize_options_data.getString("state"));
-                                }
-                                serviceBuilder.callback(redirect_uri);
-
-                                OAuth20Service oauthService = serviceBuilder.build(oauthApi);
-
-                                Map<String, String> additionalParams = new HashMap<>();
-
-                                Iterator paramKeys = authorize_options_data.keys();
-                                while(paramKeys.hasNext()) {
-                                    String key = (String)paramKeys.next();
-                                    if(key != "redirect_uri" || key != "response_type" || key != "scope" || key != "state") {
-                                        String value = authorize_options_data.getString(key);
-                                        additionalParams.put(key, value);
-                                    }
-                                }
-
-                                Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setData(Uri.parse(oauthService.getAuthorizationUrl(additionalParams)));
-                                context.startActivity(intent);
                             }
-                        }
 
-                    } else {
-                        JSONObject error = new JSONObject();
-                        error.put("data", "Authorize data missing");
-                        JasonHelper.next("error", action, error, event, context);
+                        } else {
+                            JSONObject error = new JSONObject();
+                            error.put("data", "Authorize data missing");
+                            JasonHelper.next("error", action, error, event, context);
+                        }
                     }
                 }
             }
@@ -450,96 +463,9 @@ public class JasonOauthAction {
 
                     JasonHelper.next("success", action, result, event, context);
                 } else {
-                    JSONObject access_options = options.getJSONObject("access");
-                    JSONObject access_options_data = access_options.has("data") ? access_options.getJSONObject("data") : new JSONObject();
+                    String code = uri.getQueryParameter("code");
 
-                    final String client_id = access_options.getString("client_id");
-                    //
-                    // also in access_options_data
-                    //
-                    final String client_secret = access_options.has("client_secret") ? access_options.getString("client_secret") : "";
-
-                    String redirect_uri = access_options_data.has("redirect_uri") ? access_options_data.getString("redirect_uri") : "";
-                    String grant_type = access_options_data.has("grant_type") ? access_options_data.getString("grant_type") : "";
-
-                    final String code = uri.getQueryParameter("code");
-
-                    if (access_options.length() == 0
-                        || !access_options.has("scheme") || access_options.getString("scheme").length() == 0
-                        || !access_options.has("host") || access_options.getString("host").length() == 0
-                        || !access_options.has("path") || access_options.getString("path").length() == 0
-                    ) {
-                        JasonHelper.next("error", action, data, event, context);
-                    } else {
-                        final Uri.Builder uri_builder = new Uri.Builder();
-                        uri_builder.scheme(access_options.getString("scheme"))
-                            .authority(access_options.getString("host"))
-                            .appendEncodedPath(access_options.getString("path"))
-                            .appendQueryParameter("code", code);
-
-                        if(redirect_uri != "") {
-                            uri_builder.appendQueryParameter("redirect_uri", redirect_uri);
-                        }
-
-                        if(grant_type != "") {
-                            uri_builder.appendQueryParameter("grant_type", grant_type);
-                        }
-
-                        OkHttpClient client = null;
-
-                        if(access_options.has("basic") && access_options.getBoolean("basic")) {
-                            OkHttpClient.Builder b = new OkHttpClient.Builder();
-                            b.authenticator(new Authenticator() {
-                                @Override
-                                public Request authenticate(Route route, okhttp3.Response response) throws IOException {
-                                    if (response.request().header("Authorization") != null) {
-                                        return null;
-                                    }
-
-                                    String credential = okhttp3.Credentials.basic(client_id, client_secret);
-                                    return response.request().newBuilder().header("Authorization", credential).build();
-                                }
-                            });
-                            client = b.build();
-                        } else {
-                            uri_builder.appendQueryParameter("client_id", client_id);
-                            uri_builder.appendQueryParameter("client_secret", client_secret);
-                            client = new OkHttpClient();
-                        }
-
-                        Request request;
-                        Request.Builder requestBuilder = new Request.Builder()
-                            .url(uri_builder.build().toString())
-                            .method("POST", RequestBody.create(null, new byte[0]));
-                        request = requestBuilder.build();
-
-                        client.newCall(request).enqueue(new Callback() {
-                            @Override
-                            public void onFailure(Call call, IOException e) {
-                                handleError(e, action, event, context);
-                            }
-
-                            @Override
-                            public void onResponse(Call call, okhttp3.Response response) throws IOException {
-                                try {
-                                    JSONObject jsonResponse = new JSONObject(response.body().source().readString(Charset.defaultCharset()));
-                                    String access_token = jsonResponse.getString("access_token");
-                                    int expires_in = jsonResponse.getInt("expires_in");
-
-                                    SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
-                                    preferences.edit().putString(client_id, access_token).apply();
-                                    preferences.edit().putInt(client_id + "_expires_in", expires_in).apply();
-
-                                    JSONObject result = new JSONObject();
-                                    result.put("token", access_token);
-
-                                    JasonHelper.next("success", action, result, event, context);
-                                } catch(JSONException e) {
-                                    handleError(e, action, event, context);
-                                }
-                            }
-                        });
-                    }
+                    request_oauth20_access_token(action, data, event, context, code, null);
                 }
             }
         }
@@ -551,6 +477,122 @@ public class JasonOauthAction {
             } catch(JSONException error) {
                 Log.d("Error", error.toString());
             }
+        }
+    }
+
+    private void request_oauth20_access_token(final JSONObject action, final JSONObject data, final JSONObject event, final Context context, String code, String refresh_token) {
+        try {
+            JSONObject options = action.getJSONObject("options");
+
+            JSONObject access_options = options.getJSONObject("access");
+            JSONObject access_options_data = access_options.has("data") ? access_options.getJSONObject("data") : new JSONObject();
+
+            final String client_id = access_options.getString("client_id");
+            //
+            // also in access_options_data
+            //
+            final String client_secret = access_options.has("client_secret") ? access_options.getString("client_secret") : "";
+
+            String redirect_uri = access_options_data.has("redirect_uri") ? access_options_data.getString("redirect_uri") : "";
+
+            String grant_type;
+            if(refresh_token != null) {
+                grant_type = "refresh_token";
+            } else {
+                grant_type = access_options_data.has("grant_type") ? access_options_data.getString("grant_type") : "";
+            }
+
+            if (access_options.length() == 0
+                    || !access_options.has("scheme") || access_options.getString("scheme").length() == 0
+                    || !access_options.has("host") || access_options.getString("host").length() == 0
+                    || !access_options.has("path") || access_options.getString("path").length() == 0
+                    ) {
+                JasonHelper.next("error", action, data, event, context);
+            } else {
+                final Uri.Builder uri_builder = new Uri.Builder();
+                uri_builder.scheme(access_options.getString("scheme"))
+                        .authority(access_options.getString("host"))
+                        .appendEncodedPath(access_options.getString("path"));
+
+                if(redirect_uri != "") {
+                    uri_builder.appendQueryParameter("redirect_uri", redirect_uri);
+                }
+
+                if(grant_type != "") {
+                    uri_builder.appendQueryParameter("grant_type", grant_type);
+                }
+
+                if(code != null) {
+                    uri_builder.appendQueryParameter("code", code);
+                }
+
+                if(refresh_token != null) {
+                    uri_builder.appendQueryParameter("refresh_token", refresh_token);
+                }
+
+                OkHttpClient client = null;
+
+                if(access_options.has("basic") && access_options.getBoolean("basic")) {
+                    OkHttpClient.Builder b = new OkHttpClient.Builder();
+                    b.authenticator(new Authenticator() {
+                        @Override
+                        public Request authenticate(Route route, okhttp3.Response response) throws IOException {
+                            if (response.request().header("Authorization") != null) {
+                                return null;
+                            }
+
+                            String credential = okhttp3.Credentials.basic(client_id, client_secret);
+                            return response.request().newBuilder().header("Authorization", credential).build();
+                        }
+                    });
+                    client = b.build();
+                } else {
+                    uri_builder.appendQueryParameter("client_id", client_id);
+                    uri_builder.appendQueryParameter("client_secret", client_secret);
+                    client = new OkHttpClient();
+                }
+
+                Request request;
+                Request.Builder requestBuilder = new Request.Builder()
+                        .url(uri_builder.build().toString())
+                        .method("POST", RequestBody.create(null, new byte[0]));
+                request = requestBuilder.build();
+
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        handleError(e, action, event, context);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, okhttp3.Response response) throws IOException {
+                        try {
+                            JSONObject jsonResponse = new JSONObject(response.body().source().readString(Charset.defaultCharset()));
+                            String access_token = jsonResponse.getString("access_token");
+
+                            String refresh_token = jsonResponse.has("refresh_token") ? jsonResponse.getString("refresh_token") : "";
+                            int expires_in = jsonResponse.has("expires_in") ? jsonResponse.getInt("expires_in") : -1;
+
+                            SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
+                            preferences.edit().putString(client_id, access_token).apply();
+                            preferences.edit().putInt(client_id + "_created_at", (int)(System.currentTimeMillis() / 1000)).apply();
+                            preferences.edit().putInt(client_id + "_expires_in", expires_in).apply();
+                            if(refresh_token.length() > 0) {
+                                preferences.edit().putString(client_id + "_refresh_token", refresh_token).apply();
+                            }
+
+                            JSONObject result = new JSONObject();
+                            result.put("token", access_token);
+
+                            JasonHelper.next("success", action, result, event, context);
+                        } catch(JSONException e) {
+                            handleError(e, action, event, context);
+                        }
+                    }
+                });
+            }
+        } catch(JSONException e) {
+            handleError(e, action, event, context);
         }
     }
 
