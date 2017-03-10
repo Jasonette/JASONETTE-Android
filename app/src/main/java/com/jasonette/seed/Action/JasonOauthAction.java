@@ -705,7 +705,11 @@ public class JasonOauthAction {
                             try {
                                 Response response = oauthService.execute(request);
 
-                                JasonHelper.next("success", action, response.getBody(), event, context);
+                                if(response.getCode() == 200) {
+                                    JasonHelper.next("success", action, response.getBody(), event, context);
+                                } else {
+                                    JasonHelper.next("error", action, response.getBody(), event, context);
+                                }
                             } catch(Exception e) {
                                 handleError(e, action, event, context);
                             }
@@ -743,7 +747,11 @@ public class JasonOauthAction {
                             try {
                                 Response response = oauthService.execute(request);
 
-                                JasonHelper.next("success", action, response.getBody(), event, context);
+                                if(response.getCode() == 200) {
+                                    JasonHelper.next("success", action, response.getBody(), event, context);
+                                } else {
+                                    JasonHelper.next("error", action, response.getBody(), event, context);
+                                }
                             } catch(Exception e) {
                                 handleError(e, action, event, context);
                             }
