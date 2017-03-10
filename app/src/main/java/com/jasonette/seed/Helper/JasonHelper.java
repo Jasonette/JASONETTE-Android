@@ -16,6 +16,7 @@ import com.jasonette.seed.Core.JasonViewActivity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -265,5 +266,62 @@ public class JasonHelper {
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
+    }
+
+    public static byte[] readBytes(InputStream inputStream) throws IOException {
+        // this dynamically extends to take the bytes you read
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+
+        // this is storage overwritten on each iteration with bytes
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+
+        // we need to know how may bytes were read to write them to the byteBuffer
+        int len = 0;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
+        }
+
+        // and then we can return your byte array.
+        return byteBuffer.toByteArray();
+    }
+
+
+    // dispatchIntent method
+    // 1. triggers an external Intent
+    // 2. attaches a callback with all the payload so that we can pick it up where we left off when the intent returns
+    // the callback needs to specify the class name and the method name we wish to trigger after the intent returns
+    public static void dispatchIntent(JSONObject action, JSONObject data, JSONObject event, Context context, Intent intent, JSONObject handler) {
+        // Generate unique identifier for return value
+        // This will be used to name the handlers
+        int timestamp = (int)(System.currentTimeMillis() % 10000);
+
+        try {
+            // handler looks like this:
+            /*
+                  {
+                    "class": [class name],
+                    "method": [method name],
+                    "options": {
+                        [options to preserve]
+                    }
+                  }
+             */
+
+            JSONObject options = new JSONObject();
+            options.put("action", action);
+            options.put("data", data);
+            options.put("event", event);
+            options.put("context", context);
+            handler.put("options", options);
+
+            ((JasonViewActivity)context).createHandler(String.valueOf(timestamp), handler);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+
+        // Start the activity
+        ((JasonViewActivity)context).startActivityForResult(intent, timestamp);
+
     }
 }

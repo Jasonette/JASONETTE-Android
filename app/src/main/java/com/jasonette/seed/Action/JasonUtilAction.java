@@ -435,6 +435,19 @@ public class JasonUtilAction {
                                         });
                                         helper.load();
                                     }
+                                } else if (type.equalsIgnoreCase("video")){
+                                    if(item.has("file_url")){
+                                        Uri uri = Uri.parse(item.getString("file_url"));
+                                        callback_intent.putExtra(Intent.EXTRA_STREAM, uri);
+                                        // override with image type if one of the items is an image
+                                        callback_intent.setType("video/*");
+                                        callback_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        counter++;
+                                        if (counter == l) {
+                                            JasonHelper.next("success", action, new JSONObject(), event, context);
+                                            context.startActivity(Intent.createChooser(callback_intent, "Share"));
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -96,6 +96,9 @@ public class JasonViewActivity extends AppCompatActivity{
     ArrayList<View> layer_items;
 
     Parcelable listState;
+    JSONObject intent_to_resolve;
+
+    private JSONObject handlers;
 
 
     /*************************************************************
@@ -112,6 +115,13 @@ public class JasonViewActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
 
         loaded = false;
+
+        // Intent handlers init
+        // Intent handlers are for when we trigger an external Intent
+        // and wait for it to return so that we can pick up where we left off
+        if(handlers == null){
+            handlers = new JSONObject();
+        }
 
         // Initialize Parser instance
         JasonParser.getInstance(this);
@@ -303,6 +313,65 @@ public class JasonViewActivity extends AppCompatActivity{
         }
         firstResume = false;
 
+
+
+        // Intent Handler
+        // This part is for handling return values from external Intents triggered
+        // We set "intent_to_resolve" from onActivityResult() below, and then process it here.
+        // It's because onCall/onSuccess/onError callbacks are not yet attached when onActivityResult() is called.
+        // Need to wait till this point.
+        try {
+            if(intent_to_resolve != null) {
+                if(intent_to_resolve.has("type")){
+                    String type = intent_to_resolve.getString("type");
+                    if(type.equalsIgnoreCase("success")){
+                        // success
+                        JSONObject handler = handlers.getJSONObject(String.valueOf(intent_to_resolve.getInt("name")));
+                        Intent intent = (Intent)intent_to_resolve.get("intent");
+
+                        String classname = handler.getString("class");
+                        classname = "com.jasonette.seed.Action." + classname;
+                        String methodname = handler.getString("method");
+
+                        Object module;
+                        if (modules.containsKey(classname)) {
+                            module = modules.get(classname);
+                        } else {
+                            Class<?> classObject = Class.forName(classname);
+                            Constructor<?> constructor = classObject.getConstructor();
+                            module = constructor.newInstance();
+                            modules.put(classname, module);
+                        }
+
+                        Method method = module.getClass().getMethod(methodname, Intent.class, JSONObject.class);
+                        JSONObject options = handler.getJSONObject("options");
+                        method.invoke(module, intent, options);
+
+
+                    } else {
+                        // error
+                        JSONObject handler = handlers.getJSONObject(String.valueOf(intent_to_resolve.getInt("name")));
+                        if(handler.has("options")) {
+                            JSONObject options = handler.getJSONObject("options");
+                            JSONObject action = options.getJSONObject("action");
+                            JSONObject event = options.getJSONObject("event");
+                            Context context = (Context)options.get("context");
+                            JasonHelper.next("error", action, new JSONObject(), event, context);
+                        }
+                    }
+
+                    // reset intent_to_resolve
+                    intent_to_resolve = null;
+                }
+            }
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+
+
+
+
+
         super.onResume();
 
         if (listState != null) {
@@ -310,6 +379,43 @@ public class JasonViewActivity extends AppCompatActivity{
         }
 
     }
+
+    // Create Intent Handler which will be triggered when
+    // an external intent we trigger returns with result
+    public void createHandler(String name, JSONObject handler){
+        try {
+            handlers.put(name, handler);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+    }
+
+    // This gets executed automatically when an external intent returns with result
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        try {
+            // We can't process the intent here because
+            // we need to wait until onResume gets triggered (which comes after this callback)
+            // onResume reattaches all the onCall/onSuccess/onError callbacks to the current Activity
+            // so we need to wait until that happens.
+            // Therefore here we only set the "intent_to_resolve", and the actual processing is
+            // carried out inside onResume()
+
+            intent_to_resolve = new JSONObject();
+            if(resultCode == RESULT_OK) {
+                intent_to_resolve.put("type", "success");
+                intent_to_resolve.put("name", requestCode);
+                intent_to_resolve.put("intent", intent);
+            } else {
+                intent_to_resolve.put("type", "error");
+                intent_to_resolve.put("name", requestCode);
+            }
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+
+    }
+
 
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState) {
@@ -1095,13 +1201,6 @@ public class JasonViewActivity extends AppCompatActivity{
             JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
                 @Override
                 public void onFinished(JSONObject body) {
-                    // in case we had $jason.head.data, need to trigger onLoad here
-                    // instead of inside build()
-                    // since on Load() gets triggered after everything has loaded
-                    // In this case, model.rendered will be null here since it hasn't been rendered yet.
-                    if(!loaded){
-                        onLoad();
-                    }
 
                     setup_body(body);
                     JasonHelper.next("success", action, new JSONObject(), event, context);
@@ -1348,10 +1447,10 @@ public class JasonViewActivity extends AppCompatActivity{
                         setup_sections(body.getJSONArray("sections"));
                         if(body.has("style") && body.getJSONObject("style").has("border")){
                             String border = body.getJSONObject("style").getString("border");
-                            int color = JasonHelper.parse_color(border);
                             if(border.equalsIgnoreCase("none")){
 
                             } else {
+                                int color = JasonHelper.parse_color(border);
                                 listView.removeItemDecoration(divider);
                                 divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
                                             .color(color)
@@ -1431,7 +1530,9 @@ public class JasonViewActivity extends AppCompatActivity{
                     }
                     rootLayout.requestLayout();
 
-
+                    if(!loaded){
+                        onLoad();
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
