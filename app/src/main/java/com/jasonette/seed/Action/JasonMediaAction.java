@@ -218,37 +218,36 @@ public class JasonMediaAction {
             Uri uri = intent.getData();
 
             // handling image
-            if(action.has("options")){
-                String type = "image";
-                if(action.getJSONObject("options").has("type")){
+            String type = "image";
+            if(action.has("options")) {
+                if (action.getJSONObject("options").has("type")) {
                     type = action.getJSONObject("options").getString("type");
                 }
-                if(type.equalsIgnoreCase("video")){
-                    // video
-                    try {
-                        JSONObject ret = new JSONObject();
-                        ret.put("file_url", uri.toString());
-                        ret.put("content_type", "video/mp4");
-                        JasonHelper.next("success", action, ret, event, context);
-                    } catch (Exception e) {
-                        Log.d("Error", e.toString());
-                    }
-                } else {
-                    // image
-                    InputStream stream =  context.getContentResolver().openInputStream(uri);
-                    byte[] byteArray = JasonHelper.readBytes(stream);
-                    String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                    String data_uri = "data:image/jpeg;base64," + encoded;
-                    try {
-                        JSONObject ret = new JSONObject();
-                        ret.put("data", encoded);
-                        ret.put("data_uri", data_uri);
-                        ret.put("content_type", "image/jpeg");
-                        JasonHelper.next("success", action, ret, event, context);
-                    } catch (Exception e) {
-                        Log.d("Error", e.toString());
-                    }
-
+            }
+            if(type.equalsIgnoreCase("video")){
+                // video
+                try {
+                    JSONObject ret = new JSONObject();
+                    ret.put("file_url", uri.toString());
+                    ret.put("content_type", "video/mp4");
+                    JasonHelper.next("success", action, ret, event, context);
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
+            } else {
+                // image
+                InputStream stream =  context.getContentResolver().openInputStream(uri);
+                byte[] byteArray = JasonHelper.readBytes(stream);
+                String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                String data_uri = "data:image/jpeg;base64," + encoded;
+                try {
+                    JSONObject ret = new JSONObject();
+                    ret.put("data", encoded);
+                    ret.put("data_uri", data_uri);
+                    ret.put("content_type", "image/jpeg");
+                    JasonHelper.next("success", action, ret, event, context);
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
                 }
             }
 

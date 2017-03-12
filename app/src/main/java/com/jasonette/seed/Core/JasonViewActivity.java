@@ -47,6 +47,7 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonSettings;
+import com.jasonette.seed.Launcher.Launcher;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
 import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
@@ -84,7 +85,7 @@ public class JasonViewActivity extends AppCompatActivity{
     private ImageView logoView;
     private ArrayList<JSONObject> section_items;
     private HashMap<Integer, AHBottomNavigationItem> bottomNavigationItems;
-    private HashMap<String, Object> modules;
+    public HashMap<String, Object> modules;
     private SwipeRefreshLayout swipeLayout;
     public LinearLayout sectionLayout;
     public RelativeLayout rootLayout;
@@ -97,9 +98,6 @@ public class JasonViewActivity extends AppCompatActivity{
 
     Parcelable listState;
     JSONObject intent_to_resolve;
-
-    private JSONObject handlers;
-
 
     /*************************************************************
      *
@@ -116,12 +114,6 @@ public class JasonViewActivity extends AppCompatActivity{
 
         loaded = false;
 
-        // Intent handlers init
-        // Intent handlers are for when we trigger an external Intent
-        // and wait for it to return so that we can pick up where we left off
-        if(handlers == null){
-            handlers = new JSONObject();
-        }
 
         // Initialize Parser instance
         JasonParser.getInstance(this);
@@ -323,54 +315,13 @@ public class JasonViewActivity extends AppCompatActivity{
         try {
             if(intent_to_resolve != null) {
                 if(intent_to_resolve.has("type")){
-                    String type = intent_to_resolve.getString("type");
-                    if(type.equalsIgnoreCase("success")){
-                        // success
-                        JSONObject handler = handlers.getJSONObject(String.valueOf(intent_to_resolve.getInt("name")));
-                        Intent intent = (Intent)intent_to_resolve.get("intent");
-
-                        String classname = handler.getString("class");
-                        classname = "com.jasonette.seed.Action." + classname;
-                        String methodname = handler.getString("method");
-
-                        Object module;
-                        if (modules.containsKey(classname)) {
-                            module = modules.get(classname);
-                        } else {
-                            Class<?> classObject = Class.forName(classname);
-                            Constructor<?> constructor = classObject.getConstructor();
-                            module = constructor.newInstance();
-                            modules.put(classname, module);
-                        }
-
-                        Method method = module.getClass().getMethod(methodname, Intent.class, JSONObject.class);
-                        JSONObject options = handler.getJSONObject("options");
-                        method.invoke(module, intent, options);
-
-
-                    } else {
-                        // error
-                        JSONObject handler = handlers.getJSONObject(String.valueOf(intent_to_resolve.getInt("name")));
-                        if(handler.has("options")) {
-                            JSONObject options = handler.getJSONObject("options");
-                            JSONObject action = options.getJSONObject("action");
-                            JSONObject event = options.getJSONObject("event");
-                            Context context = (Context)options.get("context");
-                            JasonHelper.next("error", action, new JSONObject(), event, context);
-                        }
-                    }
-
-                    // reset intent_to_resolve
+                    ((Launcher)getApplicationContext()).trigger(intent_to_resolve, JasonViewActivity.this);
                     intent_to_resolve = null;
                 }
             }
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
-
-
-
-
 
         super.onResume();
 
@@ -380,15 +331,6 @@ public class JasonViewActivity extends AppCompatActivity{
 
     }
 
-    // Create Intent Handler which will be triggered when
-    // an external intent we trigger returns with result
-    public void createHandler(String name, JSONObject handler){
-        try {
-            handlers.put(name, handler);
-        } catch (Exception e) {
-            Log.d("Error", e.toString());
-        }
-    }
 
     // This gets executed automatically when an external intent returns with result
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
