@@ -12,13 +12,17 @@ import android.util.TypedValue;
 import android.view.WindowManager;
 
 import com.jasonette.seed.Core.JasonViewActivity;
+import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -251,4 +255,85 @@ public class JasonHelper {
         }
 
     }
+    public static void permission_exception(String actionName, Context context){
+        try {
+            Intent intent = new Intent("call");
+            JSONObject alert_action = new JSONObject();
+            alert_action.put("type", "$util.alert");
+            JSONObject options = new JSONObject();
+            options.put("title", "Turn on Permissions");
+            options.put("description", actionName + " requires additional permissions. Go to AndroidManifest.xml file and turn on the permission");
+            alert_action.put("options", options);
+            intent.putExtra("action", alert_action.toString());
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+    }
+
+    public static byte[] readBytes(InputStream inputStream) throws IOException {
+        // this dynamically extends to take the bytes you read
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+
+        // this is storage overwritten on each iteration with bytes
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+
+        // we need to know how may bytes were read to write them to the byteBuffer
+        int len = 0;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
+        }
+
+        // and then we can return your byte array.
+        return byteBuffer.toByteArray();
+    }
+
+
+    // dispatchIntent method
+    // 1. triggers an external Intent
+    // 2. attaches a callback with all the payload so that we can pick it up where we left off when the intent returns
+    // the callback needs to specify the class name and the method name we wish to trigger after the intent returns
+    public static void dispatchIntent(String name, JSONObject action, JSONObject data, JSONObject event, Context context, Intent intent, JSONObject handler) {
+        // Generate unique identifier for return value
+        // This will be used to name the handlers
+        int requestCode;
+        try {
+            requestCode = Integer.parseInt(name);
+        } catch(NumberFormatException e) {
+            requestCode = -1;
+        }
+
+        try {
+            // handler looks like this:
+            /*
+                  {
+                    "class": [class name],
+                    "method": [method name],
+                    "options": {
+                        [options to preserve]
+                    }
+                  }
+             */
+
+            JSONObject options = new JSONObject();
+            options.put("action", action);
+            options.put("data", data);
+            options.put("event", event);
+            options.put("context", context);
+            handler.put("options", options);
+
+            ((Launcher)((JasonViewActivity)context).getApplicationContext()).once(name, handler);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+
+        // Start the activity
+        ((JasonViewActivity)context).startActivityForResult(intent, requestCode);
+
+    }
+    public static void dispatchIntent(JSONObject action, JSONObject data, JSONObject event, Context context, Intent intent, JSONObject handler) {
+        dispatchIntent(String.valueOf((int)(System.currentTimeMillis() % 10000)), action, data, event, context, intent, handler);
+    }
+
 }

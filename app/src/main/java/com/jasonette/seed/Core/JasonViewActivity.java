@@ -1,18 +1,20 @@
 package com.jasonette.seed.Core;
 
+import android.app.SearchManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.ScaleDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -20,7 +22,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -43,26 +47,26 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonSettings;
+import com.jasonette.seed.Launcher.Launcher;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
+import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static android.R.attr.action;
-import static android.R.attr.bottom;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity {
@@ -72,6 +76,7 @@ public class JasonViewActivity extends AppCompatActivity {
     public JasonModel model;
     private ProgressBar loading;
 
+    private ArrayList<RecyclerView.OnItemTouchListener> listViewOnItemTouchListeners;
 
     private boolean firstResume = true;
     private boolean loaded;
@@ -80,17 +85,19 @@ public class JasonViewActivity extends AppCompatActivity {
     private ImageView logoView;
     private ArrayList<JSONObject> section_items;
     private HashMap<Integer, AHBottomNavigationItem> bottomNavigationItems;
-    private HashMap<String, Object> modules;
+    public HashMap<String, Object> modules;
     private SwipeRefreshLayout swipeLayout;
     public LinearLayout sectionLayout;
     public RelativeLayout rootLayout;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
+    private SearchView searchView;
+    private HorizontalDividerItemDecoration divider;
     ArrayList<View> layer_items;
 
     Parcelable listState;
-
+    JSONObject intent_to_resolve;
 
     /*************************************************************
      *
@@ -107,8 +114,11 @@ public class JasonViewActivity extends AppCompatActivity {
 
         loaded = false;
 
+
         // Initialize Parser instance
         JasonParser.getInstance(this);
+
+        listViewOnItemTouchListeners = new ArrayList<RecyclerView.OnItemTouchListener>();
 
         layer_items = new ArrayList<View>();
         // Setup Layouts
@@ -307,38 +317,29 @@ public class JasonViewActivity extends AppCompatActivity {
         Uri uri = getIntent().getData();
         if(uri != null && uri.getHost().contains("oauth")) {
             try {
-                JSONObject oauth_callback = new JSONObject();
-                JSONObject oauth_callback_options = new JSONObject();
-
-                oauth_callback.put("type", "$oauth.oauth_callback");
-                oauth_callback.put("uri", uri.toString());
-
-                JSONObject auth_options = model.action.getJSONObject("options");
-
-                oauth_callback_options.put("authorize", auth_options.getJSONObject("authorize"));
-
-                if(auth_options.has("access")) {
-                    oauth_callback_options.put("access", auth_options.getJSONObject("access"));
-                }
-
-                if(auth_options.has("version")) {
-                    oauth_callback_options.put("version", auth_options.getString("version"));
-                }
-
-                if(model.action.has("success")) {
-                    oauth_callback.put("success", model.action.getJSONObject("success"));
-                }
-
-                if(model.action.has("error")) {
-                    oauth_callback.put("error", model.action.getJSONObject("error"));
-                }
-
-                oauth_callback.put("options", oauth_callback_options);
-
-                exec(oauth_callback, model.action, new JSONObject(), JasonViewActivity.this);
-            } catch(JSONException e) {
+                intent_to_resolve = new JSONObject();
+                intent_to_resolve.put("type", "success");
+                intent_to_resolve.put("name", "oauth");
+                intent_to_resolve.put("intent", getIntent());
+            } catch (JSONException e) {
                 Log.d("Error", e.toString());
             }
+        }
+
+        // Intent Handler
+        // This part is for handling return values from external Intents triggered
+        // We set "intent_to_resolve" from onActivityResult() below, and then process it here.
+        // It's because onCall/onSuccess/onError callbacks are not yet attached when onActivityResult() is called.
+        // Need to wait till this point.
+        try {
+            if(intent_to_resolve != null) {
+                if(intent_to_resolve.has("type")){
+                    ((Launcher)getApplicationContext()).trigger(intent_to_resolve, JasonViewActivity.this);
+                    intent_to_resolve = null;
+                }
+            }
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
         }
 
         super.onResume();
@@ -348,6 +349,34 @@ public class JasonViewActivity extends AppCompatActivity {
         }
 
     }
+
+
+    // This gets executed automatically when an external intent returns with result
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        try {
+            // We can't process the intent here because
+            // we need to wait until onResume gets triggered (which comes after this callback)
+            // onResume reattaches all the onCall/onSuccess/onError callbacks to the current Activity
+            // so we need to wait until that happens.
+            // Therefore here we only set the "intent_to_resolve", and the actual processing is
+            // carried out inside onResume()
+
+            intent_to_resolve = new JSONObject();
+            if(resultCode == RESULT_OK) {
+                intent_to_resolve.put("type", "success");
+                intent_to_resolve.put("name", requestCode);
+                intent_to_resolve.put("intent", intent);
+            } else {
+                intent_to_resolve.put("type", "error");
+                intent_to_resolve.put("name", requestCode);
+            }
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+
+    }
+
 
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState) {
@@ -1134,13 +1163,6 @@ public class JasonViewActivity extends AppCompatActivity {
             JasonParser.getInstance(this).setParserListener(new JasonParser.JasonParserListener() {
                 @Override
                 public void onFinished(JSONObject body) {
-                    // in case we had $jason.head.data, need to trigger onLoad here
-                    // instead of inside build()
-                    // since on Load() gets triggered after everything has loaded
-                    // In this case, model.rendered will be null here since it hasn't been rendered yet.
-                    if(!loaded){
-                        onLoad();
-                    }
 
                     setup_body(body);
                     JasonHelper.next("success", action, new JSONObject(), event, context);
@@ -1264,6 +1286,33 @@ public class JasonViewActivity extends AppCompatActivity {
         }
     }
 
+    public void snapshot ( final JSONObject action, JSONObject data, final JSONObject event, final Context context){
+        View v1 = getWindow().getDecorView().getRootView();
+        v1.setDrawingCacheEnabled(true);
+        final Bitmap bitmap = Bitmap.createBitmap(v1.getDrawingCache());
+        v1.setDrawingCacheEnabled(false);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                byte[] byteArray = stream.toByteArray();
+                String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                String data_uri = "data:image/png;base64," + encoded;
+                try {
+                    JSONObject ret = new JSONObject();
+                    ret.put("data", encoded);
+                    ret.put("data_uri", data_uri);
+                    ret.put("content_type", "image/png");
+                    JasonHelper.next("success", action, ret, event, context);
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
+
+            }
+        }).start();
+    }
+
     /*************************************************************
      *
      * JASON VIEW
@@ -1358,6 +1407,30 @@ public class JasonViewActivity extends AppCompatActivity {
                     // Set sections
                     if (body.has("sections")) {
                         setup_sections(body.getJSONArray("sections"));
+                        if(body.has("style") && body.getJSONObject("style").has("border")){
+                            String border = body.getJSONObject("style").getString("border");
+                            if(border.equalsIgnoreCase("none")){
+
+                            } else {
+                                int color = JasonHelper.parse_color(border);
+                                listView.removeItemDecoration(divider);
+                                divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
+                                            .color(color)
+                                            .showLastDivider()
+                                            .positionInsideItem(true)
+                                            .build();
+                                listView.addItemDecoration(divider);
+                            }
+                        } else {
+                            listView.removeItemDecoration(divider);
+                            int color = JasonHelper.parse_color("#eaeaea"); // default color
+                            divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
+                                    .color(color)
+                                    .showLastDivider()
+                                    .positionInsideItem(true)
+                                    .build();
+                            listView.addItemDecoration(divider);
+                        }
                     } else {
                         setup_sections(null);
                     }
@@ -1419,7 +1492,9 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
                     rootLayout.requestLayout();
 
-
+                    if(!loaded){
+                        onLoad();
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1839,6 +1914,84 @@ public class JasonViewActivity extends AppCompatActivity {
                 header_height = toolbar.getHeight();
                 setup_title(header);
 
+                if(header.has("search")){
+                    SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+                    final JSONObject search = header.getJSONObject("search");
+                    if(searchView == null) {
+                        searchView = new SearchView(this);
+                        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
+
+                        toolbar.addView(searchView);
+                    } else {
+                        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+                    }
+
+                    // styling
+
+                    // color
+                    int c;
+                    if(search.has("style") && search.getJSONObject("style").has("color")){
+                        c = JasonHelper.parse_color(search.getJSONObject("style").getString("color"));
+                    } else if(header.has("style") && header.getJSONObject("style").has("color")){
+                        c = JasonHelper.parse_color(header.getJSONObject("style").getString("color"));
+                    } else {
+                        c = -1;
+                    }
+                    if(c > 0) {
+                        ImageView searchButton = (ImageView) searchView.findViewById(android.support.v7.appcompat.R.id.search_button);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            searchButton.setImageTintList(ColorStateList.valueOf(JasonHelper.parse_color(header.getJSONObject("style").getString("color"))));
+                        }
+                    }
+
+                    // background
+                    if(search.has("style") && search.getJSONObject("style").has("background")){
+                        int bc = JasonHelper.parse_color(search.getJSONObject("style").getString("background"));
+                        searchView.setBackgroundColor(bc);
+                    }
+
+                    // placeholder
+                    if(search.has("placeholder")){
+                        searchView.setQueryHint(search.getString("placeholder"));
+                    }
+
+
+                    searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
+                        @Override
+                        public boolean onQueryTextSubmit(String s) {
+                            // name
+                            if(search.has("name")){
+                                try {
+                                    JSONObject kv = new JSONObject();
+                                    kv.put(search.getString("name"), s);
+                                    model.var = JasonHelper.merge(model.var, kv);
+                                    if(search.has("action")){
+                                        call(search.getJSONObject("action").toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
+                                    }
+                                } catch (Exception e){
+                                    Log.d("Error", e.toString());
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onQueryTextChange(String s) {
+                            if(search.has("action")){
+                                return false;
+                            } else {
+                                if(listView != null){
+                                    ItemAdapter adapter = (ItemAdapter)listView.getAdapter();
+                                    adapter.filter(s);
+                                }
+                                return true;
+                            }
+                        }
+                    });
+                }
+
+
                 if (header.has("menu")) {
                     JSONObject json = header.getJSONObject("menu");
 
@@ -2010,4 +2163,19 @@ public class JasonViewActivity extends AppCompatActivity {
         }
     }
 
+    /******************
+     * Event listeners
+     ******************/
+
+    /**
+     * Enables components, or anyone with access to this activity, to listen for item touch events
+     * on listView. If the same listener is passed more than once, only the first listener is added.
+     * @param listener
+     */
+    public void addListViewOnItemTouchListener(RecyclerView.OnItemTouchListener listener) {
+        if(!listViewOnItemTouchListeners.contains(listener)) {
+            listViewOnItemTouchListeners.add(listener);
+            listView.addOnItemTouchListener(listener);
+        }
+    }
 }

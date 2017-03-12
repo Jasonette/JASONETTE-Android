@@ -116,7 +116,11 @@ public class JasonOauthAction {
 
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
                                 intent.setData(Uri.parse(auth_url));
-                                context.startActivity(intent);
+
+                                JSONObject callback = new JSONObject();
+                                callback.put("class", "JasonOauthAction");
+                                callback.put("method", "oauth_callback");
+                                JasonHelper.dispatchIntent("oauth", action, data, event, context, intent, callback);
                             } catch(Exception e) {
                                 handleError(e, action, event, context);
                             }
@@ -318,7 +322,11 @@ public class JasonOauthAction {
 
                                     Intent intent = new Intent(Intent.ACTION_VIEW);
                                     intent.setData(Uri.parse(oauthService.getAuthorizationUrl(additionalParams)));
-                                    context.startActivity(intent);
+
+                                    JSONObject callback = new JSONObject();
+                                    callback.put("class", "JasonOauthAction");
+                                    callback.put("method", "oauth_callback");
+                                    JasonHelper.dispatchIntent("oauth", action, data, event, context, intent, callback);
                                 }
                             }
 
@@ -357,97 +365,96 @@ public class JasonOauthAction {
         }
     }
 
-    public void oauth_callback(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+    public void oauth_callback(Intent intent, final JSONObject intent_options) {
         try {
-            final JSONObject options = action.getJSONObject("options");
+            final JSONObject action = intent_options.getJSONObject("action");
+            final JSONObject data = intent_options.getJSONObject("data");
+            final JSONObject event = intent_options.getJSONObject("event");
+            final Context context = (Context)intent_options.get("context");
+
+            JSONObject options = action.getJSONObject("options");
+
+            Uri uri = intent.getData();
+
             if (options.has("version") && options.getString("version").equals("1")) {
                 //OAuth 1
+                String oauth_token = uri.getQueryParameter("oauth_token");
+                String oauth_verifier = uri.getQueryParameter("oauth_verifier");
 
-                if(action.has("uri")) {
-                    Uri uri = Uri.parse(action.getString("uri"));
+                JSONObject access_options = options.getJSONObject("access");
 
-                    String oauth_token = uri.getQueryParameter("oauth_token");
-                    String oauth_verifier = uri.getQueryParameter("oauth_verifier");
+                if(
+                    oauth_token.length() > 0  && oauth_verifier.length() > 0
+                    && access_options.has("scheme") && access_options.getString("scheme").length() > 0
+                    && access_options.has("host") && access_options.getString("host").length() > 0
+                    && access_options.has("path") && access_options.getString("path").length() > 0
+                    && access_options.has("path") && access_options.getString("path").length() > 0
+                    && access_options.has("client_id") && access_options.getString("client_id").length() > 0
+                    && access_options.has("client_secret") && access_options.getString("client_secret").length() > 0
+                ) {
+                    String client_id = access_options.getString("client_id");
+                    String client_secret = access_options.getString("client_secret");
 
-                    JSONObject access_options = options.getJSONObject("access");
+                    Uri.Builder uriBuilder = new Uri.Builder();
+                    uriBuilder.scheme(access_options.getString("scheme"))
+                        .encodedAuthority(access_options.getString("host"))
+                        .encodedPath(access_options.getString("path"));
 
-                    if(
-                        oauth_token.length() > 0  && oauth_verifier.length() > 0
-                        && access_options.has("scheme") && access_options.getString("scheme").length() > 0
-                        && access_options.has("host") && access_options.getString("host").length() > 0
-                        && access_options.has("path") && access_options.getString("path").length() > 0
-                        && access_options.has("path") && access_options.getString("path").length() > 0
-                        && access_options.has("client_id") && access_options.getString("client_id").length() > 0
-                        && access_options.has("client_secret") && access_options.getString("client_secret").length() > 0
-                    ) {
-                        String client_id = access_options.getString("client_id");
-                        String client_secret = access_options.getString("client_secret");
+                    final String accessUri = uriBuilder.build().toString();
 
-                        Uri.Builder uriBuilder = new Uri.Builder();
-                        uriBuilder.scheme(access_options.getString("scheme"))
-                            .encodedAuthority(access_options.getString("host"))
-                            .encodedPath(access_options.getString("path"));
+                    DefaultApi10a oauthApi = new DefaultApi10a() {
+                        @Override
+                        public String getAuthorizationUrl(OAuth1RequestToken requestToken) { return null; }
 
-                        final String accessUri = uriBuilder.build().toString();
+                        @Override
+                        public String getRequestTokenEndpoint() { return null; }
 
-                        DefaultApi10a oauthApi = new DefaultApi10a() {
-                            @Override
-                            public String getAuthorizationUrl(OAuth1RequestToken requestToken) { return null; }
+                        @Override
+                        public String getAccessTokenEndpoint() {
+                            return accessUri.toString();
+                        }
+                    };
 
-                            @Override
-                            public String getRequestTokenEndpoint() { return null; }
+                    final OAuth10aService oauthService = new ServiceBuilder()
+                            .apiKey(client_id)
+                            .apiSecret(client_secret)
+                            .build(oauthApi);
 
-                            @Override
-                            public String getAccessTokenEndpoint() {
-                                return accessUri.toString();
+                    new AsyncTask<String, Void, Void>() {
+                        @Override
+                        protected Void doInBackground(String... params) {
+                            try {
+                                SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
+
+                                String string_oauth_token = params[0];
+                                String oauth_verifier = params[1];
+                                String client_id = params[2];
+                                String oauth_token_secret = preferences.getString(client_id + "_request_token_secret", null);
+
+                                OAuth1RequestToken oauthToken = new OAuth1RequestToken(string_oauth_token, oauth_token_secret);
+
+                                OAuth1AccessToken access_token = oauthService.getAccessToken(oauthToken, oauth_verifier);
+
+                                preferences.edit().putString(client_id, access_token.getToken()).apply();
+                                preferences.edit().putString(client_id + "_access_token_secret", access_token.getTokenSecret()).apply();
+
+                                JSONObject result = new JSONObject();
+                                result.put("token", access_token.getToken());
+
+                                JasonHelper.next("success", action, result, event, context);
+                            } catch(Exception e) {
+                                handleError(e, action, event, context);
                             }
-                        };
 
-                        final OAuth10aService oauthService = new ServiceBuilder()
-                                .apiKey(client_id)
-                                .apiSecret(client_secret)
-                                .build(oauthApi);
+                            return null;
+                        }
+                    }.execute(oauth_token, oauth_verifier, client_id);
 
-                        new AsyncTask<String, Void, Void>() {
-                            @Override
-                            protected Void doInBackground(String... params) {
-                                try {
-                                    SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
-
-                                    String string_oauth_token = params[0];
-                                    String oauth_verifier = params[1];
-                                    String client_id = params[2];
-                                    String oauth_token_secret = preferences.getString(client_id + "_request_token_secret", null);
-
-                                    OAuth1RequestToken oauthToken = new OAuth1RequestToken(string_oauth_token, oauth_token_secret);
-
-                                    OAuth1AccessToken access_token = oauthService.getAccessToken(oauthToken, oauth_verifier);
-
-                                    preferences.edit().putString(client_id, access_token.getToken()).apply();
-                                    preferences.edit().putString(client_id + "_access_token_secret", access_token.getTokenSecret()).apply();
-
-                                    JSONObject result = new JSONObject();
-                                    result.put("token", access_token.getToken());
-
-                                    JasonHelper.next("success", action, result, event, context);
-                                } catch(Exception e) {
-                                    handleError(e, action, event, context);
-                                }
-
-                                return null;
-                            }
-                        }.execute(oauth_token, oauth_verifier, client_id);
-
-                    } else {
-                        JasonHelper.next("error", action, data, event, context);
-                    }
                 } else {
                     JasonHelper.next("error", action, data, event, context);
                 }
             } else {
                 // OAuth 2
-                Uri uri = Uri.parse(action.getString("uri"));
-
                 String access_token = uri.getQueryParameter("access_token"); // get access token from url here
 
                 JSONObject authorize_options = options.getJSONObject("authorize");
@@ -473,7 +480,8 @@ public class JasonOauthAction {
             try {
                 JSONObject error = new JSONObject();
                 error.put("data", e.toString());
-                JasonHelper.next("error", action, error, event, context);
+
+                JasonHelper.next("error", intent_options.getJSONObject("action"), error, intent_options.getJSONObject("event"), (Context)intent_options.get("context"));
             } catch(JSONException error) {
                 Log.d("Error", error.toString());
             }
