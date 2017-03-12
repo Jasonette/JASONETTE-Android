@@ -37,4 +37,6 @@ dependencies {
     compile 'commons-lang:commons-lang:2.6'
     compile 'com.yqritc:recyclerview-flexibledivider:1.4.0'
     compile 'com.commonsware.cwac:cam2:0.7.4'
+    compile 'com.github.adrielcafe:AndroidAudioRecorder:0.2.0'
+    compile 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
 }

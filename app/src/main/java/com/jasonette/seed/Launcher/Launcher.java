@@ -57,6 +57,7 @@ public class Launcher extends Application {
 
             // handler init
             handlers = new JSONObject();
+
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
@@ -66,7 +67,7 @@ public class Launcher extends Application {
 
     /***************************
      *
-        Intent schedule/trigger
+     *  Intent schedule/trigger
      *
      ***************************/
 
@@ -96,7 +97,10 @@ public class Launcher extends Application {
             if (type.equalsIgnoreCase("success")) {
                 // success
                 JSONObject handler = getHandler(String.valueOf(intent_to_resolve.getInt("name")));
-                Intent intent = (Intent) intent_to_resolve.get("intent");
+                Intent intent = null;
+                if(intent_to_resolve.has("intent")){
+                    intent = (Intent) intent_to_resolve.get("intent");
+                }
 
                 String classname = handler.getString("class");
                 classname = "com.jasonette.seed.Action." + classname;

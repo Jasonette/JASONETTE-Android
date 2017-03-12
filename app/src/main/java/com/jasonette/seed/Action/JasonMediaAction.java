@@ -117,6 +117,8 @@ public class JasonMediaAction {
             callback.put("method", "process");
 
             JasonHelper.dispatchIntent(action, data, event, context, intent, callback);
+        } catch (SecurityException e){
+            JasonHelper.permission_exception("$media.picker", context);
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }
@@ -201,7 +203,8 @@ public class JasonMediaAction {
             callback.put("class", "JasonMediaAction");
             callback.put("method", "process");
             JasonHelper.dispatchIntent(action, data, event, context, intent, callback);
-
+        } catch (SecurityException e){
+            JasonHelper.permission_exception("$media.camera", context);
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }

@@ -29,15 +29,22 @@
 
     <!-- Uncomment below line to enable $util.addressbook -->
     <!--
-    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+        <uses-permission android:name="android.permission.READ_CONTACTS"/>
     -->
 
     <!-- Uncomment below lines to enable $geo.get -->
     <!--
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+        <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+        <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     -->
+
+    <!-- Uncomment below lines to enable $audio.record -->
+    <!--
+        <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+        <uses-permission android:name="android.permission.WAKE_LOCK" />
+    -->
+
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 

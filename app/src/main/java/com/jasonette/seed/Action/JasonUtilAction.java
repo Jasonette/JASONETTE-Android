@@ -448,6 +448,18 @@ public class JasonUtilAction {
                                             context.startActivity(Intent.createChooser(callback_intent, "Share"));
                                         }
                                     }
+                                } else if (type.equalsIgnoreCase("audio")){
+                                    if(item.has("file_url")){
+                                        Uri uri = Uri.parse(item.getString("file_url"));
+                                        callback_intent.putExtra(Intent.EXTRA_STREAM, uri);
+                                        callback_intent.setType("audio/*");
+                                        callback_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        counter++;
+                                        if (counter == l) {
+                                            JasonHelper.next("success", action, new JSONObject(), event, context);
+                                            context.startActivity(Intent.createChooser(callback_intent, "Share"));
+                                        }
+                                    }
                                 }
                             }
                         }

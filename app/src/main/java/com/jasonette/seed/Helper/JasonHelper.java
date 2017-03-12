@@ -328,8 +328,13 @@ public class JasonHelper {
             Log.d("Error", e.toString());
         }
 
-        // Start the activity
-        ((JasonViewActivity)context).startActivityForResult(intent, requestCode);
+        if(intent != null) {
+            // Start the activity
+            ((JasonViewActivity) context).startActivityForResult(intent, requestCode);
+        } else {
+            // if intent is null,
+            // it means we are manually going to deal with opening a new Intent
+        }
 
     }
     public static void dispatchIntent(JSONObject action, JSONObject data, JSONObject event, Context context, Intent intent, JSONObject handler) {
