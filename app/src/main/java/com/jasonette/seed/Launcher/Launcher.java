@@ -137,6 +137,30 @@ public class Launcher extends Application {
 
         }
     }
+    public void callback(JSONObject handler, String result, JasonViewActivity context){
+        try {
+            String classname = handler.getString("class");
+            classname = "com.jasonette.seed.Action." + classname;
+            String methodname = handler.getString("method");
+
+            Object module;
+            if (context.modules.containsKey(classname)) {
+                module = context.modules.get(classname);
+            } else {
+                Class<?> classObject = Class.forName(classname);
+                Constructor<?> constructor = classObject.getConstructor();
+                module = constructor.newInstance();
+                context.modules.put(classname, module);
+            }
+
+            Method method = module.getClass().getMethod(methodname, JSONObject.class, String.class);
+            //JSONObject options = handler.getJSONObject("options");
+            method.invoke(module, handler, result);
+
+        } catch (Exception e) {
+
+        }
+    }
 
     // Private
 
