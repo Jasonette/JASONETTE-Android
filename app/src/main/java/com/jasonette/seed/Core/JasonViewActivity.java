@@ -48,6 +48,7 @@ import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonSettings;
 import com.jasonette.seed.Launcher.Launcher;
+import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
 import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
@@ -2018,9 +2019,56 @@ public class JasonViewActivity extends AppCompatActivity{
                         JasonComponentFactory.build(menuButton, json, null, JasonViewActivity.this);
                     }
 
+                    FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams)menuButton.getLayoutParams();
+                    lp.width = FrameLayout.LayoutParams.MATCH_PARENT;
+                    lp.height = FrameLayout.LayoutParams.MATCH_PARENT;
+
                     // Set padding for the menu button
                     int padding = (int)JasonHelper.pixels(this, "10", "vertical");
                     itemView.setPadding(padding, 0, padding, 0);
+
+
+                    if(json.has("badge")){
+                        String badge_text = "";
+                        JSONObject badge = json.getJSONObject("badge");
+                        if(badge.has("text")) {
+                            badge_text = badge.getString("text");
+                        }
+                        JSONObject badge_style = badge.getJSONObject("style");
+
+                        int color = JasonHelper.parse_color("#ffffff");
+                        int background = JasonHelper.parse_color("#ff0000");
+
+                        if(badge_style.has("color")) color = JasonHelper.parse_color(badge_style.getString("color"));
+                        if(badge_style.has("background")) background = JasonHelper.parse_color(badge_style.getString("background"));
+
+                        MaterialBadgeTextView v = new MaterialBadgeTextView(this);
+                        v.setBackgroundColor(background);
+                        v.setTextColor(color);
+                        v.setText(badge_text);
+
+                        FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.MATCH_PARENT);
+                        itemView.setLayoutParams(p);
+
+
+                        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+                        layoutParams.gravity = Gravity.LEFT | Gravity.TOP;
+
+                        int left = (int)JasonHelper.pixels(this, String.valueOf(-5), "vertical");
+                        int top = (int)JasonHelper.pixels(this, String.valueOf(0), "vertical");
+                        if(badge_style.has("left")){
+                            left = (int)JasonHelper.pixels(this, badge_style.getString("left"), "horizontal");
+                        }
+                        if(badge_style.has("top")) {
+                            top = (int)JasonHelper.pixels(this, String.valueOf(Integer.parseInt(badge_style.getString("top")) + 8), "vertical");
+                        }
+                        layoutParams.setMargins(left,top,0,0);
+                        itemView.addView(v);
+                        v.setLayoutParams(layoutParams);
+                        itemView.setClipChildren(false);
+                        itemView.setClipToPadding(false);
+
+                    }
 
 
                     item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
