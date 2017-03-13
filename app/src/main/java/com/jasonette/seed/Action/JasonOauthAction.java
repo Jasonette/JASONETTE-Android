@@ -611,10 +611,34 @@ public class JasonOauthAction {
             String client_id = options.getString("client_id");
 
             if(options.has("version") && options.getString("version").equals("1")) {
-                //TODO
+                SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
+                preferences.edit().remove(client_id).apply();
+
+                if(preferences.contains(client_id + "_request_token_secret")) {
+                    preferences.edit().remove(client_id + "_request_token_secret");
+                }
+
+                if(preferences.contains(client_id + "_access_token_secret")) {
+                    preferences.edit().remove(client_id + "_access_token_secret");
+                }
+
+                JasonHelper.next("success", action, data, event, context);
             } else {
                 SharedPreferences preferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
                 preferences.edit().remove(client_id).apply();
+
+                if(preferences.contains(client_id + "_refresh_token")) {
+                    preferences.edit().remove(client_id + "_refresh_token");
+                }
+
+                if(preferences.contains(client_id + "_expires_in")) {
+                    preferences.edit().remove(client_id + "_expires_in");
+                }
+
+                if(preferences.contains(client_id + "_created_at")) {
+                    preferences.edit().remove(client_id + "_created_at");
+                }
+
                 JasonHelper.next("success", action, data, event, context);
             }
         } catch(JSONException e) {
