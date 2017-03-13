@@ -204,11 +204,9 @@ public class JasonViewActivity extends AppCompatActivity {
         model = new JasonModel(url, intent, this);
 
         Uri uri = getIntent().getData();
-        if(uri != null) {
-            if(uri.getHost().contains("oauth")) {
-                loaded = true; // in case of oauth process we need to set loaded to true since we know it's already been loaded.
-                return;
-            }
+        if(uri != null && uri.getHost().contains("oauth")) {
+            loaded = true; // in case of oauth process we need to set loaded to true since we know it's already been loaded.
+            return;
         }
 
         if(savedInstanceState != null) {
@@ -283,29 +281,27 @@ public class JasonViewActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));
 
         SharedPreferences pref = getSharedPreferences("model", 0);
-        if(url!=null) {
-            if (pref.contains(url)) {
-                String str = pref.getString(url, null);
-                try {
-                    JSONObject temp_model = new JSONObject(str);
-                    if(temp_model.has("url")) model.url = temp_model.getString("url");
-                    if(temp_model.has("jason")) model.jason = temp_model.getJSONObject("jason");
-                    if(temp_model.has("rendered")) model.rendered = temp_model.getJSONObject("rendered");
-                    if(temp_model.has("state")) model.state = temp_model.getJSONObject("state");
-                    if(temp_model.has("var")) model.var = temp_model.getJSONObject("var");
-                    if(temp_model.has("cache")) model.cache = temp_model.getJSONObject("cache");
-                    if(temp_model.has("params")) model.params = temp_model.getJSONObject("params");
-                    if(temp_model.has("session")) model.session = temp_model.getJSONObject("session");
-                    if(temp_model.has("action")) model.action = temp_model.getJSONObject("action");
+        if(url!=null && pref.contains(url)) {
+            String str = pref.getString(url, null);
+            try {
+                JSONObject temp_model = new JSONObject(str);
+                if(temp_model.has("url")) model.url = temp_model.getString("url");
+                if(temp_model.has("jason")) model.jason = temp_model.getJSONObject("jason");
+                if(temp_model.has("rendered")) model.rendered = temp_model.getJSONObject("rendered");
+                if(temp_model.has("state")) model.state = temp_model.getJSONObject("state");
+                if(temp_model.has("var")) model.var = temp_model.getJSONObject("var");
+                if(temp_model.has("cache")) model.cache = temp_model.getJSONObject("cache");
+                if(temp_model.has("params")) model.params = temp_model.getJSONObject("params");
+                if(temp_model.has("session")) model.session = temp_model.getJSONObject("session");
+                if(temp_model.has("action")) model.action = temp_model.getJSONObject("action");
 
-                    // Delete shared preference after resuming
-                    SharedPreferences.Editor editor = pref.edit();
-                    editor.remove(model.url);
-                    editor.commit();
+                // Delete shared preference after resuming
+                SharedPreferences.Editor editor = pref.edit();
+                editor.remove(model.url);
+                editor.commit();
 
-                } catch (Exception e) {
-                    Log.d("Error", e.toString());
-                }
+            } catch (Exception e) {
+                Log.d("Error", e.toString());
             }
         }
 
