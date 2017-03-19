@@ -251,4 +251,19 @@ public class JasonHelper {
         }
 
     }
+    public static void permission_exception(String actionName, Context context){
+        try {
+            Intent intent = new Intent("call");
+            JSONObject alert_action = new JSONObject();
+            alert_action.put("type", "$util.alert");
+            JSONObject options = new JSONObject();
+            options.put("title", "Turn on Permissions");
+            options.put("description", actionName + " requires additional permissions. Go to AndroidManifest.xml file and turn on the permission");
+            alert_action.put("options", options);
+            intent.putExtra("action", alert_action.toString());
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+    }
 }
