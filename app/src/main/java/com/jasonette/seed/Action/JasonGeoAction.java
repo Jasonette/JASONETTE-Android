@@ -39,6 +39,8 @@ public class JasonGeoAction {
                 }
             };
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener, Looper.getMainLooper());
+        } catch (SecurityException e){
+            JasonHelper.permission_exception("$geo.get", context);
         } catch (Exception e) {
             Log.d("Error", e.toString());
         }

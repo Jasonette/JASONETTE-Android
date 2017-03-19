@@ -12,10 +12,14 @@
         <activity android:name=".Core.JasonViewActivity" android:windowSoftInputMode="adjustResize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.commonsware.cwac.cam2.CameraActivity"
+            android:process=":cwac_cam2"
+            android:theme="@style/CameraTheme"/>
+
         <!-- Uncomment below line and add your Google Maps API key -->
         <!--
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR GOOGLE MAPS API KEY HERE"/>
@@ -25,14 +29,23 @@
 
     <!-- Uncomment below line to enable $util.addressbook -->
     <!--
-    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+        <uses-permission android:name="android.permission.READ_CONTACTS"/>
     -->
 
     <!-- Uncomment below lines to enable $geo.get -->
     <!--
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+        <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+        <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     -->
+
+    <!-- Uncomment below lines to enable $audio.record -->
+    <!--
+        <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+        <uses-permission android:name="android.permission.WAKE_LOCK" />
+    -->
+
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
 </manifest>

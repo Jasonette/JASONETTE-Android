@@ -12,13 +12,17 @@ import android.util.TypedValue;
 import android.view.WindowManager;
 
 import com.jasonette.seed.Core.JasonViewActivity;
+import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -41,7 +45,7 @@ public class JasonHelper {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception e){
             Log.d("Error", e.toString());
         }
 
@@ -56,7 +60,7 @@ public class JasonHelper {
                     style.put(style_key, inline_style.get(style_key));
                 }
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             Log.d("Error", e.toString());
         }
         return style;
@@ -78,9 +82,9 @@ public class JasonHelper {
         }
     }
 
-    public static void next(String type, JSONObject action, Object data, final JSONObject event, Context context){
+    public static void next(String type, JSONObject action, Object data, final JSONObject event, Context context) {
         try {
-            if(action.has(type)){
+            if (action.has(type)) {
                 Intent intent = new Intent(type);
                 intent.putExtra("action", action.get(type).toString());
                 intent.putExtra("data", data.toString());
@@ -101,7 +105,7 @@ public class JasonHelper {
         }
     }
 
-    public static Object objectify(String json){
+    public static Object objectify(String json) {
         try {
             if (json.trim().startsWith("[")) {
                 // JSONArray
@@ -118,10 +122,10 @@ public class JasonHelper {
     }
 
 
-    public static ArrayList<JSONObject> toArrayList(JSONArray jsonArray){
+    public static ArrayList<JSONObject> toArrayList(JSONArray jsonArray) {
         ArrayList<JSONObject> list = new ArrayList<JSONObject>();
         try {
-            for (int i=0; i<jsonArray.length(); i++) {
+            for (int i = 0; i < jsonArray.length(); i++) {
                 list.add(jsonArray.getJSONObject(i));
             }
         } catch (Exception e) {
@@ -130,7 +134,7 @@ public class JasonHelper {
         return list;
     }
 
-    public static float pixels(Context context, String size, String direction){
+    public static float pixels(Context context, String size, String direction) {
         String regex_percent_and_pixels = "^([0-9.]+)%[ ]*([+-]?)[ ]*([0-9]+)$";
         Pattern percent_pixels = Pattern.compile(regex_percent_and_pixels);
         Matcher m = percent_pixels.matcher(size);
@@ -148,17 +152,17 @@ public class JasonHelper {
             float percent_height;
             float percent_width;
             float s;
-            if(direction.equalsIgnoreCase("vertical")){
+            if (direction.equalsIgnoreCase("vertical")) {
                 int full = displayMetrics.heightPixels;
-                percent_height = full*percentage/100;
+                percent_height = full * percentage / 100;
                 s = percent_height;
             } else {
                 int full = displayMetrics.widthPixels;
-                percent_width = full*percentage/100;
+                percent_width = full * percentage / 100;
                 s = percent_width;
             }
 
-            if(sign.equalsIgnoreCase("+")){
+            if (sign.equalsIgnoreCase("+")) {
                 s = s + pixels;
             } else {
                 s = s - pixels;
@@ -171,17 +175,17 @@ public class JasonHelper {
             Pattern percent = Pattern.compile(regex);
             m = percent.matcher(size);
             float s;
-            if(m.matches()){
+            if (m.matches()) {
                 Float percentage = Float.parseFloat(m.group(1));
                 DisplayMetrics displayMetrics = new DisplayMetrics();
                 WindowManager windowmanager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
                 windowmanager.getDefaultDisplay().getMetrics(displayMetrics);
-                if(direction.equalsIgnoreCase("vertical")){
+                if (direction.equalsIgnoreCase("vertical")) {
                     int full = displayMetrics.heightPixels;
-                    s = full*percentage/100;
+                    s = full * percentage / 100;
                 } else {
                     int full = displayMetrics.widthPixels;
-                    s = full*percentage/100;
+                    s = full * percentage / 100;
                 }
                 return s;
             } else {
@@ -190,29 +194,32 @@ public class JasonHelper {
             }
         }
     }
-    public static int parse_color(String color_string){
+
+    public static int parse_color(String color_string) {
         Pattern rgb = Pattern.compile("rgb *\\( *([0-9]+), *([0-9]+), *([0-9]+) *\\)");
         Pattern rgba = Pattern.compile("rgba *\\( *([0-9]+), *([0-9]+), *([0-9]+), *([0-9.]+) *\\)");
         Matcher rgba_m = rgba.matcher(color_string);
         Matcher rgb_m = rgb.matcher(color_string);
-        if (rgba_m.matches()){
+        if (rgba_m.matches()) {
             float a = Float.valueOf(rgba_m.group(4));
             int alpha = (int) Math.round(a * 255);
             String hex = Integer.toHexString(alpha).toUpperCase();
             if (hex.length() == 1) hex = "0" + hex;
             hex = "0000" + hex;
             return Color.argb(Integer.parseInt(hex, 16), Integer.valueOf(rgba_m.group(1)), Integer.valueOf(rgba_m.group(2)), Integer.valueOf(rgba_m.group(3)));
-        } else if(rgb_m.matches()){
+        } else if (rgb_m.matches()) {
             return Color.rgb(Integer.valueOf(rgb_m.group(1)), Integer.valueOf(rgb_m.group(2)), Integer.valueOf(rgb_m.group(3)));
         } else {
             // Otherwise assume hex code
             return Color.parseColor(color_string);
         }
     }
-    public static Typeface get_font(String font, Context context){
-        Typeface font_type = Typeface.createFromAsset(context.getAssets(),"fonts/"+font+".ttf");
+
+    public static Typeface get_font(String font, Context context) {
+        Typeface font_type = Typeface.createFromAsset(context.getAssets(), "fonts/" + font + ".ttf");
         return font_type;
     }
+
     public static String read_file(String filename, Context context) throws IOException {
         AssetManager assets = context.getAssets();
         final InputStream inputStream = assets.open(filename);
@@ -231,6 +238,7 @@ public class JasonHelper {
         inputStream.close();
         return stringBuilder.toString();
     }
+
     public static JSONObject read_json(String fn, Context context) throws IOException {
 
         // we're expecting a filename that looks like "file://..."
@@ -251,7 +259,8 @@ public class JasonHelper {
         }
 
     }
-    public static void permission_exception(String actionName, Context context){
+
+    public static void permission_exception(String actionName, Context context) {
         try {
             Intent intent = new Intent("call");
             JSONObject alert_action = new JSONObject();
@@ -266,4 +275,95 @@ public class JasonHelper {
             Log.d("Error", e.toString());
         }
     }
+
+    public static byte[] readBytes(InputStream inputStream) throws IOException {
+        // this dynamically extends to take the bytes you read
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+
+        // this is storage overwritten on each iteration with bytes
+        int bufferSize = 1024;
+        byte[] buffer = new byte[bufferSize];
+
+        // we need to know how may bytes were read to write them to the byteBuffer
+        int len = 0;
+        while ((len = inputStream.read(buffer)) != -1) {
+            byteBuffer.write(buffer, 0, len);
+        }
+
+        // and then we can return your byte array.
+        return byteBuffer.toByteArray();
+    }
+
+
+    // dispatchIntent method
+    // 1. triggers an external Intent
+    // 2. attaches a callback with all the payload so that we can pick it up where we left off when the intent returns
+    // the callback needs to specify the class name and the method name we wish to trigger after the intent returns
+    public static void dispatchIntent(String name, JSONObject action, JSONObject data, JSONObject event, Context context, Intent intent, JSONObject handler) {
+        // Generate unique identifier for return value
+        // This will be used to name the handlers
+        int requestCode;
+        try {
+            requestCode = Integer.parseInt(name);
+        } catch (NumberFormatException e) {
+            requestCode = -1;
+        }
+
+        try {
+            // handler looks like this:
+            /*
+                  {
+                    "class": [class name],
+                    "method": [method name],
+                    "options": {
+                        [options to preserve]
+                    }
+                  }
+             */
+
+            JSONObject options = new JSONObject();
+            options.put("action", action);
+            options.put("data", data);
+            options.put("event", event);
+            options.put("context", context);
+            handler.put("options", options);
+
+            ((Launcher) ((JasonViewActivity) context).getApplicationContext()).once(name, handler);
+        } catch (Exception e) {
+            Log.d("Error", e.toString());
+        }
+
+        if (intent != null) {
+            // Start the activity
+            ((JasonViewActivity) context).startActivityForResult(intent, requestCode);
+        } else {
+            // if intent is null,
+            // it means we are manually going to deal with opening a new Intent
+        }
+
+    }
+
+    public static void dispatchIntent(JSONObject action, JSONObject data, JSONObject event, Context context, Intent intent, JSONObject handler) {
+        dispatchIntent(String.valueOf((int) (System.currentTimeMillis() % 10000)), action, data, event, context, intent, handler);
+    }
+
+    public static void callback(JSONObject callback, String result, Context context) {
+        ((Launcher) context.getApplicationContext()).callback(callback, result, (JasonViewActivity) context);
+    }
+
+    public static JSONObject preserve(JSONObject callback, JSONObject action, JSONObject data, JSONObject event, Context context) {
+        try {
+            JSONObject callback_options = new JSONObject();
+            callback_options.put("action", action);
+            callback_options.put("data", data);
+            callback_options.put("event", event);
+            callback_options.put("context", context);
+            callback.put("options", callback_options);
+            return callback;
+        } catch (Exception e) {
+            Log.d("Error", "wasn't able to preserve stack");
+            return callback;
+        }
+    }
+
 }
