@@ -81,6 +81,7 @@ public class JasonViewActivity extends AppCompatActivity{
 
     private boolean firstResume = true;
     private boolean loaded;
+    private boolean fetched;
 
     private int header_height;
     private ImageView logoView;
@@ -225,6 +226,26 @@ public class JasonViewActivity extends AppCompatActivity{
                 Log.d("Error", e.toString());
             }
         } else {
+
+            // offline: true logic
+            // 1. check if the url + params signature exists
+            // 2. if it does, use that to construct the model and setup_body
+            // 3. Go on to fetching (it will be re-rendered if fetch is successful)
+
+            SharedPreferences pref = getSharedPreferences("offline", 0);
+            String signature = model.url + model.params.toString();
+            if(pref.contains(signature)){
+                String offline = pref.getString(signature, null);
+                try {
+                    JSONObject offline_cache = new JSONObject(offline);
+                    model.jason = offline_cache.getJSONObject("jason");
+                    model.rendered = offline_cache.getJSONObject("rendered");
+                    setup_body(model.rendered);
+                } catch (Exception e) {
+                    Log.d("Error", e.toString());
+                }
+            }
+
             // Fetch
             model.fetch();
         }
@@ -1301,6 +1322,8 @@ public class JasonViewActivity extends AppCompatActivity{
      ************************************************************/
 
     public void build(){
+        // set fetched to true since build() is only called after network.request succeeds
+        fetched = true;
         if(model.jason!=null) {
             try {
 
@@ -1340,6 +1363,25 @@ public class JasonViewActivity extends AppCompatActivity{
     private void setup_body(final JSONObject body) {
         model.rendered = body;
         invalidateOptionsMenu();
+
+        // Store to offline cache in case head.offline == true
+        try {
+            if(model.jason != null && model.jason.has("$jason") && model.jason.getJSONObject("$jason").has("head") && model.jason.getJSONObject("$jason").getJSONObject("head").has("offline")){
+                SharedPreferences pref = getSharedPreferences("offline", 0);
+                SharedPreferences.Editor editor = pref.edit();
+
+                String signature = model.url + model.params.toString();
+                JSONObject offline_cache = new JSONObject();
+                offline_cache.put("jason", model.jason);
+                offline_cache.put("rendered", model.rendered);
+
+                editor.putString(signature, offline_cache.toString());
+                editor.commit();
+
+            }
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+        }
 
         JasonViewActivity.this.runOnUiThread(new Runnable() {
             @Override
@@ -1473,8 +1515,14 @@ public class JasonViewActivity extends AppCompatActivity{
                     }
                     rootLayout.requestLayout();
 
+                    // if the first time being loaded
                     if(!loaded){
-                        onLoad();
+                        // and if the content has finished fetching (not via remote: true)
+                        if(fetched) {
+                            // trigger onLoad.
+                            // onLoad shouldn't be triggered when just drawing the offline cached view initially
+                            onLoad();
+                        }
                     }
 
                 } catch (Exception e) {
