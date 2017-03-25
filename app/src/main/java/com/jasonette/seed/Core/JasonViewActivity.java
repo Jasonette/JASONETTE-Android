@@ -30,6 +30,10 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -91,6 +95,7 @@ public class JasonViewActivity extends AppCompatActivity{
     private SwipeRefreshLayout swipeLayout;
     public LinearLayout sectionLayout;
     public RelativeLayout rootLayout;
+    public WebView webview;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
@@ -1413,9 +1418,36 @@ public class JasonViewActivity extends AppCompatActivity{
                                             }
                                         });
                                     }
-                                } else if(background == "camera"){
+                                } else if(background == "camera") {
                                 } else {
                                     getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
+                                }
+                            } else {
+                                JSONObject background = style.getJSONObject("background");
+                                String type = background.getString("type");
+                                if(type.equalsIgnoreCase("html")){
+                                    if(background.has("text")){
+                                        String html = background.getString("text");
+                                        CookieManager.getInstance().setAcceptCookie(true);
+                                        if(webview==null) {
+                                            webview = new WebView(JasonViewActivity.this);
+                                            webview.getSettings().setDefaultTextEncodingName("utf-8");
+                                            webview.setWebChromeClient(new WebChromeClient());
+                                            webview.setVerticalScrollBarEnabled(false);
+                                            webview.setHorizontalScrollBarEnabled(false);
+                                            WebSettings settings = webview.getSettings();
+                                            settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+                                            settings.setJavaScriptEnabled(true);
+                                            settings.setDomStorageEnabled(true);
+                                            settings.setJavaScriptCanOpenWindowsAutomatically(true);
+                                            RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                                    RelativeLayout.LayoutParams.MATCH_PARENT,
+                                                    RelativeLayout.LayoutParams.MATCH_PARENT);
+                                            webview.setLayoutParams(rlp);
+                                            rootLayout.addView(webview,0);
+                                        }
+                                        webview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
+                                    }
                                 }
                             }
                         }
@@ -1433,6 +1465,10 @@ public class JasonViewActivity extends AppCompatActivity{
                         if(body.has("style") && body.getJSONObject("style").has("border")){
                             String border = body.getJSONObject("style").getString("border");
                             if(border.equalsIgnoreCase("none")){
+                                if(divider != null){
+                                    listView.removeItemDecoration(divider);
+                                    divider = null;
+                                }
 
                             } else {
                                 int color = JasonHelper.parse_color(border);
