@@ -1425,29 +1425,29 @@ public class JasonViewActivity extends AppCompatActivity{
                             } else {
                                 JSONObject background = style.getJSONObject("background");
                                 String type = background.getString("type");
-                                JSONObject options = background.getJSONObject("options");
                                 if(type.equalsIgnoreCase("html")){
-                                    String text = options.getString("text");
-                                    String html = text;
-                                    CookieManager.getInstance().setAcceptCookie(true);
-                                    if(webview==null) {
-                                        webview = new WebView(JasonViewActivity.this);
-                                        webview.getSettings().setDefaultTextEncodingName("utf-8");
-                                        webview.setWebChromeClient(new WebChromeClient());
-                                        webview.setVerticalScrollBarEnabled(false);
-                                        webview.setHorizontalScrollBarEnabled(false);
-                                        WebSettings settings = webview.getSettings();
-                                        settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
-                                        settings.setJavaScriptEnabled(true);
-                                        settings.setDomStorageEnabled(true);
-                                        settings.setJavaScriptCanOpenWindowsAutomatically(true);
-                                        RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
-                                                RelativeLayout.LayoutParams.MATCH_PARENT,
-                                                RelativeLayout.LayoutParams.MATCH_PARENT);
-                                        webview.setLayoutParams(rlp);
-                                        rootLayout.addView(webview,0);
+                                    if(background.has("text")){
+                                        String html = background.getString("text");
+                                        CookieManager.getInstance().setAcceptCookie(true);
+                                        if(webview==null) {
+                                            webview = new WebView(JasonViewActivity.this);
+                                            webview.getSettings().setDefaultTextEncodingName("utf-8");
+                                            webview.setWebChromeClient(new WebChromeClient());
+                                            webview.setVerticalScrollBarEnabled(false);
+                                            webview.setHorizontalScrollBarEnabled(false);
+                                            WebSettings settings = webview.getSettings();
+                                            settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+                                            settings.setJavaScriptEnabled(true);
+                                            settings.setDomStorageEnabled(true);
+                                            settings.setJavaScriptCanOpenWindowsAutomatically(true);
+                                            RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                                    RelativeLayout.LayoutParams.MATCH_PARENT,
+                                                    RelativeLayout.LayoutParams.MATCH_PARENT);
+                                            webview.setLayoutParams(rlp);
+                                            rootLayout.addView(webview,0);
+                                        }
+                                        webview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
                                     }
-                                    webview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
                                 }
                             }
                         }
