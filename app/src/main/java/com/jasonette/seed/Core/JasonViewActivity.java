@@ -1399,6 +1399,7 @@ public class JasonViewActivity extends AppCompatActivity{
                     if (body.has("style")) {
                         JSONObject style = body.getJSONObject("style");
                         if (style.has("background")) {
+                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
                             if(style.get("background") instanceof String){
                                 String background = style.getString("background");
                                 if(background.matches("http[s]?:\\/\\/.*")) {
@@ -1658,80 +1659,91 @@ public class JasonViewActivity extends AppCompatActivity{
     private void setup_input(JSONObject input){
        // Set up a horizontal linearlayout
         // which sticks to the bottom
-        if(footerInput != null) {
-            ((EditText)footer_input_textfield).setText("");
-        } else {
-            // build footer.input shell and position it to the bottom
-            int height = (int) JasonHelper.pixels(JasonViewActivity.this, "60", "vertical");
-            int spacing = (int) JasonHelper.pixels(JasonViewActivity.this, "5", "vertical");
-            int outer_padding = (int) JasonHelper.pixels(JasonViewActivity.this, "10", "vertical");
-            footerInput = new LinearLayout(this);
-            footerInput.setOrientation(LinearLayout.HORIZONTAL);
-            footerInput.setGravity(Gravity.CENTER_VERTICAL);
-            footerInput.setPadding(outer_padding,0,outer_padding,0);
-            rootLayout.addView(footerInput);
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, height);
+        rootLayout.removeView(footerInput);
+        int height = (int) JasonHelper.pixels(JasonViewActivity.this, "60", "vertical");
+        int spacing = (int) JasonHelper.pixels(JasonViewActivity.this, "5", "vertical");
+        int outer_padding = (int) JasonHelper.pixels(JasonViewActivity.this, "10", "vertical");
+        footerInput = new LinearLayout(this);
+        footerInput.setOrientation(LinearLayout.HORIZONTAL);
+        footerInput.setGravity(Gravity.CENTER_VERTICAL);
+        footerInput.setPadding(outer_padding,0,outer_padding,0);
+        rootLayout.addView(footerInput);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, height);
 
-            params.bottomMargin = 0;
-            params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-            footerInput.setLayoutParams(params);
+        params.bottomMargin = 0;
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        footerInput.setLayoutParams(params);
 
-            // add left button and add
-            try {
-                JSONObject style = new JSONObject();
+        try {
+            if(input.has("style")){
+                if(input.getJSONObject("style").has("background")){
+                    int color = JasonHelper.parse_color(input.getJSONObject("style").getString("background"));
+                    footerInput.setBackgroundColor(color);
+                }
+            }
+            if(input.has("left")) {
+                JSONObject json = input.getJSONObject("left");
+                JSONObject style = json.getJSONObject("style");
+                style.put("height", "25");
+                if(json.has("image")) {
+                    json.put("url", json.getString("image"));
+                }
+                json.put("type", "button");
+                json.put("style", style);
+                View leftButton = JasonComponentFactory.build(null, json, null, JasonViewActivity.this);
+                leftButton.setPadding(spacing,0,spacing,0);
+                JasonComponentFactory.build(leftButton, input.getJSONObject("left"), null, JasonViewActivity.this);
+                footerInput.addView(leftButton);
+            }
+
+            JSONObject textfield;
+            if(input.has("textfield")) {
+                textfield = input.getJSONObject("textfield");
+            } else {
+                textfield = input;
+            }
+            textfield.put("type", "textfield");
+            // First build only creates the stub.
+            footer_input_textfield= JasonComponentFactory.build(null, textfield, null, JasonViewActivity.this);
+            int padding = (int) JasonHelper.pixels(JasonViewActivity.this, "10", "vertical");
+            // Build twice because the first build only builds the stub.
+            JasonComponentFactory.build(footer_input_textfield, textfield, null, JasonViewActivity.this);
+            footer_input_textfield.setPadding(padding, padding, padding, padding);
+            footerInput.addView(footer_input_textfield);
+            LinearLayout.LayoutParams layout_params = (LinearLayout.LayoutParams)footer_input_textfield.getLayoutParams();
+            layout_params.height = LinearLayout.LayoutParams.MATCH_PARENT;
+            layout_params.weight = 1;
+            layout_params.width = 0;
+            layout_params.leftMargin = spacing;
+            layout_params.rightMargin = spacing;
+            layout_params.topMargin = spacing;
+            layout_params.bottomMargin = spacing;
+
+            if(input.has("right")) {
+                JSONObject json = input.getJSONObject("right");
+                if(!json.has("image") && !json.has("text")){
+                    json.put("text", "Send");
+                }
+                if(json.has("image")) {
+                    json.put("url", json.getString("image"));
+                }
+                JSONObject style = json.getJSONObject("style");
                 style.put("height", "25");
 
-                if(input.has("left")) {
-                    JSONObject json = input.getJSONObject("left");
-                    if(json.has("image")) {
-                        json.put("url", json.getString("image"));
-                    }
-                    json.put("type", "button");
-                    json.put("style", style);
-                    View leftButton = JasonComponentFactory.build(null, json, null, JasonViewActivity.this);
-                    JasonComponentFactory.build(leftButton, input.getJSONObject("left"), null, JasonViewActivity.this);
-                    footerInput.addView(leftButton);
-                }
-
-                input.put("type", "textfield");
-                footer_input_textfield= JasonComponentFactory.build(null, input, null, JasonViewActivity.this);
-                int padding = (int) JasonHelper.pixels(JasonViewActivity.this, "10", "vertical");
-                JasonComponentFactory.build(footer_input_textfield, input, null, JasonViewActivity.this);
-                footer_input_textfield.setPadding(padding, padding, padding, padding);
-
-                footerInput.addView(footer_input_textfield);
-                LinearLayout.LayoutParams layout_params = (LinearLayout.LayoutParams)footer_input_textfield.getLayoutParams();
-                layout_params.height = LinearLayout.LayoutParams.MATCH_PARENT;
-                layout_params.weight = 1;
-                layout_params.width = 0;
-                layout_params.leftMargin = spacing;
-                layout_params.rightMargin = spacing;
-
-                if(input.has("right")) {
-                    JSONObject json = input.getJSONObject("right");
-                    if(!json.has("image") && !json.has("text")){
-                        json.put("text", "Send");
-                    }
-                    if(json.has("image")) {
-                        json.put("url", json.getString("image"));
-                    }
-                    json.put("type", "button");
-                    json.put("style", style);
-                    View rightButton = JasonComponentFactory.build(null, json, null, JasonViewActivity.this);
-                    JasonComponentFactory.build(rightButton, input.getJSONObject("right"), null, JasonViewActivity.this);
-                    rightButton.setPadding(0,0,0,0);
-                    footerInput.addView(rightButton);
-                }
-
-                footerInput.requestLayout();
-
-                listView.setClipToPadding(false);
-                listView.setPadding(0,0,0,height);
-            } catch (Exception e){
-                Log.d("Error", e.toString());
+                json.put("type", "button");
+                json.put("style", style);
+                View rightButton = JasonComponentFactory.build(null, json, null, JasonViewActivity.this);
+                JasonComponentFactory.build(rightButton, input.getJSONObject("right"), null, JasonViewActivity.this);
+                rightButton.setPadding(spacing,0,spacing,0);
+                footerInput.addView(rightButton);
             }
-            // add textfield
-            // ad right button ad add
+
+            footerInput.requestLayout();
+
+            listView.setClipToPadding(false);
+            listView.setPadding(0,0,0,height);
+        } catch (Exception e){
+            Log.d("Error", e.toString());
         }
     }
 
