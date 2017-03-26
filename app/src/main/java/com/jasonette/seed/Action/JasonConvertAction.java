@@ -16,11 +16,12 @@ import java.lang.Thread;
 public class JasonConvertAction {
     private JSONObject action;
     private Context context;
-    private JSONObject event;
+    private JSONObject event_cache;
 
     public void csv(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         this.action = action;
         this.context = context;
+        event_cache = event;
         try{
             final JSONObject options = action.getJSONObject("options");
             String result = "[]";
@@ -50,6 +51,7 @@ public class JasonConvertAction {
     public void rss(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         this.action = action;
         this.context = context;
+        event_cache = event;
         try{
             final JSONObject options = action.getJSONObject("options");
             String rss_data = options.getString("data");
@@ -105,7 +107,7 @@ public class JasonConvertAction {
         try {
             JSONObject error = new JSONObject();
             error.put("data", exc.toString());
-            JasonHelper.next("error", action, error, event, context);
+            JasonHelper.next("error", action, error, event_cache, context);
         } catch (Exception err){
             Log.d("Error", err.toString());
         }
@@ -137,7 +139,7 @@ public class JasonConvertAction {
                 V8Array rss_data = (V8Array) parameters.get(0);
                 String result = stringify(receiver.getRuntime(), rss_data);
 
-                JasonHelper.next("success", action, result, event, context);
+                JasonHelper.next("success", action, result, event_cache, context);
             } catch (Exception e) {
                 handle_exception(e);
             }
