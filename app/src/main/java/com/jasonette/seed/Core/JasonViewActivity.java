@@ -1123,8 +1123,7 @@ public class JasonViewActivity extends AppCompatActivity{
                             }
                             res.put(key, ret);
                         } else if(val instanceof String){
-                            String ret = ((String)val);
-                            res.put(key, ret);
+                            res.put(key, refs.get((String)val));
                         }
                     }
                     JasonHelper.next("success", action, res, event, context);
