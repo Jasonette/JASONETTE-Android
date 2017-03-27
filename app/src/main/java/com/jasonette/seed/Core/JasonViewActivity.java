@@ -308,8 +308,8 @@ public class JasonViewActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));
 
         SharedPreferences pref = getSharedPreferences("model", 0);
-        if(model.url!=null && pref.contains(url)) {
-            String str = pref.getString(url, null);
+        if(model.url!=null && pref.contains(model.url)) {
+            String str = pref.getString(model.url, null);
             try {
                 JSONObject temp_model = new JSONObject(str);
                 if(temp_model.has("url")) model.url = temp_model.getString("url");
