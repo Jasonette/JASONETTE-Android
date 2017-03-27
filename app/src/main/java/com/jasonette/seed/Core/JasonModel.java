@@ -179,7 +179,7 @@ public class JasonModel{
 
 
     private void include(String res){
-        String regex =  "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
+        String regex =  "\"([+@])\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
         Pattern require_pattern = Pattern.compile(regex);
         Matcher matcher = require_pattern.matcher(res);
 
@@ -219,18 +219,27 @@ public class JasonModel{
             // 1. check if it contains "+": "..."
             // 2. if it does, need to resolve it first.
             // 3. if it doesn't, just build the view immediately
-            String regex = "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
+
+            // Exclude patterns that start with $ (will be handled by local resolve)
+            String regex = "\"([+@])\"[ ]*:[ ]*\"(([^$\"@]+)(@))?([^$\"]+)\"";
             Pattern require_pattern = Pattern.compile(regex);
             Matcher matcher = require_pattern.matcher(res);
             if (matcher.find()) {
                 // if requires resolution, require first.
                 include(res);
             } else {
-                // otherwise just render
-                if (jason.has("$jason")) {
-                    view.build();
+                // otherwise, resolve local once and then render (for $document)
+                String local_regex = "\"([+@])\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
+                Pattern local_require_pattern = Pattern.compile(local_regex);
+                Matcher local_matcher = local_require_pattern.matcher(res);
+                if (local_matcher.find()) {
+                    resolve_local_reference();
                 } else {
+                    if (jason.has("$jason")) {
+                        view.build();
+                    } else {
 
+                    }
                 }
             }
         } catch (Exception e){
@@ -245,19 +254,14 @@ public class JasonModel{
 
         try {
 
-            Log.d("str_jason = ", str_jason);
-
-            String local_pattern_str = "\"@\"[ ]*:[ ]*\"[ ]*(\\$document[^\"]*)\"";
-            Pattern local_pattern = Pattern.compile(local_pattern_str);
-            Matcher local_matcher = local_pattern.matcher(str_jason);
-            str_jason = local_matcher.replaceAll("\"{{#include \\$root.$1}}\": {}");
-
-            String remote_pattern_with_path_str = "\"(@)\"[ ]*:[ ]*\"(([^\"@]+)(@))([^\"]+)\"";
+            // Exclude a pattern that starts with $ => will be handled by resolve_local_reference
+            String remote_pattern_with_path_str = "\"([+@])\"[ ]*:[ ]*\"(([^$\"@]+)(@))([^\"]+)\"";
             Pattern remote_pattern_with_path = Pattern.compile(remote_pattern_with_path_str);
             Matcher remote_with_path_matcher = remote_pattern_with_path.matcher(str_jason);
             str_jason = remote_with_path_matcher.replaceAll("\"{{#include \\$root[\\\\\"$5\\\\\"].$3}}\": {}");
 
-            String remote_pattern_without_path_str = "\"(@)\"[ ]*:[ ]*\"([^\"]+)\"";
+            // Exclude a pattern that starts with $ => will be handled by resolve_local_reference
+            String remote_pattern_without_path_str = "\"([+@])\"[ ]*:[ ]*\"([^$\"]+)\"";
             Pattern remote_pattern_without_path = Pattern.compile(remote_pattern_without_path_str);
             Matcher remote_without_path_matcher = remote_pattern_without_path.matcher(str_jason);
             str_jason = remote_without_path_matcher.replaceAll("\"{{#include \\$root[\\\\\"$2\\\\\"]}}\": {}");
@@ -265,34 +269,52 @@ public class JasonModel{
             JSONObject to_resolve = new JSONObject(str_jason);
 
             refs.put("$document", jason);
-            /*
-            Iterator<?> keys = refs.keys();
-            while(keys.hasNext()) {
-                String key = (String)keys.next();
-                if(!key.equalsIgnoreCase("$document")) {
-                    try {
-                        refs.put(key, refs.get(key));
-                    } catch (Exception e) {
-                        Log.d("Error", e.toString());
-                    }
-                }
-            }
-            */
 
             // parse
             JasonParser.getInstance(this.view).setParserListener(new JasonParser.JasonParserListener() {
                 @Override
                 public void onFinished(JSONObject resolved_jason) {
                     try {
-                        Log.d("j", resolved_jason.toString(2));
                         resolve_and_build(resolved_jason.toString());
                     } catch (Exception e) {
                         Log.d("Error", e.toString());
                     }
                 }
             });
-            Log.d("refs", refs.toString(2));
-            Log.d("to_resolve", to_resolve.toString(2));
+            JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
+        } catch (Exception e){
+            Log.d("Error", e.toString());
+        }
+
+    }
+
+    private void resolve_local_reference(){
+        // convert "+": "$document.blah.blah"
+        // to "{{#include $root.$document.blah.blah}}": {}
+        String str_jason = jason.toString();
+
+        try {
+
+            String local_pattern_str = "\"[+@]\"[ ]*:[ ]*\"[ ]*(\\$document[^\"]*)\"";
+            Pattern local_pattern = Pattern.compile(local_pattern_str);
+            Matcher local_matcher = local_pattern.matcher(str_jason);
+            str_jason = local_matcher.replaceAll("\"{{#include \\$root.$1}}\": {}");
+
+            JSONObject to_resolve = new JSONObject(str_jason);
+
+            refs.put("$document", jason);
+
+            // parse
+            JasonParser.getInstance(this.view).setParserListener(new JasonParser.JasonParserListener() {
+                @Override
+                public void onFinished(JSONObject resolved_jason) {
+                    try {
+                        resolve_and_build(resolved_jason.toString());
+                    } catch (Exception e) {
+                        Log.d("Error", e.toString());
+                    }
+                }
+            });
             JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
         } catch (Exception e){
             Log.d("Error", e.toString());
