@@ -49,6 +49,7 @@ public class JasonModel{
     public JSONObject cache;    // $cache
     public JSONObject params;   // $params
     public JSONObject session;
+    public JSONObject action;   // latest executed action
 
     public OkHttpClient client;
 

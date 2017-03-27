@@ -74,7 +74,7 @@ import java.util.concurrent.Executors;
 
 import static com.bumptech.glide.Glide.with;
 
-public class JasonViewActivity extends AppCompatActivity{
+public class JasonViewActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private RecyclerView listView;
     public String url;
@@ -210,6 +210,12 @@ public class JasonViewActivity extends AppCompatActivity{
         // Create model
         model = new JasonModel(url, intent, this);
 
+        Uri uri = getIntent().getData();
+        if(uri != null && uri.getHost().contains("oauth")) {
+            loaded = true; // in case of oauth process we need to set loaded to true since we know it's already been loaded.
+            return;
+        }
+
         if(savedInstanceState != null) {
             // Restore model and url
             // Then rebuild the view
@@ -280,6 +286,7 @@ public class JasonViewActivity extends AppCompatActivity{
             if (model.cache != null) temp_model.put("cache", model.cache);
             if (model.params != null) temp_model.put("params", model.params);
             if (model.session != null) temp_model.put("session", model.session);
+            if (model.action != null) temp_model.put("action", model.action);
             if (model.url!= null){
                 editor.putString(model.url, temp_model.toString());
                 editor.commit();
@@ -301,38 +308,46 @@ public class JasonViewActivity extends AppCompatActivity{
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));
 
         SharedPreferences pref = getSharedPreferences("model", 0);
-        if(model.url!=null) {
-            if (pref.contains(model.url)) {
-                String str = pref.getString(model.url, null);
-                try {
-                    JSONObject temp_model = new JSONObject(str);
-                    model.url = temp_model.getString("url");
-                    model.jason = temp_model.getJSONObject("jason");
-                    model.rendered = temp_model.getJSONObject("rendered");
-                    model.state = temp_model.getJSONObject("state");
-                    model.var = temp_model.getJSONObject("var");
-                    model.cache = temp_model.getJSONObject("cache");
-                    model.params = temp_model.getJSONObject("params");
-                    model.session = temp_model.getJSONObject("session");
+        if(model.url!=null && pref.contains(url)) {
+            String str = pref.getString(url, null);
+            try {
+                JSONObject temp_model = new JSONObject(str);
+                if(temp_model.has("url")) model.url = temp_model.getString("url");
+                if(temp_model.has("jason")) model.jason = temp_model.getJSONObject("jason");
+                if(temp_model.has("rendered")) model.rendered = temp_model.getJSONObject("rendered");
+                if(temp_model.has("state")) model.state = temp_model.getJSONObject("state");
+                if(temp_model.has("var")) model.var = temp_model.getJSONObject("var");
+                if(temp_model.has("cache")) model.cache = temp_model.getJSONObject("cache");
+                if(temp_model.has("params")) model.params = temp_model.getJSONObject("params");
+                if(temp_model.has("session")) model.session = temp_model.getJSONObject("session");
+                if(temp_model.has("action")) model.action = temp_model.getJSONObject("action");
 
-                    // Delete shared preference after resuming
-                    SharedPreferences.Editor editor = pref.edit();
-                    editor.remove(model.url);
-                    editor.commit();
+                // Delete shared preference after resuming
+                SharedPreferences.Editor editor = pref.edit();
+                editor.remove(model.url);
+                editor.commit();
 
-                } catch (Exception e) {
-                    Log.d("Error", e.toString());
-                }
+            } catch (Exception e) {
+                Log.d("Error", e.toString());
             }
         }
-
 
         if (!firstResume) {
             onShow();
         }
         firstResume = false;
 
-
+        Uri uri = getIntent().getData();
+        if(uri != null && uri.getHost().contains("oauth")) {
+            try {
+                intent_to_resolve = new JSONObject();
+                intent_to_resolve.put("type", "success");
+                intent_to_resolve.put("name", "oauth");
+                intent_to_resolve.put("intent", getIntent());
+            } catch (JSONException e) {
+                Log.d("Error", e.toString());
+            }
+        }
 
         // Intent Handler
         // This part is for handling return values from external Intents triggered
@@ -396,6 +411,7 @@ public class JasonViewActivity extends AppCompatActivity{
         if(model.cache!=null) savedInstanceState.putString("cache", model.cache.toString());
         if(model.params!=null) savedInstanceState.putString("params", model.params.toString());
         if(model.session!=null) savedInstanceState.putString("session", model.session.toString());
+        if(model.action!=null) savedInstanceState.putString("action", model.action.toString());
 
         // Store RecyclerView state
         listState = listView.getLayoutManager().onSaveInstanceState();
@@ -733,8 +749,8 @@ public class JasonViewActivity extends AppCompatActivity{
                     }
 
                     Method method = module.getClass().getMethod(methodName, JSONObject.class, JSONObject.class, JSONObject.class, Context.class);
+                    model.action = action;
                     method.invoke(module, action, model.state, event, context);
-
                 }
 
 
