@@ -64,6 +64,20 @@ public class JasonNetworkAction {
                     }
                 }
 
+                // Attach header passed in as options
+                if (options.has("header")) {
+                    JSONObject header = options.getJSONObject("header");
+                    Iterator<String> keys = header.keys();
+                    try {
+                        while (keys.hasNext()) {
+                            String key = (String) keys.next();
+                            String val = header.getString(key);
+                            builder.addHeader(key, val);
+                        }
+                    } catch (Exception e) {
+
+                    }
+                }
 
                 if(method.equalsIgnoreCase("get")) {
                     Uri.Builder b = Uri.parse(url).buildUpon();
