@@ -1418,6 +1418,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     if(swipeLayout !=null) {
                         swipeLayout.setRefreshing(false);
                     }
+                    getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color("#ffffff"));
                     if (body.has("style")) {
                         JSONObject style = body.getJSONObject("style");
                         if (style.has("background")) {
@@ -1625,6 +1626,7 @@ public class JasonViewActivity extends AppCompatActivity {
             String backgroundColor = header.getJSONObject("style").getString("background");
             toolbar.setBackgroundColor(JasonHelper.parse_color(backgroundColor));
         } catch (Exception e){
+            toolbar.setBackgroundColor(JasonHelper.parse_color("#ffffff"));
             Log.d("Error", e.toString());
         }
 
