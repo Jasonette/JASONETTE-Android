@@ -207,6 +207,11 @@ public class JasonViewActivity extends AppCompatActivity {
             url = getString(R.string.url);
         }
 
+        // set color scheme based on the intent
+        int background = intent.getIntExtra("background", JasonHelper.parse_color("#ffffff"));
+        getWindow().getDecorView().setBackgroundColor(background);
+        toolbar.setBackgroundColor(background);
+
         // Create model
         model = new JasonModel(url, intent, this);
 
@@ -1251,6 +1256,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     if(params!=null) {
                         intent.putExtra("params", params);
                     }
+                    intent.putExtra("background", ((ColorDrawable) toolbar.getBackground()).getColor());
                     model = new JasonModel(url, intent, this);
                     model.fetch();
                 } else {
@@ -1259,6 +1265,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     if(params != null) {
                         intent.putExtra("params", params);
                     }
+                    intent.putExtra("background", ((ColorDrawable) toolbar.getBackground()).getColor());
                     startActivity(intent);
                 }
             }
@@ -1451,6 +1458,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                             webview.setWebChromeClient(new WebChromeClient());
                                             webview.setVerticalScrollBarEnabled(false);
                                             webview.setHorizontalScrollBarEnabled(false);
+                                            webview.setBackgroundColor(Color.TRANSPARENT);
                                             WebSettings settings = webview.getSettings();
                                             settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
                                             settings.setJavaScriptEnabled(true);
