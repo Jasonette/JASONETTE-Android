@@ -29,12 +29,12 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -1460,6 +1460,31 @@ public class JasonViewActivity extends AppCompatActivity {
                                                     RelativeLayout.LayoutParams.MATCH_PARENT,
                                                     RelativeLayout.LayoutParams.MATCH_PARENT);
                                             webview.setLayoutParams(rlp);
+
+
+                                            // not interactive by default;
+                                            Boolean responds_to_webview = false;
+                                            if(background.has("action")){
+                                                if(background.getJSONObject("action").has("type")){
+                                                    String action_type = background.getJSONObject("action").getString("type");
+                                                    if(action_type.equalsIgnoreCase("$default")){
+                                                        responds_to_webview = true;
+                                                    }
+                                                }
+                                            }
+                                            if(responds_to_webview){
+                                                // webview receives click
+                                                webview.setOnTouchListener(null);
+                                            } else {
+                                                // webview shouldn't receive click
+                                                webview.setOnTouchListener(new View.OnTouchListener() {
+                                                    @Override
+                                                    public boolean onTouch(View v, MotionEvent event) {
+                                                        return true;
+                                                    }
+                                                });
+                                            }
+
                                             rootLayout.addView(webview,0);
                                         }
                                         webview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
