@@ -1724,7 +1724,12 @@ public class JasonViewActivity extends AppCompatActivity {
             }
             if(input.has("left")) {
                 JSONObject json = input.getJSONObject("left");
-                JSONObject style = json.getJSONObject("style");
+                JSONObject style;
+                if(json.has("style")){
+                    style = json.getJSONObject("style");
+                }  else {
+                    style = new JSONObject();
+                }
                 style.put("height", "25");
                 if(json.has("image")) {
                     json.put("url", json.getString("image"));
@@ -1762,13 +1767,18 @@ public class JasonViewActivity extends AppCompatActivity {
 
             if(input.has("right")) {
                 JSONObject json = input.getJSONObject("right");
+                JSONObject style;
+                if(json.has("style")){
+                    style = json.getJSONObject("style");
+                }  else {
+                    style = new JSONObject();
+                }
                 if(!json.has("image") && !json.has("text")){
                     json.put("text", "Send");
                 }
                 if(json.has("image")) {
                     json.put("url", json.getString("image"));
                 }
-                JSONObject style = json.getJSONObject("style");
                 style.put("height", "25");
 
                 json.put("type", "button");
