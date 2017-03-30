@@ -96,11 +96,17 @@ public class Launcher extends Application {
             String type = intent_to_resolve.getString("type");
             if (type.equalsIgnoreCase("success")) {
                 // success
-                JSONObject handler = getHandler(String.valueOf(intent_to_resolve.getInt("name")));
-                Intent intent = null;
-                if(intent_to_resolve.has("intent")){
-                    intent = (Intent) intent_to_resolve.get("intent");
+
+                Object name = intent_to_resolve.get("name");
+
+                JSONObject handler;
+                if(name instanceof String) {
+                    handler = getHandler((String)name);
+                } else {
+                    handler = getHandler(String.valueOf(intent_to_resolve.getInt("name")));
                 }
+
+                Intent intent = (Intent) intent_to_resolve.get("intent");
 
                 String classname = handler.getString("class");
                 classname = "com.jasonette.seed.Action." + classname;
