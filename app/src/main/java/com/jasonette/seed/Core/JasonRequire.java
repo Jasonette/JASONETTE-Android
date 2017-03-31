@@ -29,7 +29,7 @@ public class JasonRequire implements Runnable{
     JSONObject private_refs;
 
     public JasonRequire(String url, CountDownLatch latch, JSONObject refs, OkHttpClient client, Context context) {
-        this.URL = url;
+        this.URL = url.replace("\\", "");
         this.latch = latch;
         this.private_refs = refs;
         this.context = context;
