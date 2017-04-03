@@ -29,7 +29,7 @@ public class JasonHtmlComponent {
 
             try {
                 String text = component.getString("text");
-                String html = text;
+                String html = "<style>" + component.getString("css") + "</style>" + text;
                 CookieManager.getInstance().setAcceptCookie(true);
                 ((WebView) view).loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
                 ((WebView) view).setWebChromeClient(new WebChromeClient());
