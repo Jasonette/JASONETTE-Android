@@ -160,6 +160,10 @@ public class JasonViewActivity extends AppCompatActivity {
 
         // 4.1. RecyclerView
         listView = new RecyclerView(this);
+        listView.setItemViewCacheSize(20);
+        listView.setDrawingCacheEnabled(true);
+        listView.setHasFixedSize(true);
+
         // Create adapter passing in the sample user data
         ItemAdapter adapter = new ItemAdapter(this, this, new ArrayList<JSONObject>());
         // Attach the adapter to the recyclerview to populate items
@@ -1457,6 +1461,10 @@ public class JasonViewActivity extends AppCompatActivity {
                                             settings.setJavaScriptEnabled(true);
                                             settings.setDomStorageEnabled(true);
                                             settings.setJavaScriptCanOpenWindowsAutomatically(true);
+                                            settings.setAppCachePath( getCacheDir().getAbsolutePath() );
+                                            settings.setAllowFileAccess( true );
+                                            settings.setAppCacheEnabled( true );
+                                            settings.setCacheMode( WebSettings.LOAD_DEFAULT );
                                             RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
                                                     RelativeLayout.LayoutParams.MATCH_PARENT,
                                                     RelativeLayout.LayoutParams.MATCH_PARENT);

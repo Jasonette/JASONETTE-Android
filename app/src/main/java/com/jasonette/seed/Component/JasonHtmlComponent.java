@@ -43,6 +43,12 @@ public class JasonHtmlComponent {
                 settings.setDomStorageEnabled(true);
                 settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
+                settings.setAppCachePath( context.getCacheDir().getAbsolutePath() );
+                settings.setAllowFileAccess( true );
+                settings.setAppCacheEnabled( true );
+                settings.setCacheMode( WebSettings.LOAD_DEFAULT );
+
+
                 // not interactive by default;
                 Boolean responds_to_webview = false;
                 if(component.has("action")){
