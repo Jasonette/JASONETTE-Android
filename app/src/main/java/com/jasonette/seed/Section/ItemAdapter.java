@@ -43,6 +43,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
     Map<String, Integer> signature_to_type = new HashMap<String,Integer>();
     Map<Integer, String> type_to_signature = new HashMap<Integer, String>();
     ViewHolderFactory factory = new ViewHolderFactory();
+    Boolean isHorizontalScroll = false;
 
 
     /********************************************************
@@ -181,6 +182,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
 
             // 2. Create Adapter
             ItemAdapter horizontal_adapter = new ItemAdapter(context, horizontalListView.getContext(), new ArrayList<JSONObject>());
+            horizontal_adapter.isHorizontalScroll = true;
 
             // 3. Connect RecyclerView with Adapter
             horizontalListView.setAdapter(horizontal_adapter);
@@ -428,7 +430,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
                     }
 
                     // set width and height
-                    layoutParams = JasonLayout.autolayout(parent, item, root_context);
+                    layoutParams = JasonLayout.autolayout(isHorizontalScroll, parent, item, root_context);
 
                     layout.setLayoutParams(layoutParams);
 

@@ -47,7 +47,7 @@ public class JasonComponent {
                 view.setLayoutParams(layoutParams);
             } else {
                 // Section item type
-                LinearLayout.LayoutParams layoutParams = JasonLayout.autolayout(parent, component, root_context);
+                LinearLayout.LayoutParams layoutParams = JasonLayout.autolayout(null, parent, component, root_context);
                 view.setLayoutParams(layoutParams);
             }
 

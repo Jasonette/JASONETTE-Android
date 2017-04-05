@@ -6,7 +6,7 @@ import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONObject;
 
 public class JasonLayout {
-    public static LinearLayout.LayoutParams autolayout(JSONObject parent, JSONObject item, Context root_context) {
+    public static LinearLayout.LayoutParams autolayout(Boolean isHorizontalScroll, JSONObject parent, JSONObject item, Context root_context) {
 
         int width = 0;
         int height = 0;
@@ -26,7 +26,11 @@ public class JasonLayout {
                         width = (int) JasonHelper.pixels(root_context, style.getString("width"), "horizontal");
                     } catch (Exception e) { }
                 } else {
-                    width = LinearLayout.LayoutParams.MATCH_PARENT;
+                    if(isHorizontalScroll){
+                        width = LinearLayout.LayoutParams.WRAP_CONTENT;
+                    } else {
+                        width = LinearLayout.LayoutParams.MATCH_PARENT;
+                    }
                 }
                 if (style.has("height")) {
                     try {
