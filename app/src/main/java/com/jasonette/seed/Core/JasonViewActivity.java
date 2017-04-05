@@ -268,7 +268,7 @@ public class JasonViewActivity extends AppCompatActivity {
     }
 
 
-
+    
     @Override
     protected void onPause() {
         // Unregister since the activity is paused.
@@ -1251,6 +1251,10 @@ public class JasonViewActivity extends AppCompatActivity {
                 editor.commit();
 
                 if(transition.equalsIgnoreCase("replace")){
+                    // remove all touch listeners before replacing
+                    // Use case : Tab bar
+                    removeListViewOnItemTouchListeners();
+
                     Intent intent = new Intent(this, JasonViewActivity.class);
                     if(params!=null) {
                         intent.putExtra("params", params);
@@ -2359,6 +2363,18 @@ public class JasonViewActivity extends AppCompatActivity {
         if(!listViewOnItemTouchListeners.contains(listener)) {
             listViewOnItemTouchListeners.add(listener);
             listView.addOnItemTouchListener(listener);
+        }
+    }
+
+
+    /**
+     * Removes all item touch listeners attached to this activity
+     * Called when the activity
+     */
+    public void removeListViewOnItemTouchListeners() {
+        for (RecyclerView.OnItemTouchListener listener: listViewOnItemTouchListeners) {
+            listView.removeOnItemTouchListener(listener);
+            listViewOnItemTouchListeners.remove(listener);
         }
     }
 }
