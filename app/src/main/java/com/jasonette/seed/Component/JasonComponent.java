@@ -2,6 +2,7 @@ package com.jasonette.seed.Component;
 
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
@@ -65,7 +66,7 @@ public class JasonComponent {
             }
 
             if (style.has("corner_radius")) {
-                float corner = (float)style.getDouble("corner_radius");
+                float corner = JasonHelper.pixels(root_context, style.getString("corner_radius"), "horizontal");
                 int color = ContextCompat.getColor(root_context, android.R.color.transparent);
                 GradientDrawable cornerShape = new GradientDrawable();
                 cornerShape.setShape(GradientDrawable.RECTANGLE);
@@ -103,6 +104,30 @@ public class JasonComponent {
             if (style.has("padding_bottom")) {
                 padding_bottom = (int)JasonHelper.pixels(root_context, style.getString("padding_bottom"), "vertical");
             }
+
+
+            // Border logic
+            int border_width = 0;
+            if (style.has("border_width")){
+                border_width = (int)JasonHelper.pixels(root_context, style.getString("border_width"), "horizontal");
+            }
+            int border_color;
+            if (style.has("border_color")){
+                border_color = JasonHelper.parse_color(style.getString("border_color"));
+            } else {
+                border_color = JasonHelper.parse_color("#000000");
+            }
+            if(border_width > 0) {
+                GradientDrawable border = new GradientDrawable();
+                border.setColor(0xFFFFFFFF); //white background
+                border.setStroke(border_width, border_color); //black border with full opacity
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                    view.setBackgroundDrawable(border);
+                } else {
+                    view.setBackground(border);
+                }
+            }
+
 
             view.setPadding(padding_left, padding_top, padding_right, padding_bottom);
             return view;
