@@ -37,10 +37,6 @@ public class JasonTextareaComponent {
                     int color = JasonHelper.parse_color(style.getString("color:placeholder"));
                     ((TextView)view).setHintTextColor(color);
                 }
-                if (style.has("background")) {
-                    int color = JasonHelper.parse_color(style.getString("background"));
-                    ((TextView)view).setBackgroundColor(color);
-                }
 
                 if (style.has("font:android")){
                     String f = style.getString("font:android");
