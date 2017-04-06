@@ -65,19 +65,6 @@ public class JasonComponent {
                 }
             }
 
-            if (style.has("corner_radius")) {
-                float corner = JasonHelper.pixels(root_context, style.getString("corner_radius"), "horizontal");
-                int color = ContextCompat.getColor(root_context, android.R.color.transparent);
-                GradientDrawable cornerShape = new GradientDrawable();
-                cornerShape.setShape(GradientDrawable.RECTANGLE);
-                if (style.has("background")) {
-                    color = JasonHelper.parse_color(style.getString("background"));
-                }
-                cornerShape.setColor(color);
-                cornerShape.setCornerRadius(corner);
-                cornerShape.invalidateSelf();
-                view.setBackground(cornerShape);
-            }
 
             // padding
             int padding_left = (int)JasonHelper.pixels(root_context, "0", "horizontal");
@@ -105,29 +92,51 @@ public class JasonComponent {
                 padding_bottom = (int)JasonHelper.pixels(root_context, style.getString("padding_bottom"), "vertical");
             }
 
-
-            // Border logic
-            int border_width = 0;
-            if (style.has("border_width")){
-                border_width = (int)JasonHelper.pixels(root_context, style.getString("border_width"), "horizontal");
-            }
-            int border_color;
-            if (style.has("border_color")){
-                border_color = JasonHelper.parse_color(style.getString("border_color"));
-            } else {
-                border_color = JasonHelper.parse_color("#000000");
-            }
-            if(border_width > 0) {
-                GradientDrawable border = new GradientDrawable();
-                border.setColor(0xFFFFFFFF); //white background
-                border.setStroke(border_width, border_color); //black border with full opacity
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                    view.setBackgroundDrawable(border);
-                } else {
-                    view.setBackground(border);
+            if (style.has("corner_radius")) {
+                float corner = JasonHelper.pixels(root_context, style.getString("corner_radius"), "horizontal");
+                int color = ContextCompat.getColor(root_context, android.R.color.transparent);
+                GradientDrawable cornerShape = new GradientDrawable();
+                cornerShape.setShape(GradientDrawable.RECTANGLE);
+                if (style.has("background")) {
+                    color = JasonHelper.parse_color(style.getString("background"));
                 }
-            }
+                cornerShape.setColor(color);
+                cornerShape.setCornerRadius(corner);
 
+                // border + corner_radius handling
+                if (style.has("border_width")){
+                    int border_width = (int)JasonHelper.pixels(root_context, style.getString("border_width"), "horizontal");
+                    if(border_width > 0){
+                        int border_color;
+                        if (style.has("border_color")){
+                            border_color = JasonHelper.parse_color(style.getString("border_color"));
+                        } else {
+                            border_color = JasonHelper.parse_color("#000000");
+                        }
+                        cornerShape.setStroke(border_width, border_color);
+                    }
+                }
+                cornerShape.invalidateSelf();
+                view.setBackground(cornerShape);
+            } else {
+                // border handling (no corner radius)
+                if (style.has("border_width")){
+                    int border_width = (int)JasonHelper.pixels(root_context, style.getString("border_width"), "horizontal");
+                    if(border_width > 0){
+                        int border_color;
+                        if (style.has("border_color")){
+                            border_color = JasonHelper.parse_color(style.getString("border_color"));
+                        } else {
+                            border_color = JasonHelper.parse_color("#000000");
+                        }
+                        GradientDrawable cornerShape = new GradientDrawable();
+                        cornerShape.setStroke(border_width, border_color);
+                        cornerShape.invalidateSelf();
+                        view.setBackground(cornerShape);
+                    }
+                }
+
+            }
 
             view.setPadding(padding_left, padding_top, padding_right, padding_bottom);
             return view;
