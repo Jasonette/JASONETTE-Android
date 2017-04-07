@@ -29,7 +29,7 @@ public class JasonRequire implements Runnable{
     JSONObject private_refs;
 
     public JasonRequire(String url, CountDownLatch latch, JSONObject refs, OkHttpClient client, Context context) {
-        this.URL = url;
+        this.URL = url.replace("\\", "");
         this.latch = latch;
         this.private_refs = refs;
         this.context = context;
@@ -43,7 +43,7 @@ public class JasonRequire implements Runnable{
         try {
             SharedPreferences pref = context.getSharedPreferences("session", 0);
             JSONObject session = null;
-            URI uri_for_session = new URI(this.URL.toLowerCase());
+            URI uri_for_session = new URI(this.URL);
             String session_domain = uri_for_session.getHost();
             if(pref.contains(session_domain)){
                 String str = pref.getString(session_domain, null);

@@ -1,6 +1,5 @@
 package com.jasonette.seed.Action;
 
-import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.ContentResolver;
@@ -22,12 +21,12 @@ import android.text.format.DateFormat;
 import android.util.Base64;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.github.florent37.singledateandtimepicker.dialog.SingleDateAndTimePickerDialog;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonImageHelper;
@@ -37,6 +36,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 
 public class JasonUtilAction {
@@ -253,46 +253,28 @@ public class JasonUtilAction {
         }
     }
 
-    public static class DatePickerFragment extends DialogFragment implements DatePickerDialog.OnDateSetListener {
-
-        private DatePickerDialog.OnDateSetListener externalListener;
-        public void setOnDateSetListener(DatePickerDialog.OnDateSetListener listener){
-            this.externalListener = listener;
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            final Calendar c = Calendar.getInstance();
-            int year = c.get(Calendar.YEAR);
-            int month = c.get(Calendar.MONTH);
-            int day = c.get(Calendar.DAY_OF_MONTH);
-            return new DatePickerDialog(getActivity(), this, year, month, day);
-        }
-
-        public void onDateSet(DatePicker view, int year, int month, int day) {
-            if(externalListener != null) {
-                externalListener.onDateSet(view, year, month, day);
-            }
-        }
-    }
 
     public void datepicker(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
-        DatePickerFragment newFragment = new DatePickerFragment();
-        newFragment.setOnDateSetListener(new DatePickerDialog.OnDateSetListener(){
-            public void onDateSet(DatePicker view, int year, int month, int day){
-                try {
-                    Calendar calendar = new GregorianCalendar(year, month, day);
-                    long val = calendar.getTimeInMillis();
-                    JSONObject value = new JSONObject();
-                    value.put("value", val);
-                    JasonHelper.next("success", action, value, event, context);
-                } catch (Exception e) {
-                    Log.d("Error", e.toString());
-                }
-            }
-        });
+        new SingleDateAndTimePickerDialog.Builder(context)
+                .bottomSheet()
+                .curved()
+                //.minutesStep(15)
+                //.title("Simple")
+                .listener(new SingleDateAndTimePickerDialog.Listener() {
+                    @Override
+                    public void onDateSelected(Date date) {
+                        try {
+                            String val = String.valueOf(date.getTime()/1000);
+                            JSONObject value = new JSONObject();
+                            value.put("value", val);
+                            JasonHelper.next("success", action, value, event, context);
+                        } catch (Exception e) {
+                            Log.d("Error", e.toString());
+                        }
 
-        newFragment.show(((JasonViewActivity)context).getSupportFragmentManager(), "datePicker");
+                    }
+                }).display();
+
     }
 
 
@@ -434,6 +416,31 @@ public class JasonUtilAction {
                                             }
                                         });
                                         helper.load();
+                                    }
+                                } else if (type.equalsIgnoreCase("video")){
+                                    if(item.has("file_url")){
+                                        Uri uri = Uri.parse(item.getString("file_url"));
+                                        callback_intent.putExtra(Intent.EXTRA_STREAM, uri);
+                                        // override with image type if one of the items is an image
+                                        callback_intent.setType("video/*");
+                                        callback_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        counter++;
+                                        if (counter == l) {
+                                            JasonHelper.next("success", action, new JSONObject(), event, context);
+                                            context.startActivity(Intent.createChooser(callback_intent, "Share"));
+                                        }
+                                    }
+                                } else if (type.equalsIgnoreCase("audio")){
+                                    if(item.has("file_url")){
+                                        Uri uri = Uri.parse(item.getString("file_url"));
+                                        callback_intent.putExtra(Intent.EXTRA_STREAM, uri);
+                                        callback_intent.setType("audio/*");
+                                        callback_intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        counter++;
+                                        if (counter == l) {
+                                            JasonHelper.next("success", action, new JSONObject(), event, context);
+                                            context.startActivity(Intent.createChooser(callback_intent, "Share"));
+                                        }
                                     }
                                 }
                             }

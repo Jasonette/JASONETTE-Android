@@ -36,12 +36,10 @@ public class JasonTextfieldComponent {
                     int color = JasonHelper.parse_color(style.getString("color"));
                     ((TextView)view).setTextColor(color);
                 }
-                if (style.has("background")) {
-                    int color = JasonHelper.parse_color(style.getString("background"));
-                    ((TextView)view).setBackgroundColor(color);
+                if (style.has("color:placeholder")) {
+                    int color = JasonHelper.parse_color(style.getString("color:placeholder"));
+                    ((TextView)view).setHintTextColor(color);
                 }
-
-
 
                 if (style.has("align")) {
                     String align = style.getString("align");

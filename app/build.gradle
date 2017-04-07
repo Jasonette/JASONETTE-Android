@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '23.0.2'
+    buildToolsVersion '25.0.0'
     defaultConfig {
         applicationId "com.jasonette"
         minSdkVersion 16
@@ -31,9 +31,14 @@ dependencies {
     compile 'jp.wasabeef:glide-transformations:2.0.1'
     compile 'com.eclipsesource.j2v8:j2v8:4.5.0@aar'
     compile 'com.android.support:recyclerview-v7:25.0.1'
-    compile 'com.android.support:design:25.0.0'
+    compile 'com.android.support:design:25.0.1'
     compile 'com.aurelhubert:ahbottomnavigation:2.0.2'
     compile 'com.android.support:support-core-ui:25.0.1'
     compile 'commons-lang:commons-lang:2.6'
+    compile 'com.github.scribejava:scribejava-apis:4.0.0'
     compile 'com.yqritc:recyclerview-flexibledivider:1.4.0'
+    compile 'com.commonsware.cwac:cam2:0.7.4'
+    compile 'com.github.adrielcafe:AndroidAudioRecorder:0.2.0'
+    compile 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
+    compile 'com.github.florent37:singledateandtimepicker:1.0.8'
 }
