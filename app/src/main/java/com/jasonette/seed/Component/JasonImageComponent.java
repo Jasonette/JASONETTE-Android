@@ -11,11 +11,9 @@ import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.load.model.LazyHeaderFactory;
 import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.jasonette.seed.Helper.JasonHelper;
@@ -150,17 +148,6 @@ public class JasonImageComponent {
                         }
                     }
                 }
-
-
-                LinearLayout.LayoutParams params = (LinearLayout.LayoutParams)view.getLayoutParams();
-                if (!style.has("height")) {
-                    params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-                }
-                if (!style.has("width")) {
-                    params.width = LinearLayout.LayoutParams.WRAP_CONTENT;
-                }
-
-
 
                 JasonComponent.addListener(view, context);
                 view.requestLayout();

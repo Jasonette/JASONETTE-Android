@@ -9,6 +9,8 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import com.jasonette.seed.Core.JasonViewActivity;
+
 import org.json.JSONObject;
 
 
@@ -40,6 +42,12 @@ public class JasonHtmlComponent {
                 settings.setJavaScriptEnabled(true);
                 settings.setDomStorageEnabled(true);
                 settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+                settings.setAppCachePath( context.getCacheDir().getAbsolutePath() );
+                settings.setAllowFileAccess( true );
+                settings.setAppCacheEnabled( true );
+                settings.setCacheMode( WebSettings.LOAD_DEFAULT );
+
 
                 // not interactive by default;
                 Boolean responds_to_webview = false;
@@ -73,19 +81,24 @@ public class JasonHtmlComponent {
                                     }
                                 }
 
-                                // 2. Otherwise, ignore the clidks and find the closest parent view that has "action" attribute and execute
-                                // Need to bubble up all the way to the root viewholder.
-
                                 // But only trigger on UP motion
                                 if (event.getAction() == MotionEvent.ACTION_UP) {
-                                    View cursor = v;
-                                    while (cursor.getParent() != null) {
-                                        JSONObject item = (JSONObject) (((View) cursor.getParent()).getTag());
-                                        if (item != null && (item.has("action") || item.has("href"))) {
-                                            ((View) cursor.getParent()).performClick();
-                                            break;
-                                        } else {
-                                            cursor = (View) cursor.getParent();
+
+                                    if(component.has("action")){
+                                        // if the current component contains an action, run that one
+                                        JSONObject action = component.getJSONObject("action");
+                                        ((JasonViewActivity) context).call(action.toString(), new JSONObject().toString(), "{}", v.getContext());
+                                    } else {
+                                        // otherwise, bubble up the event to the closest parent view with an 'action' attribute
+                                        View cursor = v;
+                                        while (cursor.getParent() != null) {
+                                            JSONObject item = (JSONObject) (((View) cursor.getParent()).getTag());
+                                            if (item != null && (item.has("action") || item.has("href"))) {
+                                                ((View) cursor.getParent()).performClick();
+                                                break;
+                                            } else {
+                                                cursor = (View) cursor.getParent();
+                                            }
                                         }
                                     }
                                 }

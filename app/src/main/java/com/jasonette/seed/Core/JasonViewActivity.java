@@ -160,6 +160,10 @@ public class JasonViewActivity extends AppCompatActivity {
 
         // 4.1. RecyclerView
         listView = new RecyclerView(this);
+        listView.setItemViewCacheSize(20);
+        listView.setDrawingCacheEnabled(true);
+        listView.setHasFixedSize(true);
+
         // Create adapter passing in the sample user data
         ItemAdapter adapter = new ItemAdapter(this, this, new ArrayList<JSONObject>());
         // Attach the adapter to the recyclerview to populate items
@@ -264,7 +268,7 @@ public class JasonViewActivity extends AppCompatActivity {
     }
 
 
-
+    
     @Override
     protected void onPause() {
         // Unregister since the activity is paused.
@@ -1247,6 +1251,10 @@ public class JasonViewActivity extends AppCompatActivity {
                 editor.commit();
 
                 if(transition.equalsIgnoreCase("replace")){
+                    // remove all touch listeners before replacing
+                    // Use case : Tab bar
+                    removeListViewOnItemTouchListeners();
+
                     Intent intent = new Intent(this, JasonViewActivity.class);
                     if(params!=null) {
                         intent.putExtra("params", params);
@@ -1457,6 +1465,10 @@ public class JasonViewActivity extends AppCompatActivity {
                                             settings.setJavaScriptEnabled(true);
                                             settings.setDomStorageEnabled(true);
                                             settings.setJavaScriptCanOpenWindowsAutomatically(true);
+                                            settings.setAppCachePath( getCacheDir().getAbsolutePath() );
+                                            settings.setAllowFileAccess( true );
+                                            settings.setAppCacheEnabled( true );
+                                            settings.setCacheMode( WebSettings.LOAD_DEFAULT );
                                             RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
                                                     RelativeLayout.LayoutParams.MATCH_PARENT,
                                                     RelativeLayout.LayoutParams.MATCH_PARENT);
@@ -2351,6 +2363,18 @@ public class JasonViewActivity extends AppCompatActivity {
         if(!listViewOnItemTouchListeners.contains(listener)) {
             listViewOnItemTouchListeners.add(listener);
             listView.addOnItemTouchListener(listener);
+        }
+    }
+
+
+    /**
+     * Removes all item touch listeners attached to this activity
+     * Called when the activity
+     */
+    public void removeListViewOnItemTouchListeners() {
+        for (RecyclerView.OnItemTouchListener listener: listViewOnItemTouchListeners) {
+            listView.removeOnItemTouchListener(listener);
+            listViewOnItemTouchListeners.remove(listener);
         }
     }
 }
