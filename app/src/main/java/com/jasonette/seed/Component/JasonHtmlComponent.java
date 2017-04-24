@@ -42,6 +42,7 @@ public class JasonHtmlComponent {
                 settings.setJavaScriptEnabled(true);
                 settings.setDomStorageEnabled(true);
                 settings.setJavaScriptCanOpenWindowsAutomatically(true);
+                settings.setMediaPlaybackRequiresUserGesture(false);
 
                 settings.setAppCachePath( context.getCacheDir().getAbsolutePath() );
                 settings.setAllowFileAccess( true );
