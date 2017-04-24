@@ -61,6 +61,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -1325,10 +1326,15 @@ public class JasonViewActivity extends AppCompatActivity {
             @Override
             public void run() {
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 byte[] byteArray = stream.toByteArray();
-                String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                String data_uri = "data:image/png;base64," + encoded;
+                String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("data:image/jpeg;base64,");
+                stringBuilder.append(encoded);
+                String data_uri = stringBuilder.toString();
+
                 try {
                     JSONObject ret = new JSONObject();
                     ret.put("data", encoded);
@@ -1443,6 +1449,16 @@ public class JasonViewActivity extends AppCompatActivity {
                                         });
                                     }
                                 } else if(background == "camera") {
+                                } else if(background.matches("data:image.*")){
+                                    String base64 = background.substring("data:image/jpeg;base64,".length());
+                                    byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
+
+                                    with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
+                                        @Override
+                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                            sectionLayout.setBackground(resource);
+                                        }
+                                    });
                                 } else {
                                     getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
                                 }

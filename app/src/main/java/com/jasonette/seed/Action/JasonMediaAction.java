@@ -241,8 +241,13 @@ public class JasonMediaAction {
                 // image
                 InputStream stream =  context.getContentResolver().openInputStream(uri);
                 byte[] byteArray = JasonHelper.readBytes(stream);
-                String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                String data_uri = "data:image/jpeg;base64," + encoded;
+                String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("data:image/jpeg;base64,");
+                stringBuilder.append(encoded);
+                String data_uri = stringBuilder.toString();
+
                 try {
                     JSONObject ret = new JSONObject();
                     ret.put("data", encoded);
