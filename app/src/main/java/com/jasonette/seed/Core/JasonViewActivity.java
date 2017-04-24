@@ -1464,6 +1464,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                             settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
                                             settings.setJavaScriptEnabled(true);
                                             settings.setDomStorageEnabled(true);
+                                            settings.setMediaPlaybackRequiresUserGesture(false);
                                             settings.setJavaScriptCanOpenWindowsAutomatically(true);
                                             settings.setAppCachePath( getCacheDir().getAbsolutePath() );
                                             settings.setAllowFileAccess( true );
