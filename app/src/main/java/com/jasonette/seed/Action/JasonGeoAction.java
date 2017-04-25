@@ -15,10 +15,13 @@ import org.json.JSONObject;
 public class JasonGeoAction {
     public void get(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         try {
-            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            final LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
             LocationListener locationListener = new LocationListener() {
                 public void onLocationChanged(Location location) {
                     try {
+
+                        locationManager.removeUpdates(this);
+
                         JSONObject ret = new JSONObject();
                         String val = String.format("%f,%f", location.getLatitude(), location.getLongitude());
                         ret.put("coord", val);
