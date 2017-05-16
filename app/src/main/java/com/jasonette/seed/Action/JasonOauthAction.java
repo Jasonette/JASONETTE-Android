@@ -476,14 +476,14 @@ public class JasonOauthAction {
                 }
             }
         }
-        catch(JSONException e) {
+        catch(JSONException err) {
             try {
                 JSONObject error = new JSONObject();
-                error.put("data", e.toString());
+                error.put("data", err.toString());
 
                 JasonHelper.next("error", intent_options.getJSONObject("action"), error, intent_options.getJSONObject("event"), (Context)intent_options.get("context"));
-            } catch(JSONException error) {
-                Log.d("Error", error.toString());
+            } catch(JSONException e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     }
@@ -800,13 +800,13 @@ public class JasonOauthAction {
         }
     }
 
-    private void handleError(Exception e, JSONObject action, JSONObject event, Context context) {
+    private void handleError(Exception err, JSONObject action, JSONObject event, Context context) {
         try {
             JSONObject error = new JSONObject();
-            error.put("data", e.toString());
+            error.put("data", err.toString());
             JasonHelper.next("error", action, error, event, context);
-        } catch(JSONException error) {
-            Log.d("Error", error.toString());
+        } catch(JSONException e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }

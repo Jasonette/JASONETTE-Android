@@ -63,7 +63,7 @@ public class JasonModel{
             try {
                 this.params = new JSONObject(intent.getStringExtra("params"));
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -78,7 +78,7 @@ public class JasonModel{
             try {
                 this.cache = new JSONObject(str);
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -93,7 +93,7 @@ public class JasonModel{
                 this.session = new JSONObject(str);
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         };
     }
 
@@ -116,7 +116,7 @@ public class JasonModel{
                 Log.d("Error", "Invalid jason");
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -173,7 +173,7 @@ public class JasonModel{
                 }
             });
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -204,7 +204,7 @@ public class JasonModel{
             try {
                 latch.await();
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -244,7 +244,7 @@ public class JasonModel{
                 }
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -278,13 +278,13 @@ public class JasonModel{
                     try {
                         resolve_and_build(resolved_jason.toString());
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });
             JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -312,13 +312,13 @@ public class JasonModel{
                     try {
                         resolve_and_build(resolved_jason.toString());
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });
             JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -350,7 +350,7 @@ public class JasonModel{
                 state.put("$cache", cache);
                 state.put("$params", params);
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
 

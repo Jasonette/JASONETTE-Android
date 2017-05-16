@@ -569,7 +569,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
                 }
                 view.requestLayout();
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 

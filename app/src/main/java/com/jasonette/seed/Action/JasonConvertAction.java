@@ -108,8 +108,8 @@ public class JasonConvertAction {
             JSONObject error = new JSONObject();
             error.put("data", exc.toString());
             JasonHelper.next("error", action, error, event_cache, context);
-        } catch (Exception err){
-            Log.d("Error", err.toString());
+        } catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 

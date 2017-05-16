@@ -53,7 +53,7 @@ public class JasonMediaAction {
                 JasonHelper.dispatchIntent(action, data, event, context, intent, callback);
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     // Util for play
@@ -75,7 +75,7 @@ public class JasonMediaAction {
 
             JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -120,7 +120,7 @@ public class JasonMediaAction {
         } catch (SecurityException e){
             JasonHelper.permission_exception("$media.picker", context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -206,7 +206,7 @@ public class JasonMediaAction {
         } catch (SecurityException e){
             JasonHelper.permission_exception("$media.camera", context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -235,7 +235,7 @@ public class JasonMediaAction {
                     ret.put("content_type", "video/mp4");
                     JasonHelper.next("success", action, ret, event, context);
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             } else {
                 // image
@@ -255,12 +255,12 @@ public class JasonMediaAction {
                     ret.put("content_type", "image/jpeg");
                     JasonHelper.next("success", action, ret, event, context);
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
 
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     private File createFile(String type, Context context) throws IOException {

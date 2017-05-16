@@ -46,7 +46,7 @@ public class JasonHelper {
                 }
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         try {
@@ -61,7 +61,7 @@ public class JasonHelper {
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         return style;
     }
@@ -77,7 +77,7 @@ public class JasonHelper {
             }
             return stub;
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             return new JSONObject();
         }
     }
@@ -101,7 +101,7 @@ public class JasonHelper {
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -116,7 +116,7 @@ public class JasonHelper {
                 return new Object();
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             return new Object();
         }
     }
@@ -129,7 +129,7 @@ public class JasonHelper {
                 list.add(jsonArray.getJSONObject(i));
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         return list;
     }
@@ -254,7 +254,7 @@ public class JasonHelper {
             jr = new String(buffer, "UTF-8");
             return new JSONObject(jr);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             return new JSONObject();
         }
 
@@ -272,7 +272,7 @@ public class JasonHelper {
             intent.putExtra("action", alert_action.toString());
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -330,7 +330,7 @@ public class JasonHelper {
 
             ((Launcher) ((JasonViewActivity) context).getApplicationContext()).once(name, handler);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         if (intent != null) {
@@ -362,6 +362,7 @@ public class JasonHelper {
             return callback;
         } catch (Exception e) {
             Log.d("Error", "wasn't able to preserve stack");
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             return callback;
         }
     }

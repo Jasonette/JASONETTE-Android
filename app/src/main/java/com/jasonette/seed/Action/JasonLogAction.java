@@ -32,7 +32,7 @@ public class JasonLogAction {
             }
             JasonHelper.next("success", action, data, event, context);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }

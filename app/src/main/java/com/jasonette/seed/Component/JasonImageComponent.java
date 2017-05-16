@@ -32,7 +32,7 @@ public class JasonImageComponent {
                 imageview.setAdjustViewBounds(true);
                 return imageview;
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 return new View(context);
             }
         } else {
@@ -108,7 +108,7 @@ public class JasonImageComponent {
                                                     DrawableCompat.setTint(wrapper, JasonHelper.parse_color(style.getString("color")));
                                                     view.setImageDrawable(wrapper);
                                                 } catch (Exception e) {
-                                                    Log.d("Error", e.toString());
+                                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                                     view.setImageDrawable(d);
                                                 }
                                             }
@@ -123,7 +123,7 @@ public class JasonImageComponent {
 
                         }
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 } else {
                     final float corner_radius_float = (float)corner_radius;
@@ -144,7 +144,7 @@ public class JasonImageComponent {
                                         }
                                     });
                         } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                     }
                 }
@@ -153,7 +153,7 @@ public class JasonImageComponent {
                 view.requestLayout();
                 return view;
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
             return new View(context);
         }

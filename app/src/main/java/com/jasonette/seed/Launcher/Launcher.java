@@ -59,7 +59,7 @@ public class Launcher extends Application {
             handlers = new JSONObject();
 
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -78,7 +78,7 @@ public class Launcher extends Application {
             store.put("content", val);
             handlers.put(key, store);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void once(String key, JSONObject val){
@@ -88,7 +88,7 @@ public class Launcher extends Application {
             store.put("content", val);
             handlers.put(key, store);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void trigger(JSONObject intent_to_resolve, JasonViewActivity context) {
@@ -184,7 +184,7 @@ public class Launcher extends Application {
             return handler.getJSONObject("content");
 
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             return new JSONObject();
         }
     }

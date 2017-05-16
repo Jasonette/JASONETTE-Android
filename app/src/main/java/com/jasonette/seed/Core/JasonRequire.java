@@ -108,13 +108,13 @@ public class JasonRequire implements Runnable{
                         }
                         latch.countDown();
                     } catch (JSONException e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }

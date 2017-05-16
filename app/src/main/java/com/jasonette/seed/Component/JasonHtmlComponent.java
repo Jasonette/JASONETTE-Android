@@ -24,7 +24,7 @@ public class JasonHtmlComponent {
 
                 return webview;
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
             JasonComponent.build(view, component, parent, context);
@@ -105,7 +105,7 @@ public class JasonHtmlComponent {
                                 }
                                 return true;
                             } catch (Exception e) {
-                                Log.d("Error", e.toString());
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                             return true;
                         }
@@ -115,7 +115,7 @@ public class JasonHtmlComponent {
                 view.requestLayout();
                 return view;
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
         return new View(context);

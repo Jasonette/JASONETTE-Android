@@ -51,7 +51,7 @@ public class JasonAudioAction {
         } catch (SecurityException e){
             JasonHelper.permission_exception("$audio.play", context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void pause(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
@@ -76,13 +76,13 @@ public class JasonAudioAction {
                 ret.put("value", String.valueOf(duration));
                 JasonHelper.next("success", action, ret, event, context);
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 try {
                     JSONObject err = new JSONObject();
                     err.put("message", "invalid position");
                     JasonHelper.next("error", action, err, event, context);
                 } catch (Exception e2){
-                    Log.d("Error", e2.toString());
+                    Log.d("Warning", e2.getStackTrace()[0].getMethodName() + " : " + e2.toString());
                 }
             }
         } else {
@@ -91,7 +91,7 @@ public class JasonAudioAction {
                 err.put("message", "player doesn't exist");
                 JasonHelper.next("error", action, err, event, context);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     }
@@ -110,7 +110,7 @@ public class JasonAudioAction {
                     err.put("message", "invalid position or duration");
                     JasonHelper.next("error", action, err, event, context);
                 } catch (Exception e2){
-                    Log.d("Error", e2.toString());
+                    Log.d("Warning", e2.getStackTrace()[0].getMethodName() + " : " + e2.toString());
                 }
             }
         } else {
@@ -119,7 +119,7 @@ public class JasonAudioAction {
                 err.put("message", "player doesn't exist");
                 JasonHelper.next("error", action, err, event, context);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     }
@@ -135,7 +135,7 @@ public class JasonAudioAction {
                     }
                 }
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
         JasonHelper.next("success", action, new JSONObject(), event, context);
@@ -155,8 +155,8 @@ public class JasonAudioAction {
                 public void onSuccess() {
                 }
                 @Override
-                public void onFailure(Exception error) {
-                    Log.d("Error", error.toString());
+                public void onFailure(Exception e) {
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             });
 
@@ -183,7 +183,7 @@ public class JasonAudioAction {
         } catch (SecurityException e){
             JasonHelper.permission_exception("$audio.record", context);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -212,7 +212,7 @@ public class JasonAudioAction {
                         ret.put("content_type", "audio/m4a");
                         JasonHelper.next("success", action, ret, event, context);
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
                 @Override
@@ -222,7 +222,7 @@ public class JasonAudioAction {
                         err.put("message", error.toString());
                         JasonHelper.next("error", action, err, event, context);
                     } catch (Exception e){
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             };
@@ -232,7 +232,7 @@ public class JasonAudioAction {
                     .setCallback(callback)
                     .convert();
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }

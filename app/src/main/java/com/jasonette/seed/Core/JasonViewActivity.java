@@ -239,7 +239,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
                 setup_body(model.rendered);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
 
@@ -258,7 +258,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     model.rendered = offline_cache.getJSONObject("rendered");
                     setup_body(model.rendered);
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
 
@@ -297,7 +297,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 editor.commit();
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         super.onPause();
@@ -333,7 +333,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 editor.commit();
 
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -350,7 +350,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 intent_to_resolve.put("name", "oauth");
                 intent_to_resolve.put("intent", getIntent());
             } catch (JSONException e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -367,7 +367,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         super.onResume();
@@ -400,7 +400,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 intent_to_resolve.put("name", requestCode);
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -450,7 +450,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 simple_trigger("$show", new JSONObject(), this);
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     void onLoad(){
@@ -510,7 +510,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 final_call((JSONObject)action, data, event, context);
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     };
     private void final_call(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
@@ -532,7 +532,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                 action_with_parsed_options.put("options", parsed_options);
                                 exec(action_with_parsed_options, model.state, event, context);
                             } catch (Exception e) {
-                                Log.d("Error", e.toString());
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
                     });
@@ -543,7 +543,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -619,7 +619,7 @@ public class JasonViewActivity extends AppCompatActivity {
                         try {
                             invoke_lambda(action, data, parsed_options, context);
                         } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                     }
                 });
@@ -631,7 +631,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
 
@@ -660,7 +660,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
             call(lambda.toString(), data.toString(), "{}", context);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -673,7 +673,7 @@ public class JasonViewActivity extends AppCompatActivity {
             Object action = events.get(event_name);
             call(action.toString(), data.toString(), "{}", context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -712,7 +712,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             resolved_classname = jrjson.getString("classname");
                         }
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
 
 
@@ -732,7 +732,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                 try {
                                     loading.setVisibility(View.VISIBLE);
                                 } catch (Exception e) {
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
                             }
                         });
@@ -762,7 +762,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
         } catch (Exception e){
             // Action doesn't exist yet
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             try {
 
                 JSONObject alert_action = new JSONObject();
@@ -778,8 +778,8 @@ public class JasonViewActivity extends AppCompatActivity {
 
                 call(alert_action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
 
-            } catch (Exception err){
-                Log.d("Error", err.toString());
+            } catch (Exception e2){
+                Log.d("Warning", e2.getStackTrace()[0].getMethodName() + " : " + e2.toString());
             }
         }
     }
@@ -816,7 +816,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 // call next
                 call(action_string, data.toString(), event_string, JasonViewActivity.this);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     };
@@ -841,7 +841,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 // call next
                 call(action_string, data.toString(), event_string, JasonViewActivity.this);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     };
@@ -859,7 +859,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 // call next
                 call(action_string, data_string, event_string, JasonViewActivity.this);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     };
@@ -1072,7 +1072,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             JasonHelper.next("error", action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
         }
 
@@ -1127,7 +1127,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     try {
                         latch.await();
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
 
                     JSONObject res = new JSONObject();
@@ -1153,7 +1153,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 JasonHelper.next("error", action, new JSONObject(), event, context);
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             JasonHelper.next("error", action, new JSONObject(), event, context);
         }
 
@@ -1199,7 +1199,7 @@ public class JasonViewActivity extends AppCompatActivity {
             JasonParser.getInstance(this).parse(type, data, template, context);
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             JasonHelper.next("error", action, new JSONObject(), event, context);
         }
     }
@@ -1212,7 +1212,7 @@ public class JasonViewActivity extends AppCompatActivity {
             JasonHelper.next("success", action, new JSONObject(), event, context);
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1273,7 +1273,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1290,7 +1290,7 @@ public class JasonViewActivity extends AppCompatActivity {
                         swipeLayout.setRefreshing(false);
                     }
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         });
@@ -1303,7 +1303,7 @@ public class JasonViewActivity extends AppCompatActivity {
             try {
                 JasonHelper.next("success", action, new JSONObject(), event, context);
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     }
@@ -1313,7 +1313,7 @@ public class JasonViewActivity extends AppCompatActivity {
         try {
             JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1342,7 +1342,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     ret.put("content_type", "image/png");
                     JasonHelper.next("success", action, ret, event, context);
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
 
             }
@@ -1388,7 +1388,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 onLoad();
 
             } catch (JSONException e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -1414,7 +1414,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         JasonViewActivity.this.runOnUiThread(new Runnable() {
@@ -1647,14 +1647,14 @@ public class JasonViewActivity extends AppCompatActivity {
             String backgroundColor = header.getJSONObject("style").getString("background");
             toolbar.setBackgroundColor(JasonHelper.parse_color(backgroundColor));
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         try{
             String color = header.getJSONObject("style").getString("color");
             toolbar.setTitleTextColor(JasonHelper.parse_color(color));
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -1700,7 +1700,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
                 }
             } catch (JSONException e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -1722,7 +1722,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 setup_input(footer.getJSONObject("input"));
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1823,7 +1823,7 @@ public class JasonViewActivity extends AppCompatActivity {
             listView.setClipToPadding(false);
             listView.setPadding(0,0,0,height);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1883,7 +1883,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                                 bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                                             }
                                         } catch (Exception e) {
-                                            Log.d("Error", e.toString());
+                                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                         }
                                         AHBottomNavigationItem tab_item = bottomNavigation.getItem(index);
                                         bottomNavigationItems.put(Integer.valueOf(index), tab_item);
@@ -1899,7 +1899,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             text = item.getString("text");
                             bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                         } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                         AHBottomNavigationItem tab_item = bottomNavigation.getItem(i);
                         bottomNavigationItems.put(Integer.valueOf(i), tab_item);
@@ -1928,7 +1928,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                                 bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                                             }
                                         } catch (Exception e) {
-                                            Log.d("Error", e.toString());
+                                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                         }
                                         Drawable drawable = new BitmapDrawable(getResources(), resource);
                                         AHBottomNavigationItem item = new AHBottomNavigationItem(text, drawable);
@@ -1949,7 +1949,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                 bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                             }
                         } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
 
                         ColorDrawable d = new ColorDrawable(Color.TRANSPARENT);
@@ -1993,7 +1993,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             href(action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
                         }
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                     return true;
                 }
@@ -2002,7 +2002,7 @@ public class JasonViewActivity extends AppCompatActivity {
             listView.setClipToPadding(false);
             listView.setPadding(0,0,0,160);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -2026,7 +2026,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -2057,7 +2057,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
             view.setLayoutParams(params);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -2127,7 +2127,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                         call(search.getJSONObject("action").toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
                                     }
                                 } catch (Exception e){
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
                             }
                             return false;
@@ -2261,7 +2261,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                     }
                                 }
                             } catch (Exception e) {
-                                Log.d("Error", e.toString());
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                             return true;
                         }
@@ -2270,7 +2270,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
             }
         }catch(Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         return super.onPrepareOptionsMenu(menu);
     }
@@ -2298,14 +2298,14 @@ public class JasonViewActivity extends AppCompatActivity {
                                 try {
                                     height = (int) JasonHelper.pixels(this, style.getString("height"), "vertical");
                                 } catch (Exception e) {
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
                             }
                             if (style.has("width")) {
                                 try {
                                     width = (int) JasonHelper.pixels(this, style.getString("width"), "horizontal");
                                 } catch (Exception e) {
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
                             }
                         }
@@ -2340,7 +2340,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         try {
             for (int i = 0; i < toolbar.getChildCount(); ++i) {
@@ -2363,7 +2363,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 

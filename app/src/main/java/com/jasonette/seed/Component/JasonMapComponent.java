@@ -63,8 +63,8 @@ public class JasonMapComponent {
                 // Add pins when the map is ready
                 mapview.getMapAsync(new MapReadyHandler(component, mapview, context));
                 return mapview;
-            } catch (Exception err) {
-                Log.d("Error", err.toString());
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
             try {
@@ -77,8 +77,8 @@ public class JasonMapComponent {
 
                 ((MapView)view).onResume(); // Trigger onResume
                 return view;
-            } catch (Exception err){
-                Log.d("Error", err.toString());
+            } catch (Exception e){
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
         return new View(context);
@@ -94,8 +94,8 @@ public class JasonMapComponent {
                 latitude = Double.parseDouble(r[0]);
                 longitude = Double.parseDouble(r[1]);
             }
-        } catch (Exception err) {
-            Log.d("Error", err.toString());
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         return new LatLng(latitude, longitude);
     }
@@ -167,8 +167,8 @@ public class JasonMapComponent {
                         map.moveCamera(CameraUpdateFactory.zoomTo(zoom));
                     }
                 }
-            } catch (Exception err) {
-                Log.d("Error", err.toString());
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     }

@@ -44,7 +44,7 @@ public class JasonSliderComponent {
                 view.requestLayout();
                 return view;
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 return new View(context);
             }
         }
@@ -69,7 +69,7 @@ public class JasonSliderComponent {
                         ((JasonViewActivity) root_context).call(action.toString(), new JSONObject().toString(), "{}", view.getContext());
                     }
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         };

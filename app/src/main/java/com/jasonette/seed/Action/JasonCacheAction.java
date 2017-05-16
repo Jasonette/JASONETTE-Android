@@ -32,7 +32,7 @@ public class JasonCacheAction {
             JasonHelper.next("success", action, new_cache, event, context);
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
 
@@ -53,7 +53,7 @@ public class JasonCacheAction {
             JasonHelper.next("success", action, new JSONObject(), event, context);
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }

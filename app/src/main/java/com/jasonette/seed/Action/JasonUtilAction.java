@@ -52,14 +52,14 @@ public class JasonUtilAction {
                     Snackbar snackbar = Snackbar.make(((JasonViewActivity)context).rootLayout, options.getString("title") + "\n" + options.getString("description"), Snackbar.LENGTH_LONG);
                     snackbar.show();
                 } catch (Exception e){
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         });
         try {
             JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void toast(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
@@ -72,14 +72,14 @@ public class JasonUtilAction {
                     Toast toast = Toast.makeText(context, (CharSequence)options.getString("text"), duration);
                     toast.show();
                 } catch (Exception e){
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         });
         try {
             JasonHelper.next("success", action, new JSONObject(), event, context);
-        } catch (Exception err) {
-            Log.d("Error", err.toString());
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void alert(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
@@ -166,7 +166,7 @@ public class JasonUtilAction {
                             });
                     builder.show();
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         });
@@ -209,7 +209,7 @@ public class JasonUtilAction {
                                         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                                     }
                                 } catch (Exception e){
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
                             }
                         });
@@ -222,14 +222,14 @@ public class JasonUtilAction {
                         builder.create().show();
                     }
                 } catch (Exception e){
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         });
         try {
             JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -269,7 +269,7 @@ public class JasonUtilAction {
                             value.put("value", val);
                             JasonHelper.next("success", action, value, event, context);
                         } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
 
                     }
@@ -332,13 +332,13 @@ public class JasonUtilAction {
                         // Add to array
                         contactList.put(contact);
                     } catch (Exception e){
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
                 try {
                     JasonHelper.next("success", action, contactList, event, context);
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         } catch (SecurityException e){
@@ -447,7 +447,7 @@ public class JasonUtilAction {
                         }
                     }
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         }).start();

@@ -28,7 +28,7 @@ public class JasonGeoAction {
                         ret.put("value", val);
                         JasonHelper.next("success", action, ret, event, context);
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
 
@@ -45,7 +45,7 @@ public class JasonGeoAction {
         } catch (SecurityException e){
             JasonHelper.permission_exception("$geo.get", context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }

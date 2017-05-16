@@ -56,7 +56,7 @@ public class JasonImageHelper {
             Uri bitmapUri = Uri.fromFile(file);
             this.listener.onLoaded(this.data, bitmapUri);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -121,7 +121,7 @@ public class JasonImageHelper {
 
                                     listener.onLoaded(byteArray, bitmapUri);
                                 } catch (Exception e) {
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
 
                             }
@@ -129,7 +129,7 @@ public class JasonImageHelper {
 
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }
