@@ -179,28 +179,30 @@ public class JasonMapComponent {
         // to let the mapview handle them
         @Override
         public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-            LinearLayout layout = (LinearLayout)rv.findChildViewUnder(e.getX(),e.getY());
-            if(layout != null) {
-                for(int i=0; i<layout.getChildCount(); i++) {
-                    View child= layout.getChildAt(i);
-                    // Weed out non-map views ASAP
-                    if (child.getClass().equals(MapView.class)) {
-                        int left = layout.getLeft() + child.getLeft();
-                        int right = layout.getLeft() + child.getRight();
-                        int top = layout.getTop() + child.getTop();
-                        int bottom = layout.getTop() + child.getBottom();
-                        if(e.getX() > left && e.getX() < right && e.getY() > top && e.getY() < bottom) {
-                            switch (e.getActionMasked()) {
-                                // Pressed on map: stop listview from scrolling
-                                case MotionEvent.ACTION_DOWN:
-                                    rv.requestDisallowInterceptTouchEvent(true);
-                                    break;
+            if((rv.findChildViewUnder(e.getX(), e.getY())) instanceof LinearLayout) {
+                LinearLayout layout = (LinearLayout)rv.findChildViewUnder(e.getX(),e.getY());
+                if (layout != null) {
+                    for (int i = 0; i < layout.getChildCount(); i++) {
+                        View child = layout.getChildAt(i);
+                        // Weed out non-map views ASAP
+                        if (child.getClass().equals(MapView.class)) {
+                            int left = layout.getLeft() + child.getLeft();
+                            int right = layout.getLeft() + child.getRight();
+                            int top = layout.getTop() + child.getTop();
+                            int bottom = layout.getTop() + child.getBottom();
+                            if (e.getX() > left && e.getX() < right && e.getY() > top && e.getY() < bottom) {
+                                switch (e.getActionMasked()) {
+                                    // Pressed on map: stop listview from scrolling
+                                    case MotionEvent.ACTION_DOWN:
+                                        rv.requestDisallowInterceptTouchEvent(true);
+                                        break;
 
-                                // Released on map or cancelled: listview can be normal again
-                                case MotionEvent.ACTION_UP:
-                                case MotionEvent.ACTION_CANCEL:
-                                    rv.requestDisallowInterceptTouchEvent(false);
-                                    break;
+                                    // Released on map or cancelled: listview can be normal again
+                                    case MotionEvent.ACTION_UP:
+                                    case MotionEvent.ACTION_CANCEL:
+                                        rv.requestDisallowInterceptTouchEvent(false);
+                                        break;
+                                }
                             }
                         }
                     }

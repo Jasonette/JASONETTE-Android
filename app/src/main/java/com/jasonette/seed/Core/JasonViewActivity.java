@@ -1421,6 +1421,9 @@ public class JasonViewActivity extends AppCompatActivity {
             @Override
             public void run() {
                 try {
+                    // First need to remove all handlers because they will be reattached after render
+                    removeListViewOnItemTouchListeners();
+
                     loading.setVisibility(View.GONE);
                     if(swipeLayout !=null) {
                         swipeLayout.setRefreshing(false);
