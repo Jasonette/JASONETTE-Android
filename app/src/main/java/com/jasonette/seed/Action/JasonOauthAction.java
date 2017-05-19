@@ -197,7 +197,7 @@ public class JasonOauthAction {
                         Iterator paramKeys = authorize_options_data.keys();
                         while(paramKeys.hasNext()) {
                             String key = (String)paramKeys.next();
-                            if(key != "redirect_uri" || key != "response_type" || key != "scope" || key != "state") {
+                            if(key != "redirect_uri" && key != "response_type" && key != "scope" && key != "state") {
                                 String value = authorize_options_data.getString(key);
                                 additionalParams.put(key, value);
                             }
@@ -314,7 +314,7 @@ public class JasonOauthAction {
                                     Iterator paramKeys = authorize_options_data.keys();
                                     while(paramKeys.hasNext()) {
                                         String key = (String)paramKeys.next();
-                                        if(key != "redirect_uri" || key != "response_type" || key != "scope" || key != "state") {
+                                        if(key != "redirect_uri" && key != "response_type" && key != "scope" && key != "state") {
                                             String value = authorize_options_data.getString(key);
                                             additionalParams.put(key, value);
                                         }
