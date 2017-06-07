@@ -2,6 +2,8 @@ package com.jasonette.seed.Action;
 
 import android.app.Dialog;
 import android.app.TimePickerDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -38,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+
 
 public class JasonUtilAction {
     private int counter; // general purpose counter;
@@ -452,4 +455,40 @@ public class JasonUtilAction {
             }
         }).start();
     }
+    public void clipboard(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ClipboardManager clipboard = (ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
+                    JSONObject options = action.getJSONObject("options");
+                    if (options.has("items")) {
+                        final JSONArray items = options.getJSONArray("items");
+                        counter = 0;
+                        final int l = items.length();
+                        for (int i = 0; i < l; i++) {
+                            JSONObject item = (JSONObject) items.get(i);
+                            if (item.has("type")) {
+                                String type = item.getString("type");
+                                if (type.equalsIgnoreCase("text")) {
+                                    ClipData clip = ClipData.newPlainText("simple_text", item.getString("text"));
+                                    counter++;
+                                    if (counter == l) {
+                                        JasonHelper.next("success", action, new JSONObject(), event, context);
+                                        clipboard.setPrimaryClip(clip);
+                                        if (item.has("confirmation")) {
+                                            Toast.makeText(context, item.getString("confirmation"), Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                }
+            }
+        });
+    }
+
 }
