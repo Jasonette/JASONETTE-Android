@@ -180,6 +180,10 @@ public class JasonUtilAction {
                     if(options.has("items")){
                         final JSONArray items = options.getJSONArray("items");
                         AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                        if(options.has("title")){
+                            String title = options.getString("title");
+                            builder.setTitle(title);
+                        }
 
                         ArrayList<String> listItems = new ArrayList<String>();
                         for (int i = 0; i < items.length() ; i++) {
