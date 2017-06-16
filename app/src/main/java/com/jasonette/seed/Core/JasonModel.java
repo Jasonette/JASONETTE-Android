@@ -109,12 +109,9 @@ public class JasonModel{
 
     private void fetch_local(){
         try {
-            jason = JasonHelper.read_json(url, this.view);
-            if(jason.has("$jason")){
-                view.build();
-            } else {
-                Log.d("Error", "Invalid jason");
-            }
+            jason = (JSONObject)JasonHelper.read_json(url, this.view);
+            refs = new JSONObject();
+            resolve_and_build(jason.toString());
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
