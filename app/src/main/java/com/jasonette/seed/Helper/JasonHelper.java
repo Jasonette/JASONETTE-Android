@@ -239,12 +239,13 @@ public class JasonHelper {
         return stringBuilder.toString();
     }
 
-    public static JSONObject read_json(String fn, Context context) throws IOException {
+    public static Object read_json(String fn, Context context) {// throws IOException {
 
         // we're expecting a filename that looks like "file://..."
         String filename = fn.replace("file://", "file/");
 
         String jr = null;
+        Object ret;
         try {
             InputStream is = context.getAssets().open(filename);
             int size = is.available();
@@ -252,11 +253,23 @@ public class JasonHelper {
             is.read(buffer);
             is.close();
             jr = new String(buffer, "UTF-8");
-            return new JSONObject(jr);
+
+
+            if(jr.trim().startsWith("[")) {
+                // array
+                ret = new JSONArray(jr);
+            } else if(jr.trim().startsWith("{")){
+                // object
+                ret = new JSONObject(jr);
+            } else {
+                // string
+                ret = jr;
+            }
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             return new JSONObject();
         }
+        return ret;
 
     }
 
