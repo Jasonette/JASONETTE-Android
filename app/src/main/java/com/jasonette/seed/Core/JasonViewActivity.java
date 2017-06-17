@@ -31,6 +31,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -48,7 +49,9 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.eclipsesource.v8.debug.mirror.Frame;
 import com.jasonette.seed.Component.JasonComponentFactory;
+import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonSettings;
 import com.jasonette.seed.Launcher.Launcher;
@@ -1434,9 +1437,11 @@ public class JasonViewActivity extends AppCompatActivity {
                             sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
                             if(style.get("background") instanceof String){
                                 String background = style.getString("background");
-                                if(background.matches("http[s]?:\\/\\/.*")) {
+                                JSONObject c = new JSONObject();
+                                c.put("url", background);
+                                if(background.matches("(file|http[s]?):\\/\\/.*")) {
                                     if (background.matches(".*\\.gif")) {
-                                        with(JasonViewActivity.this).load(background).asGif().into(new SimpleTarget<GifDrawable>() {
+                                        with(JasonViewActivity.this).load(JasonImageComponent.resolve_url(c, JasonViewActivity.this)).asGif().into(new SimpleTarget<GifDrawable>() {
                                             @Override
                                             public void onResourceReady(GifDrawable resource, GlideAnimation<? super GifDrawable> glideAnimation) {
                                                 sectionLayout.setBackground(resource);
@@ -1444,7 +1449,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                             }
                                         });
                                     } else {
-                                        with(JasonViewActivity.this).load(background).into(new SimpleTarget<GlideDrawable>() {
+                                        with(JasonViewActivity.this).load(JasonImageComponent.resolve_url(c, JasonViewActivity.this)).into(new SimpleTarget<GlideDrawable>() {
                                             @Override
                                             public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
                                                 sectionLayout.setBackground(resource);
@@ -1868,13 +1873,16 @@ public class JasonViewActivity extends AppCompatActivity {
             if(bottomNavigation.getItemsCount() == items.length()){
                 // if the same number as the previous state, try to fill in the items instead of re-instantiating them all
 
+
                 for (int i = 0; i < items.length(); i++) {
                     final JSONObject item = items.getJSONObject(i);
                     if(item.has("image")) {
                         final int index = i;
+                        JSONObject c = new JSONObject();
+                        c.put("url", item.getString("image"));
                         Glide
                                 .with(this)
-                                .load(item.getString("image"))
+                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                 .asBitmap()
                                 .into(new SimpleTarget<Bitmap>(100, 100) {
                                     @Override
@@ -1918,31 +1926,33 @@ public class JasonViewActivity extends AppCompatActivity {
                     final JSONObject item = items.getJSONObject(i);
                     final int index = i;
                     if(item.has("image")) {
+                        JSONObject c = new JSONObject();
+                        c.put("url", item.getString("image"));
                         with(this)
-                                .load(item.getString("image"))
-                                .asBitmap()
-                                .into(new SimpleTarget<Bitmap>(100, 100) {
-                                    @Override
-                                    public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
-                                        String text = "";
-                                        try {
-                                            if (item.has("text")) {
-                                                text = item.getString("text");
-                                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
-                                            }
-                                        } catch (Exception e) {
-                                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                            .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                            .asBitmap()
+                            .into(new SimpleTarget<Bitmap>(100, 100) {
+                                @Override
+                                public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
+                                    String text = "";
+                                    try {
+                                        if (item.has("text")) {
+                                            text = item.getString("text");
+                                            bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                                         }
-                                        Drawable drawable = new BitmapDrawable(getResources(), resource);
-                                        AHBottomNavigationItem item = new AHBottomNavigationItem(text, drawable);
-                                        bottomNavigationItems.put(Integer.valueOf(index), item);
-                                        if(bottomNavigationItems.size() >= items.length()){
-                                            for(int j = 0; j < bottomNavigationItems.size(); j++){
-                                                bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
-                                            }
+                                    } catch (Exception e) {
+                                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                                    }
+                                    Drawable drawable = new BitmapDrawable(getResources(), resource);
+                                    AHBottomNavigationItem item = new AHBottomNavigationItem(text, drawable);
+                                    bottomNavigationItems.put(Integer.valueOf(index), item);
+                                    if(bottomNavigationItems.size() >= items.length()){
+                                        for(int j = 0; j < bottomNavigationItems.size(); j++){
+                                            bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
                                         }
                                     }
-                                });
+                                }
+                            });
 
                     } else if(item.has("text")){
                         String text = "";
@@ -2198,13 +2208,12 @@ public class JasonViewActivity extends AppCompatActivity {
                         JasonComponentFactory.build(menuButton, json, null, JasonViewActivity.this);
                     }
 
-                    FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams)menuButton.getLayoutParams();
-                    lp.width = FrameLayout.LayoutParams.MATCH_PARENT;
-                    lp.height = FrameLayout.LayoutParams.MATCH_PARENT;
+                    FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                    menuButton.setLayoutParams(lp);
 
                     // Set padding for the menu button
-                    int padding = (int)JasonHelper.pixels(this, "10", "vertical");
-                    itemView.setPadding(padding, 0, padding, 0);
+                    int padding = (int)JasonHelper.pixels(this, "15", "vertical");
+                    itemView.setPadding(padding, padding, padding, padding);
 
 
                     if(json.has("badge")){
@@ -2226,20 +2235,15 @@ public class JasonViewActivity extends AppCompatActivity {
                         v.setTextColor(color);
                         v.setText(badge_text);
 
-                        FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.MATCH_PARENT);
-                        itemView.setLayoutParams(p);
-
-
                         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-                        layoutParams.gravity = Gravity.LEFT | Gravity.TOP;
-
-                        int left = (int)JasonHelper.pixels(this, String.valueOf(-5), "vertical");
-                        int top = (int)JasonHelper.pixels(this, String.valueOf(0), "vertical");
+                        //layoutParams.gravity = Gravity.RIGHT | Gravity.TOP;
+                        int left = (int)JasonHelper.pixels(this, String.valueOf(20), "horizontal");
+                        int top = (int)JasonHelper.pixels(this, String.valueOf(-10), "vertical");
                         if(badge_style.has("left")){
                             left = (int)JasonHelper.pixels(this, badge_style.getString("left"), "horizontal");
                         }
                         if(badge_style.has("top")) {
-                            top = (int)JasonHelper.pixels(this, String.valueOf(Integer.parseInt(badge_style.getString("top")) + 8), "vertical");
+                            top = (int)JasonHelper.pixels(this, String.valueOf(Integer.parseInt(badge_style.getString("top"))), "vertical");
                         }
                         layoutParams.setMargins(left,top,0,0);
                         itemView.addView(v);
@@ -2293,6 +2297,8 @@ public class JasonViewActivity extends AppCompatActivity {
                     String type = ((JSONObject) title).getString("type");
                     if (type.equalsIgnoreCase("image")) {
                         String url = ((JSONObject) title).getString("url");
+                        JSONObject c = new JSONObject();
+                        c.put("url", url);
                         int height = header_height;
                         int width = Toolbar.LayoutParams.WRAP_CONTENT;
                         if (((JSONObject) title).has("style")) {
@@ -2320,7 +2326,7 @@ public class JasonViewActivity extends AppCompatActivity {
                         params.gravity = Gravity.CENTER_HORIZONTAL;
                         logoView.setLayoutParams(params);
                         Glide.with(this)
-                                .load(url)
+                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                 .into((ImageView) logoView);
                     } else if(type.equalsIgnoreCase("label")){
                         String text = ((JSONObject) title).getString("text");
