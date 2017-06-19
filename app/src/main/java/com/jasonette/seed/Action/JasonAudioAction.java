@@ -33,18 +33,21 @@ public class JasonAudioAction {
                     if(player == null) {
                         player = new MediaPlayer();
                         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+                        String url = options.getString("url");
+                        player.reset();
+                        player.setDataSource(url);
+                        player.prepare();
                     }
 
                     AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
                     ((JasonViewActivity)context).setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
-                    String url = options.getString("url");
-                    player.reset();
-                    player.setDataSource(url);
-                    player.prepare();
-                    player.start();
-
-
+                    if(player.isPlaying()){
+                        player.pause();
+                    } else {
+                        player.start();
+                    }
                 }
             }
             JasonHelper.next("success", action, new JSONObject(), event, context);
