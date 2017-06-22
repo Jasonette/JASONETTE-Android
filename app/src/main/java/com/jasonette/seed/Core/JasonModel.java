@@ -1,30 +1,22 @@
 package com.jasonette.seed.Core;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.jasonette.seed.Helper.JasonHelper;
+import com.jasonette.seed.Launcher.Launcher;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -345,6 +337,7 @@ public class JasonModel{
                 // merge with passed in data
                 state.put("$get", var);
                 state.put("$cache", cache);
+                state.put("$global", ((Launcher)(this.view.getApplicationContext())).getGlobal());
                 state.put("$params", params);
             } catch (Exception e) {
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());

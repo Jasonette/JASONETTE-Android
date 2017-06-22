@@ -3,6 +3,7 @@ package com.jasonette.seed.Launcher;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.bumptech.glide.request.target.ViewTarget;
@@ -10,16 +11,38 @@ import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.R;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 import static android.R.attr.action;
 
 public class Launcher extends Application {
     private JSONObject handlers;
+    private JSONObject global;
+
+    public JSONObject getGlobal(){
+        return this.global;
+    }
+    public void setGlobal(String key, Object json){
+        try {
+            this.global.put(key, json);
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
+    public void resetGlobal(String key){
+        try {
+            this.global.remove(key);
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
 
     public Launcher() {
     }
@@ -57,6 +80,27 @@ public class Launcher extends Application {
 
             // handler init
             handlers = new JSONObject();
+
+            // $global
+            SharedPreferences global_pref = getSharedPreferences("global", 0);
+            this.global = new JSONObject();
+            if(global_pref != null){
+                Map<String,?> map = global_pref.getAll();
+                for (Map.Entry<String, ?> entry : map.entrySet()) {
+                    try {
+                        String val = (String) entry.getValue();
+                        Object json = new JSONTokener(val).nextValue();
+                        if (json instanceof JSONObject) {
+                            this.global.put(entry.getKey(), new JSONObject(val));
+                        } else if (json instanceof JSONArray) {
+                            this.global.put(entry.getKey(), new JSONArray(val));
+                        }
+                    } catch (Exception e){
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                    }
+                }
+            }
+
 
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
