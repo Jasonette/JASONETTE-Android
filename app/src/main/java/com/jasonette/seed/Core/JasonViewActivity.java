@@ -1280,6 +1280,9 @@ public class JasonViewActivity extends AppCompatActivity {
         }
     }
 
+    public void back ( final JSONObject action, JSONObject data, JSONObject event, Context context){
+        finish();
+    }
     public void close ( final JSONObject action, JSONObject data, JSONObject event, Context context){
        finish();
     }
