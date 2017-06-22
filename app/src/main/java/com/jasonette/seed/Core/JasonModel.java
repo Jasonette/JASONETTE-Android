@@ -338,6 +338,7 @@ public class JasonModel{
                 state.put("$get", var);
                 state.put("$cache", cache);
                 state.put("$global", ((Launcher)(this.view.getApplicationContext())).getGlobal());
+                state.put("$env", ((Launcher)(this.view.getApplicationContext())).getEnv());
                 state.put("$params", params);
             } catch (Exception e) {
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());

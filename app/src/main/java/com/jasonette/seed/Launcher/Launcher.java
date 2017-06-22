@@ -4,7 +4,12 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 
 import com.bumptech.glide.request.target.ViewTarget;
 import com.jasonette.seed.Core.JasonViewActivity;
@@ -25,7 +30,11 @@ import static android.R.attr.action;
 public class Launcher extends Application {
     private JSONObject handlers;
     private JSONObject global;
+    private JSONObject env;
 
+    public JSONObject getEnv(){
+        return this.env;
+    }
     public JSONObject getGlobal(){
         return this.global;
     }
@@ -101,6 +110,25 @@ public class Launcher extends Application {
                 }
             }
 
+            this.env = new JSONObject();
+
+            // device info
+            JSONObject device = new JSONObject();
+            DisplayMetrics displayMetrics = Resources.getSystem().getDisplayMetrics();
+
+            float width = displayMetrics.widthPixels / displayMetrics.density;
+            float height = displayMetrics.heightPixels / displayMetrics.density;
+            device.put("width", width);
+            device.put("height", height);
+
+            JSONObject os = new JSONObject();
+            os.put("name", "android");
+            os.put("version", Build.VERSION.RELEASE);
+            os.put("sdk", Build.VERSION.SDK_INT);
+
+            device.put("os", os);
+
+            this.env.put("device", device);
 
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
