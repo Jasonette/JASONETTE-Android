@@ -23,6 +23,7 @@ import org.json.JSONTokener;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Locale;
 import java.util.Map;
 
 import static android.R.attr.action;
@@ -120,6 +121,7 @@ public class Launcher extends Application {
             float height = displayMetrics.heightPixels / displayMetrics.density;
             device.put("width", width);
             device.put("height", height);
+            device.put("language", Locale.getDefault().toString());
 
             JSONObject os = new JSONObject();
             os.put("name", "android");
