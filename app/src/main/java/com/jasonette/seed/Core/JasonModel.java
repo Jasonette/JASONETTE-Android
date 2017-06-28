@@ -93,13 +93,13 @@ public class JasonModel{
 
     public void fetch() {
         if(url.startsWith("file://")) {
-            fetch_local();
+            fetch_local(url);
         } else {
-            fetch_http();
+            fetch_http(url);
         }
     }
 
-    private void fetch_local(){
+    public void fetch_local(String url){
         try {
             jason = (JSONObject)JasonHelper.read_json(url, this.view);
             refs = new JSONObject();
@@ -109,7 +109,7 @@ public class JasonModel{
         }
     }
 
-    private void fetch_http(){
+    private void fetch_http(String url){
         try{
             Request request;
             Request.Builder builder = new Request.Builder();
@@ -226,7 +226,7 @@ public class JasonModel{
                     resolve_local_reference();
                 } else {
                     if (jason.has("$jason")) {
-                        view.build();
+                        view.build(jason);
                     } else {
 
                     }
