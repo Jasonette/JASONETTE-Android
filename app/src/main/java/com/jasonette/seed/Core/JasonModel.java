@@ -156,17 +156,19 @@ public class JasonModel{
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
+                    fetch_local("file://error.json");
                     e.printStackTrace();
                 }
 
                 @Override
                 public void onResponse(Call call, final Response response) throws IOException {
                     if (!response.isSuccessful()) {
-                        throw new IOException("Unexpected code " + response);
+                        fetch_local("file://error.json");
+                    } else {
+                        String res = response.body().string();
+                        refs = new JSONObject();
+                        resolve_and_build(res);
                     }
-                    String res = response.body().string();
-                    refs = new JSONObject();
-                    resolve_and_build(res);
                 }
             });
         } catch (Exception e){
