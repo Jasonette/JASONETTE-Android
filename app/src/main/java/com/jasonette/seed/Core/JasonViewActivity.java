@@ -45,6 +45,7 @@ import android.widget.TextView;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -100,6 +101,7 @@ public class JasonViewActivity extends AppCompatActivity {
     public LinearLayout sectionLayout;
     public RelativeLayout rootLayout;
     public WebView webview;
+    public ImageView backgroundImageView;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
@@ -1443,22 +1445,23 @@ public class JasonViewActivity extends AppCompatActivity {
                                 JSONObject c = new JSONObject();
                                 c.put("url", background);
                                 if(background.matches("(file|http[s]?):\\/\\/.*")) {
-                                    if (background.matches(".*\\.gif")) {
-                                        with(JasonViewActivity.this).load(JasonImageComponent.resolve_url(c, JasonViewActivity.this)).asGif().into(new SimpleTarget<GifDrawable>() {
-                                            @Override
-                                            public void onResourceReady(GifDrawable resource, GlideAnimation<? super GifDrawable> glideAnimation) {
-                                                sectionLayout.setBackground(resource);
+                                    RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                            RelativeLayout.LayoutParams.MATCH_PARENT,
+                                            RelativeLayout.LayoutParams.MATCH_PARENT);
+                                    backgroundImageView = new ImageView(JasonViewActivity.this);
+                                    rootLayout.addView(backgroundImageView, 0, rlp);
 
-                                            }
-                                        });
-                                    } else {
-                                        with(JasonViewActivity.this).load(JasonImageComponent.resolve_url(c, JasonViewActivity.this)).into(new SimpleTarget<GlideDrawable>() {
-                                            @Override
-                                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
-                                                sectionLayout.setBackground(resource);
-                                            }
-                                        });
+                                    DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
+
+                                    if (background.matches(".*\\.gif")) {
+                                        cacheStrategy = DiskCacheStrategy.SOURCE;
                                     }
+
+                                    with(JasonViewActivity.this)
+                                            .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                                            .diskCacheStrategy(cacheStrategy)
+                                            .centerCrop()
+                                            .into(backgroundImageView);
                                 } else if(background == "camera") {
                                 } else if(background.matches("data:image.*")){
                                     String base64 = background.substring("data:image/jpeg;base64,".length());
