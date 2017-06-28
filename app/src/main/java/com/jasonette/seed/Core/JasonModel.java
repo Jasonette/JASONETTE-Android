@@ -87,6 +87,14 @@ public class JasonModel{
         } catch (Exception e){
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         };
+
+        try {
+            JSONObject v = new JSONObject();
+            v.put("url", this.url);
+            ((Launcher)(this.view.getApplicationContext())).setEnv("view", v);
+        } catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        };
     }
 
 

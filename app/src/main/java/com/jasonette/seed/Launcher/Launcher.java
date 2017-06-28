@@ -36,6 +36,13 @@ public class Launcher extends Application {
     public JSONObject getEnv(){
         return this.env;
     }
+    public void setEnv(String key, Object json) {
+        try {
+            this.env.put(key, json);
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
     public JSONObject getGlobal(){
         return this.global;
     }
