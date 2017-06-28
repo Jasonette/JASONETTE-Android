@@ -198,6 +198,7 @@ public class JasonViewActivity extends AppCompatActivity {
         loadingLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
         loading = new ProgressBar(this);
         loading.setLayoutParams(loadingLayoutParams);
+        loading.setVisibility(View.INVISIBLE);
         rootLayout.addView(loading);
 
         // 6. set root layout as content
@@ -263,6 +264,8 @@ public class JasonViewActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
+            } else {
+                model.fetch_local("file://loading.json", true);
             }
 
             // Fetch
@@ -726,20 +729,6 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
 
                     methodName = type.substring(type.lastIndexOf('.') + 1);
-
-                    // Turn on Loading indicator if it's an async action
-                    if(JasonSettings.isAsync(className, this)){
-                        JasonViewActivity.this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    loading.setVisibility(View.VISIBLE);
-                                } catch (Exception e) {
-                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                                }
-                            }
-                        });
-                    }
 
                     // Look up the module registry to see if there's an instance already
                     // 1. If there is, use that
@@ -1361,22 +1350,22 @@ public class JasonViewActivity extends AppCompatActivity {
      *
      ************************************************************/
 
-    public void build(){
+    public void build(JSONObject jason){
         // set fetched to true since build() is only called after network.request succeeds
         fetched = true;
-        if(model.jason!=null) {
+        if(jason!=null) {
             try {
 
                 // Set up background
 
-                if (model.jason.getJSONObject("$jason").has("body")) {
+                if (jason.getJSONObject("$jason").has("body")) {
                     final JSONObject body;
-                    body = (JSONObject) model.jason.getJSONObject("$jason").getJSONObject("body");
+                    body = (JSONObject) jason.getJSONObject("$jason").getJSONObject("body");
                     setup_body(body);
                 }
 
-                if (model.jason.getJSONObject("$jason").has("head")) {
-                    final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                if (jason.getJSONObject("$jason").has("head")) {
+                    final JSONObject head = jason.getJSONObject("$jason").getJSONObject("head");
                     if (head.has("data")) {
                         if (head.has("templates")) {
                             if (head.getJSONObject("templates").has("body")) {
@@ -1401,11 +1390,11 @@ public class JasonViewActivity extends AppCompatActivity {
     }
 
     private void setup_body(final JSONObject body) {
-        model.rendered = body;
-        invalidateOptionsMenu();
 
         // Store to offline cache in case head.offline == true
         try {
+            model.rendered = body;
+            invalidateOptionsMenu();
             if(model.jason != null && model.jason.has("$jason") && model.jason.getJSONObject("$jason").has("head") && model.jason.getJSONObject("$jason").getJSONObject("head").has("offline")){
                 SharedPreferences pref = getSharedPreferences("offline", 0);
                 SharedPreferences.Editor editor = pref.edit();
@@ -1430,14 +1419,14 @@ public class JasonViewActivity extends AppCompatActivity {
                     // First need to remove all handlers because they will be reattached after render
                     removeListViewOnItemTouchListeners();
 
-                    loading.setVisibility(View.GONE);
                     if(swipeLayout !=null) {
                         swipeLayout.setRefreshing(false);
                     }
+                    sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
+                    getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
                     if (body.has("style")) {
                         JSONObject style = body.getJSONObject("style");
                         if (style.has("background")) {
-                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
                             if(style.get("background") instanceof String){
                                 String background = style.getString("background");
                                 JSONObject c = new JSONObject();
@@ -1461,16 +1450,26 @@ public class JasonViewActivity extends AppCompatActivity {
                                     }
                                 } else if(background == "camera") {
                                 } else if(background.matches("data:image.*")){
-                                    String base64 = background.substring("data:image/jpeg;base64,".length());
+                                    String base64;
+                                    if(background.startsWith("data:image/jpeg")){
+                                        base64 = background.substring("data:image/jpeg;base64,".length());
+                                    } else if(background.startsWith("data:image/png")){
+                                        base64 = background.substring("data:image/png;base64,".length());
+                                    } else if(background.startsWith("data:image/gif")){
+                                        base64 = background.substring("data:image/gif;base64,".length());
+                                    } else {
+                                        base64 = "";    // exception
+                                    }
                                     byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
 
                                     with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
                                         @Override
                                         public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
-                                            sectionLayout.setBackground(resource);
+                                        sectionLayout.setBackground(resource);
                                         }
                                     });
                                 } else {
+                                    sectionLayout.setBackgroundColor(JasonHelper.parse_color(background));
                                     getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
                                 }
                             } else {
@@ -1577,22 +1576,23 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
 
 
-                    final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
-                    if(head.has("actions") && head.getJSONObject("actions").has("$pull")){
-                        // Setup refresh listener which triggers new data loading
-                        swipeLayout.setEnabled(true);
-                        swipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                            @Override
-                            public void onRefresh() {
-                                try {
-                                    JSONObject action = head.getJSONObject("actions").getJSONObject("$pull");
-                                    call(action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
-                                } catch (Exception e) {
+                    swipeLayout.setEnabled(false);
+                    if(model.jason.has("$jason") && model.jason.getJSONObject("$jason").has("head")){
+                        final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                        if(head.has("actions") && head.getJSONObject("actions").has("$pull")) {
+                            // Setup refresh listener which triggers new data loading
+                            swipeLayout.setEnabled(true);
+                            swipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                                @Override
+                                public void onRefresh() {
+                                    try {
+                                        JSONObject action = head.getJSONObject("actions").getJSONObject("$pull");
+                                        call(action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
+                                    } catch (Exception e) {
+                                    }
                                 }
-                            }
-                        });
-                    } else {
-                        swipeLayout.setEnabled(false);
+                            });
+                        }
                     }
 
 
@@ -2030,6 +2030,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     View layerView = layer_items.get(j);
                     rootLayout.removeView(layerView);
                 }
+                layer_items = new ArrayList<View>();
             }
             for(int i = 0; i<layers.length(); i++){
                 JSONObject layer = (JSONObject)layers.getJSONObject(i);
