@@ -87,19 +87,27 @@ public class JasonModel{
         } catch (Exception e){
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         };
+
+        try {
+            JSONObject v = new JSONObject();
+            v.put("url", this.url);
+            ((Launcher)(this.view.getApplicationContext())).setEnv("view", v);
+        } catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        };
     }
 
 
 
     public void fetch() {
         if(url.startsWith("file://")) {
-            fetch_local();
+            fetch_local(url);
         } else {
-            fetch_http();
+            fetch_http(url);
         }
     }
 
-    private void fetch_local(){
+    public void fetch_local(String url){
         try {
             jason = (JSONObject)JasonHelper.read_json(url, this.view);
             refs = new JSONObject();
@@ -109,7 +117,7 @@ public class JasonModel{
         }
     }
 
-    private void fetch_http(){
+    private void fetch_http(String url){
         try{
             Request request;
             Request.Builder builder = new Request.Builder();
@@ -148,17 +156,19 @@ public class JasonModel{
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
+                    fetch_local("file://error.json");
                     e.printStackTrace();
                 }
 
                 @Override
                 public void onResponse(Call call, final Response response) throws IOException {
                     if (!response.isSuccessful()) {
-                        throw new IOException("Unexpected code " + response);
+                        fetch_local("file://error.json");
+                    } else {
+                        String res = response.body().string();
+                        refs = new JSONObject();
+                        resolve_and_build(res);
                     }
-                    String res = response.body().string();
-                    refs = new JSONObject();
-                    resolve_and_build(res);
                 }
             });
         } catch (Exception e){
@@ -226,7 +236,7 @@ public class JasonModel{
                     resolve_local_reference();
                 } else {
                     if (jason.has("$jason")) {
-                        view.build();
+                        view.build(jason);
                     } else {
 
                     }

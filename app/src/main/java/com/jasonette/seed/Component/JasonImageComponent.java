@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -16,7 +17,11 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONObject;
 
@@ -70,6 +75,8 @@ public class JasonImageComponent {
             String url = component.getString("url");
             if(url.contains("file://")) {
                 return "file:///android_asset/file/" + url.substring(7);
+            } else if(url.startsWith("data:image")) {
+                return url;
             } else {
                 LazyHeaders.Builder builder = JasonImageComponent.prepare(component, context);
                 return new GlideUrl(url, builder.build());
@@ -110,12 +117,36 @@ public class JasonImageComponent {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
-    private static void normal(JSONObject component, View view, Context context) {
+    private static void normal(JSONObject component, final View view, Context context) {
         Object new_url = JasonImageComponent.resolve_url(component, context);
-        Glide
-            .with(context)
-            .load(new_url)
-            .into((ImageView) view);
+        if(new_url.getClass().toString().equalsIgnoreCase("string") && ((String)new_url).startsWith("data:image")){
+            String n = (String)new_url;
+            String base64;
+            if(n.startsWith("data:image/jpeg")){
+                base64 = n.substring("data:image/jpeg;base64,".length());
+            } else if(n.startsWith("data:image/png")){
+                base64 = n.substring("data:image/png;base64,".length());
+            } else if(n.startsWith("data:image/gif")){
+                base64 = n.substring("data:image/gif;base64,".length());
+            } else {
+                base64 = "";    // exception
+            }
+            byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
+
+            Glide.with(context).load(bs)
+                    .into(new SimpleTarget<GlideDrawable>() {
+                @Override
+                public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                    ((ImageView)view).setImageDrawable(resource);
+                }
+            });
+        } else {
+            Glide
+                    .with(context)
+                    .load(new_url)
+                    .into((ImageView) view);
+        }
+
     }
     private static void tinted(JSONObject component, View view, final Context context){
         try {
