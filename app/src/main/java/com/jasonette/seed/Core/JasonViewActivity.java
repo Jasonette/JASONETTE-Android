@@ -434,17 +434,27 @@ public class JasonViewActivity extends AppCompatActivity {
 
     /*************************************************************
 
-     ## Event Handlers Rule
+     ## Event Handlers Rule ver2.
 
-     1. Pick only ONE Between $load and $show.
-     - It's because currently action call chains are single threaded on Jason.
-     - If you include both, only $load will be triggered.
-     2. Use $show if you want to keep content constantly in sync without manually refreshing ($show gets triggered whenever the view shows up while you're in the app, either from a parent view or coming back from a child view).
-     3. Use $load if you want to trigger ONLY when the view loads (for populating content once)
-     - You still may want to implement a way to refresh the view manually. You can:
-     - add some component that calls "$network.request" or "$reload" when touched
-     - add "$pull" event handler that calls "$network.request" or "$reload" when user makes a pull to refresh action
-     4. Use $foreground to handle coming background ($show only gets triggered WHILE you're on the app)
+     1. When there's only $show handler
+         - $show: Handles both initial load and subsequent show events
+
+     2. When there's only $load handler
+         - $load: Handles Only the initial load event
+
+     3. When there are both $show and $load handlers
+         - $load : handle initial load only
+         - $show : handle subsequent show events only
+
+
+     ## Summary
+
+     $load:
+         - triggered when view loads for the first time.
+     $show:
+         - triggered at load time + subsequent show events (IF $load handler doesn't exist)
+         - NOT triggered at load time BUT ONLY at subsequent show events (IF $load handler exists)
+
 
      *************************************************************/
     void onShow(){
@@ -452,9 +462,7 @@ public class JasonViewActivity extends AppCompatActivity {
         try {
             JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
             JSONObject events = head.getJSONObject("actions");
-            if(events!=null && !events.has("$load")){
-                simple_trigger("$show", new JSONObject(), this);
-            }
+            simple_trigger("$show", new JSONObject(), this);
         } catch (Exception e){
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
@@ -462,7 +470,17 @@ public class JasonViewActivity extends AppCompatActivity {
     void onLoad(){
         loaded = true;
         simple_trigger("$load", new JSONObject(), this);
-        onShow();
+        try {
+            JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+            JSONObject events = head.getJSONObject("actions");
+            if(events!=null && events.has("$load")){
+                // nothing
+            } else {
+                onShow();
+            }
+        } catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
     }
     void onForeground(){
         // Not implemented yet
