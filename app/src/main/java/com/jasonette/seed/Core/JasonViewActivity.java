@@ -544,6 +544,9 @@ public class JasonViewActivity extends AppCompatActivity {
             if (action.has("trigger")) {
                 trigger(action, data, event, context);
             } else {
+                if(action.length() == 0){
+                    return;
+                }
                 // If not trigger, regular call
                 if(action.has("options")){
                     // if action has options, we need to parse out the options first
