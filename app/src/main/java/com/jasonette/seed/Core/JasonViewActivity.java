@@ -1456,14 +1456,17 @@ public class JasonViewActivity extends AppCompatActivity {
                                 JSONObject c = new JSONObject();
                                 c.put("url", background);
                                 if(background.matches("(file|http[s]?):\\/\\/.*")) {
-                                    RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
-                                            RelativeLayout.LayoutParams.MATCH_PARENT,
-                                            RelativeLayout.LayoutParams.MATCH_PARENT);
-                                    backgroundImageView = new ImageView(JasonViewActivity.this);
-                                    rootLayout.addView(backgroundImageView, 0, rlp);
+                                    if(backgroundImageView == null) {
+                                        RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                                RelativeLayout.LayoutParams.MATCH_PARENT,
+                                                RelativeLayout.LayoutParams.MATCH_PARENT);
+                                        backgroundImageView = new ImageView(JasonViewActivity.this);
+                                        rootLayout.addView(backgroundImageView, 0, rlp);
+                                    }
 
                                     DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
-
+                                    // gif doesn't work with RESULT cache strategy
+                                    // TODO: Check with Glide V4
                                     if (background.matches(".*\\.gif")) {
                                         cacheStrategy = DiskCacheStrategy.SOURCE;
                                     }
