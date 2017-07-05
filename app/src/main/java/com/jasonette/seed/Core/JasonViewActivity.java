@@ -49,6 +49,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.eclipsesource.v8.debug.mirror.Frame;
 import com.jasonette.seed.Component.JasonComponentFactory;
@@ -1471,7 +1472,14 @@ public class JasonViewActivity extends AppCompatActivity {
                                             .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                             .diskCacheStrategy(cacheStrategy)
                                             .centerCrop()
-                                            .into(backgroundImageView);
+                                            .into(new GlideDrawableImageViewTarget(backgroundImageView) {
+
+                                        @Override
+                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> animation) {
+                                            super.onResourceReady(resource, animation);
+                                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
+                                        }
+                                    });
                                 } else if(background == "camera") {
                                 } else if(background.matches("data:image.*")){
                                     String base64;
