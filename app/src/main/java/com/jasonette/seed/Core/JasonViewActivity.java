@@ -2056,14 +2056,16 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
                 layer_items = new ArrayList<View>();
             }
-            for(int i = 0; i<layers.length(); i++){
-                JSONObject layer = (JSONObject)layers.getJSONObject(i);
-                if(layer.has("type")){
-                    View view = JasonComponentFactory.build(null, layer, null, JasonViewActivity.this);
-                    JasonComponentFactory.build(view, layer, null, JasonViewActivity.this);
-                    stylize_layer(view, layer);
-                    rootLayout.addView(view);
-                    layer_items.add(view);
+            if(layers != null) {
+                for(int i = 0; i<layers.length(); i++){
+                    JSONObject layer = (JSONObject)layers.getJSONObject(i);
+                    if(layer.has("type")){
+                        View view = JasonComponentFactory.build(null, layer, null, JasonViewActivity.this);
+                        JasonComponentFactory.build(view, layer, null, JasonViewActivity.this);
+                        stylize_layer(view, layer);
+                        rootLayout.addView(view);
+                        layer_items.add(view);
+                    }
                 }
             }
         } catch (Exception e) {
