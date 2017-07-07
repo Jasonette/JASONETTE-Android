@@ -30,8 +30,9 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -47,16 +48,14 @@ import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
-import com.eclipsesource.v8.debug.mirror.Frame;
 import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
-import com.jasonette.seed.Helper.JasonSettings;
 import com.jasonette.seed.Launcher.Launcher;
+import com.jasonette.seed.Lib.BackgroundCameraManager;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
@@ -66,7 +65,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -103,6 +101,8 @@ public class JasonViewActivity extends AppCompatActivity {
     public RelativeLayout rootLayout;
     public WebView webview;
     public ImageView backgroundImageView;
+    private BackgroundCameraManager cameraManager;
+    private SurfaceView backgroundCameraView;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
@@ -1439,6 +1439,8 @@ public class JasonViewActivity extends AppCompatActivity {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
+
+
         JasonViewActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1482,7 +1484,6 @@ public class JasonViewActivity extends AppCompatActivity {
                                             .diskCacheStrategy(cacheStrategy)
                                             .centerCrop()
                                             .into(backgroundImageView);
-                                } else if(background == "camera") {
                                 } else if(background.matches("data:image.*")){
                                     String base64;
                                     if(background.startsWith("data:image/jpeg")){
@@ -1562,6 +1563,35 @@ public class JasonViewActivity extends AppCompatActivity {
                                             rootLayout.addView(webview,0);
                                         }
                                         webview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
+                                    }
+                                }
+                                else if(type.equalsIgnoreCase("camera")) {
+                                    int side = BackgroundCameraManager.BACK;
+                                    if (background.has("options")) {
+                                        JSONObject options = background.getJSONObject("options");
+                                        if (options.has("device") && options.getString("device").equals("front")) {
+                                            side = BackgroundCameraManager.FRONT;
+                                        }
+                                    }
+
+                                    boolean initialized = cameraManager != null;
+                                    if (!initialized) {
+                                        cameraManager = new BackgroundCameraManager(side);
+                                    }
+
+                                    // startBackground caches the returned view so no problem here
+                                    backgroundCameraView = cameraManager.startBackground(JasonViewActivity.this, new BackgroundCameraManager.BackgroundCameraManagerCallback() {
+                                        @Override
+                                        public void onReady() {
+                                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
+                                        }
+                                    });
+
+                                    if (!initialized) {
+                                        RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                                RelativeLayout.LayoutParams.MATCH_PARENT,
+                                                RelativeLayout.LayoutParams.MATCH_PARENT);
+                                        rootLayout.addView(backgroundCameraView, 0, rlp);
                                     }
                                 }
                             }
