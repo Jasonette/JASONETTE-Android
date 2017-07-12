@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 
-import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
 
@@ -153,9 +152,7 @@ public class JasonModel{
                     .build();
 
 
-            client = new OkHttpClient.Builder()
-                    .addNetworkInterceptor(new StethoInterceptor())
-                    .build();
+            client = ((Launcher)view.getApplication()).getHttpClient();
 
             client.newCall(request).enqueue(new Callback() {
                 @Override

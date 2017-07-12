@@ -8,11 +8,8 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
-import android.view.WindowManager;
 
 import com.bumptech.glide.request.target.ViewTarget;
-import com.facebook.stetho.Stetho;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.R;
@@ -27,7 +24,7 @@ import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
 
-import static android.R.attr.action;
+import okhttp3.OkHttpClient;
 
 public class Launcher extends Application {
     private JSONObject handlers;
@@ -68,8 +65,6 @@ public class Launcher extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        Stetho.initializeWithDefaults(this);
 
         ViewTarget.setTagId(R.id.glide_request);
 
@@ -274,4 +269,7 @@ public class Launcher extends Application {
         }
     }
 
+    public OkHttpClient getHttpClient() {
+        return new OkHttpClient.Builder().build();
+    }
 }

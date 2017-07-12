@@ -13,6 +13,7 @@ android {
     }
     buildTypes {
         release {
+            debuggable false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -24,6 +25,10 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+
+    debugCompile 'com.facebook.stetho:stetho:1.5.0'
+    debugCompile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
+
     compile 'com.android.support:appcompat-v7:25.0.1'
     compile 'com.google.android.gms:play-services-maps:10.0.1'
     compile 'com.squareup.okhttp3:okhttp:3.4.2'
@@ -41,6 +46,4 @@ dependencies {
     compile 'com.github.adrielcafe:AndroidAudioRecorder:0.2.0'
     compile 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
     compile 'com.github.florent37:singledateandtimepicker:1.0.8'
-    compile 'com.facebook.stetho:stetho:1.5.0'
-    compile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
 }
