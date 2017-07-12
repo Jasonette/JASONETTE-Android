@@ -1451,6 +1451,9 @@ public class JasonViewActivity extends AppCompatActivity {
                     if (body.has("style")) {
                         JSONObject style = body.getJSONObject("style");
                         if (style.has("background")) {
+                            // sectionLayout must be transparent to see the background
+                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
+
                             if(style.get("background") instanceof String){
                                 String background = style.getString("background");
                                 JSONObject c = new JSONObject();
@@ -1475,14 +1478,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                             .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                             .diskCacheStrategy(cacheStrategy)
                                             .centerCrop()
-                                            .into(new GlideDrawableImageViewTarget(backgroundImageView) {
-
-                                        @Override
-                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> animation) {
-                                            super.onResourceReady(resource, animation);
-                                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
-                                        }
-                                    });
+                                            .into(backgroundImageView);
                                 } else if(background == "camera") {
                                 } else if(background.matches("data:image.*")){
                                     String base64;
