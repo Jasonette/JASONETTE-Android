@@ -12,6 +12,7 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.bumptech.glide.request.target.ViewTarget;
+import com.facebook.stetho.Stetho;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.R;
@@ -67,6 +68,9 @@ public class Launcher extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        Stetho.initializeWithDefaults(this);
+
         ViewTarget.setTagId(R.id.glide_request);
 
         // Look for all extensions and initialize them if they have initialize class methods

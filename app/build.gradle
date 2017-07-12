@@ -41,4 +41,6 @@ dependencies {
     compile 'com.github.adrielcafe:AndroidAudioRecorder:0.2.0'
     compile 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
     compile 'com.github.florent37:singledateandtimepicker:1.0.8'
+    compile 'com.facebook.stetho:stetho:1.5.0'
+    compile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
 }
