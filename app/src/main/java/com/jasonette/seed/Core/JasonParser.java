@@ -1,7 +1,6 @@
 package com.jasonette.seed.Core;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.eclipsesource.v8.V8;
 import com.eclipsesource.v8.V8Array;
@@ -9,6 +8,8 @@ import com.eclipsesource.v8.V8Object;
 import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
+
+import timber.log.Timber;
 
 public class JasonParser {
     static JSONObject res;
@@ -41,7 +42,7 @@ public class JasonParser {
                 instance.juice.executeVoidScript(js);
                 instance.juice.getLocker().release();
             } catch (Exception e){
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
         return instance;
@@ -92,7 +93,7 @@ public class JasonParser {
                         listener.onFinished(res);
 
                     } catch (Exception e){
-                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                        Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
 
                     // thread handling - release handle
@@ -100,7 +101,7 @@ public class JasonParser {
                }
             }).start();
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }
@@ -111,12 +112,12 @@ public class JasonParser {
  */
 class Console {
     public void log(final String message) {
-        Log.d("console.log", message);
+        Timber.d(message);
     }
     public void error(final String message) {
-        Log.e("console.error", message);
+        Timber.e(message);
     }
     public void trace() {
-        Log.e("console.trace", "Unable to reproduce JS stacktrace");
+        Timber.e("Unable to reproduce JS stacktrace");
     }
 }

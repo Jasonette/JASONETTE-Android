@@ -1,14 +1,20 @@
 package com.jasonette.seed.Launcher;
 
+import android.content.res.Resources;
 import android.util.Log;
 
 import com.facebook.stetho.Stetho;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
+import com.facebook.stetho.timber.StethoTree;
+import com.jasonette.seed.R;
 
 import okhttp3.OkHttpClient;
+import timber.log.Timber;
 
 /**
- * Provides debug-build specific Application
+ * Provides debug-build specific Application.
+ * 
+ * To disable Stetho console logging change the setting in src/debug/res/values/bools.xml
  */
 public class DebugLauncher extends Launcher {
 
@@ -18,8 +24,17 @@ public class DebugLauncher extends Launcher {
     public void onCreate() {
         super.onCreate();
 
-        Log.d(LOGTAG, "Initialised Stetho debugging");
         Stetho.initializeWithDefaults(this);
+        Resources res = getResources();
+        boolean enableStethoConsole = res.getBoolean(R.bool.enableStethoConsole);
+
+        if (enableStethoConsole) {
+            Timber.plant(new StethoTree());
+            Log.i(LOGTAG, "Using Stetho console logging");
+        } else  {
+            Timber.plant(new Timber.DebugTree());
+        }
+        Timber.i("Initialised Stetho debugging"+getEnv());
     }
 
     @Override
