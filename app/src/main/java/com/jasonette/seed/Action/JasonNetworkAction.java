@@ -178,8 +178,8 @@ public class JasonNetworkAction {
                                     JasonHelper.next("error", action, error, event, context);
                                 }
                             }
-                        } catch (Exception err){
-                            Log.d("Error", err.toString());
+                        } catch (Exception e2){
+                            Log.d("Warning", e2.getStackTrace()[0].getMethodName() + " : " + e2.toString());
                         }
                     }
 
@@ -196,8 +196,8 @@ public class JasonNetworkAction {
                                         JasonHelper.next("error", action, error, event, context);
                                     }
                                 }
-                            } catch (Exception err){
-                                Log.d("Error", err.toString());
+                            } catch (Exception e){
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         } else {
                             try {
@@ -209,7 +209,7 @@ public class JasonNetworkAction {
                                 }
 
                             } catch (Exception e) {
-                                Log.d("Error", e.toString());
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
                     }
@@ -217,7 +217,7 @@ public class JasonNetworkAction {
 
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void request(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
@@ -255,7 +255,7 @@ public class JasonNetworkAction {
                 _request(stack, upload_action, data, event, context);
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -291,7 +291,7 @@ public class JasonNetworkAction {
 
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void uploadfinished(JSONObject stack, String result) {
@@ -306,7 +306,7 @@ public class JasonNetworkAction {
             final Context context = (Context) o.get("context");
             JasonHelper.next("success", action, ret, event, context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }

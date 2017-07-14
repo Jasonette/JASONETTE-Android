@@ -409,6 +409,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
                     // Layout styling
                     String type = item.getString("type");
                     JSONObject style = JasonHelper.style(item, root_context);
+                    layout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
 
                     JSONArray components;
                     if (type.equalsIgnoreCase("vertical") || type.equalsIgnoreCase("horizontal")) {
@@ -569,7 +570,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
                 }
                 view.requestLayout();
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 

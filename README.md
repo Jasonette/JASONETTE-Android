@@ -13,23 +13,23 @@ Looking for an iOS version? [See here](https://www.github.com/Jasonette/JASONETT
 
 <br>
 
-##★ Jasonette fetches this JSON markup from a server:
+## ★ Jasonette fetches this JSON markup from a server:
 
 ![json](https://raw.githubusercontent.com/gliechtenstein/images/master/json.png)
 
-##★ And self-constructs into the following native app, in realtime:
+## ★ And self-constructs into the following native app, in realtime:
 
 ![instagram](https://github.com/Jasonette/Instagram-UI-example/blob/master/images/instagram-android.gif)
 
 <br>
 
-#How it works
+# How it works
 
 ![diagram](https://raw.githubusercontent.com/gliechtenstein/images/master/diagram.gif)
 
 <br>
 
-#Cool things about Jasonette
+# Cool things about Jasonette
 
 - **100% NATIVE**: Jasonette maps JSON into native components and native function calls. There is no gimmick. There is no magic.
 - **App loads over HTTP**: Your app exists 100% as JSON, and loads from the cloud. No more hard-coding.
@@ -57,7 +57,7 @@ Try playing these on Jasonette and watch them turn into native apps in front of 
 
 # Technical Highlights
 
-##1. One JSON to rule them all
+## 1. One JSON to rule them all
 
 Jasonette simplifies the entire app building process down to nothing more than:
 
@@ -75,24 +75,24 @@ This is possible because Jasonette came up with a way to **fit an entire app wor
 
 <br>
 
-##2. App-over-HTTP
+## 2. App-over-HTTP
 Until now, the only thing JSON could send over the Internet was raw data. Normally apps would fetch remote data from the server for a connected experience, but the actual app logic would be hard-coded on the client side. This makes it hard to update and extend apps.
 
 But what happens when you can express an entire app logic as JSON?
 
-**Then apps can be stored, processed, shared, and sent over the Internet just like any other JSON.** Watch below where we update the JSON on a [JSON pastebin server](https://www.jasonbase.com), and the app changes immediately to reflect the new markup:
+** Then apps can be stored, processed, shared, and sent over the Internet just like any other JSON.** Watch below where we update the JSON on a [JSON pastebin server](https://www.jasonbase.com), and the app changes immediately to reflect the new markup:
 
 ![remote control](http://i.giphy.com/3o7TKrdmlX5uD7RszK.gif)
 
 <br>
 
-##3. Designed to be extended or integrated
+## 3. Designed to be extended or integrated
 Currently Jasonette covers all the essential native APIs and components, which means you can build pretty much any app you can imagine. But Jasonette is very flexible.
 
-###A. Extensible
+### A. Extensible
 If you don't see a feature you want, you can simply extend Jasonette. Just follow the convention. Want to learn more? [Ask here](https://github.com/gliechtenstein/jasonette-android#questions-and-support)
 
-###B. Integrate existing code
+### B. Integrate existing code
 Since Jasonette is simply a Java project, You can even integrate Jasonette with your existing Android project if you want. This way you can use Jasonette for just a small part of your app without having to completely switch to a new way of programming. Want to learn more? [Ask here](https://github.com/gliechtenstein/jasonette-android#questions-and-support)
 
 <br>

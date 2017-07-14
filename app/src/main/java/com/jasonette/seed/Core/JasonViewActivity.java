@@ -31,6 +31,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -44,11 +45,15 @@ import android.widget.TextView;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.eclipsesource.v8.debug.mirror.Frame;
 import com.jasonette.seed.Component.JasonComponentFactory;
+import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonSettings;
 import com.jasonette.seed.Launcher.Launcher;
@@ -61,6 +66,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -96,6 +102,7 @@ public class JasonViewActivity extends AppCompatActivity {
     public LinearLayout sectionLayout;
     public RelativeLayout rootLayout;
     public WebView webview;
+    public ImageView backgroundImageView;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
@@ -194,6 +201,7 @@ public class JasonViewActivity extends AppCompatActivity {
         loadingLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
         loading = new ProgressBar(this);
         loading.setLayoutParams(loadingLayoutParams);
+        loading.setVisibility(View.INVISIBLE);
         rootLayout.addView(loading);
 
         // 6. set root layout as content
@@ -238,7 +246,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
                 setup_body(model.rendered);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
 
@@ -257,8 +265,10 @@ public class JasonViewActivity extends AppCompatActivity {
                     model.rendered = offline_cache.getJSONObject("rendered");
                     setup_body(model.rendered);
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
+            } else {
+                model.fetch_local("file://loading.json");
             }
 
             // Fetch
@@ -296,7 +306,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 editor.commit();
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         super.onPause();
@@ -332,7 +342,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 editor.commit();
 
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -349,7 +359,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 intent_to_resolve.put("name", "oauth");
                 intent_to_resolve.put("intent", getIntent());
             } catch (JSONException e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -366,7 +376,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         super.onResume();
@@ -399,7 +409,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 intent_to_resolve.put("name", requestCode);
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -427,17 +437,27 @@ public class JasonViewActivity extends AppCompatActivity {
 
     /*************************************************************
 
-     ## Event Handlers Rule
+     ## Event Handlers Rule ver2.
 
-     1. Pick only ONE Between $load and $show.
-     - It's because currently action call chains are single threaded on Jason.
-     - If you include both, only $load will be triggered.
-     2. Use $show if you want to keep content constantly in sync without manually refreshing ($show gets triggered whenever the view shows up while you're in the app, either from a parent view or coming back from a child view).
-     3. Use $load if you want to trigger ONLY when the view loads (for populating content once)
-     - You still may want to implement a way to refresh the view manually. You can:
-     - add some component that calls "$network.request" or "$reload" when touched
-     - add "$pull" event handler that calls "$network.request" or "$reload" when user makes a pull to refresh action
-     4. Use $foreground to handle coming background ($show only gets triggered WHILE you're on the app)
+     1. When there's only $show handler
+         - $show: Handles both initial load and subsequent show events
+
+     2. When there's only $load handler
+         - $load: Handles Only the initial load event
+
+     3. When there are both $show and $load handlers
+         - $load : handle initial load only
+         - $show : handle subsequent show events only
+
+
+     ## Summary
+
+     $load:
+         - triggered when view loads for the first time.
+     $show:
+         - triggered at load time + subsequent show events (IF $load handler doesn't exist)
+         - NOT triggered at load time BUT ONLY at subsequent show events (IF $load handler exists)
+
 
      *************************************************************/
     void onShow(){
@@ -445,17 +465,25 @@ public class JasonViewActivity extends AppCompatActivity {
         try {
             JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
             JSONObject events = head.getJSONObject("actions");
-            if(events!=null && !events.has("$load")){
-                simple_trigger("$show", new JSONObject(), this);
-            }
+            simple_trigger("$show", new JSONObject(), this);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     void onLoad(){
         loaded = true;
         simple_trigger("$load", new JSONObject(), this);
-        onShow();
+        try {
+            JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+            JSONObject events = head.getJSONObject("actions");
+            if(events!=null && events.has("$load")){
+                // nothing
+            } else {
+                onShow();
+            }
+        } catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
     }
     void onForeground(){
         // Not implemented yet
@@ -509,7 +537,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 final_call((JSONObject)action, data, event, context);
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     };
     private void final_call(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
@@ -519,6 +547,9 @@ public class JasonViewActivity extends AppCompatActivity {
             if (action.has("trigger")) {
                 trigger(action, data, event, context);
             } else {
+                if(action.length() == 0){
+                    return;
+                }
                 // If not trigger, regular call
                 if(action.has("options")){
                     // if action has options, we need to parse out the options first
@@ -531,7 +562,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                 action_with_parsed_options.put("options", parsed_options);
                                 exec(action_with_parsed_options, model.state, event, context);
                             } catch (Exception e) {
-                                Log.d("Error", e.toString());
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
                     });
@@ -542,7 +573,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -618,7 +649,7 @@ public class JasonViewActivity extends AppCompatActivity {
                         try {
                             invoke_lambda(action, data, parsed_options, context);
                         } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                     }
                 });
@@ -630,7 +661,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
 
@@ -659,7 +690,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
             call(lambda.toString(), data.toString(), "{}", context);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -672,7 +703,7 @@ public class JasonViewActivity extends AppCompatActivity {
             Object action = events.get(event_name);
             call(action.toString(), data.toString(), "{}", context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -711,7 +742,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             resolved_classname = jrjson.getString("classname");
                         }
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
 
 
@@ -722,20 +753,6 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
 
                     methodName = type.substring(type.lastIndexOf('.') + 1);
-
-                    // Turn on Loading indicator if it's an async action
-                    if(JasonSettings.isAsync(className, this)){
-                        JasonViewActivity.this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    loading.setVisibility(View.VISIBLE);
-                                } catch (Exception e) {
-                                    Log.d("Error", e.toString());
-                                }
-                            }
-                        });
-                    }
 
                     // Look up the module registry to see if there's an instance already
                     // 1. If there is, use that
@@ -761,7 +778,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
         } catch (Exception e){
             // Action doesn't exist yet
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             try {
 
                 JSONObject alert_action = new JSONObject();
@@ -777,8 +794,8 @@ public class JasonViewActivity extends AppCompatActivity {
 
                 call(alert_action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
 
-            } catch (Exception err){
-                Log.d("Error", err.toString());
+            } catch (Exception e2){
+                Log.d("Warning", e2.getStackTrace()[0].getMethodName() + " : " + e2.toString());
             }
         }
     }
@@ -815,7 +832,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 // call next
                 call(action_string, data.toString(), event_string, JasonViewActivity.this);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     };
@@ -840,7 +857,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 // call next
                 call(action_string, data.toString(), event_string, JasonViewActivity.this);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     };
@@ -858,7 +875,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 // call next
                 call(action_string, data_string, event_string, JasonViewActivity.this);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     };
@@ -1071,7 +1088,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             JasonHelper.next("error", action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
         }
 
@@ -1126,7 +1143,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     try {
                         latch.await();
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
 
                     JSONObject res = new JSONObject();
@@ -1152,7 +1169,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 JasonHelper.next("error", action, new JSONObject(), event, context);
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             JasonHelper.next("error", action, new JSONObject(), event, context);
         }
 
@@ -1198,7 +1215,7 @@ public class JasonViewActivity extends AppCompatActivity {
             JasonParser.getInstance(this).parse(type, data, template, context);
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             JasonHelper.next("error", action, new JSONObject(), event, context);
         }
     }
@@ -1211,7 +1228,7 @@ public class JasonViewActivity extends AppCompatActivity {
             JasonHelper.next("success", action, new JSONObject(), event, context);
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1272,10 +1289,13 @@ public class JasonViewActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
+    public void back ( final JSONObject action, JSONObject data, JSONObject event, Context context){
+        finish();
+    }
     public void close ( final JSONObject action, JSONObject data, JSONObject event, Context context){
        finish();
     }
@@ -1289,7 +1309,7 @@ public class JasonViewActivity extends AppCompatActivity {
                         swipeLayout.setRefreshing(false);
                     }
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         });
@@ -1302,7 +1322,7 @@ public class JasonViewActivity extends AppCompatActivity {
             try {
                 JasonHelper.next("success", action, new JSONObject(), event, context);
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     }
@@ -1312,7 +1332,7 @@ public class JasonViewActivity extends AppCompatActivity {
         try {
             JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1325,10 +1345,15 @@ public class JasonViewActivity extends AppCompatActivity {
             @Override
             public void run() {
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 byte[] byteArray = stream.toByteArray();
-                String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                String data_uri = "data:image/png;base64," + encoded;
+                String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("data:image/jpeg;base64,");
+                stringBuilder.append(encoded);
+                String data_uri = stringBuilder.toString();
+
                 try {
                     JSONObject ret = new JSONObject();
                     ret.put("data", encoded);
@@ -1336,7 +1361,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     ret.put("content_type", "image/png");
                     JasonHelper.next("success", action, ret, event, context);
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
 
             }
@@ -1349,22 +1374,22 @@ public class JasonViewActivity extends AppCompatActivity {
      *
      ************************************************************/
 
-    public void build(){
+    public void build(JSONObject jason){
         // set fetched to true since build() is only called after network.request succeeds
         fetched = true;
-        if(model.jason!=null) {
+        if(jason!=null) {
             try {
 
                 // Set up background
 
-                if (model.jason.getJSONObject("$jason").has("body")) {
+                if (jason.getJSONObject("$jason").has("body")) {
                     final JSONObject body;
-                    body = (JSONObject) model.jason.getJSONObject("$jason").getJSONObject("body");
+                    body = (JSONObject) jason.getJSONObject("$jason").getJSONObject("body");
                     setup_body(body);
                 }
 
-                if (model.jason.getJSONObject("$jason").has("head")) {
-                    final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                if (jason.getJSONObject("$jason").has("head")) {
+                    final JSONObject head = jason.getJSONObject("$jason").getJSONObject("head");
                     if (head.has("data")) {
                         if (head.has("templates")) {
                             if (head.getJSONObject("templates").has("body")) {
@@ -1382,18 +1407,18 @@ public class JasonViewActivity extends AppCompatActivity {
                 onLoad();
 
             } catch (JSONException e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
     }
 
     private void setup_body(final JSONObject body) {
-        model.rendered = body;
-        invalidateOptionsMenu();
 
         // Store to offline cache in case head.offline == true
         try {
+            model.rendered = body;
+            invalidateOptionsMenu();
             if(model.jason != null && model.jason.has("$jason") && model.jason.getJSONObject("$jason").has("head") && model.jason.getJSONObject("$jason").getJSONObject("head").has("offline")){
                 SharedPreferences pref = getSharedPreferences("offline", 0);
                 SharedPreferences.Editor editor = pref.edit();
@@ -1408,42 +1433,78 @@ public class JasonViewActivity extends AppCompatActivity {
 
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         JasonViewActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    loading.setVisibility(View.GONE);
+                    // First need to remove all handlers because they will be reattached after render
+                    removeListViewOnItemTouchListeners();
+
                     if(swipeLayout !=null) {
                         swipeLayout.setRefreshing(false);
                     }
+                    sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
+                    getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
                     if (body.has("style")) {
                         JSONObject style = body.getJSONObject("style");
                         if (style.has("background")) {
-                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
                             if(style.get("background") instanceof String){
                                 String background = style.getString("background");
-                                if(background.matches("http[s]?:\\/\\/.*")) {
-                                    if (background.matches(".*\\.gif")) {
-                                        with(JasonViewActivity.this).load(background).asGif().into(new SimpleTarget<GifDrawable>() {
-                                            @Override
-                                            public void onResourceReady(GifDrawable resource, GlideAnimation<? super GifDrawable> glideAnimation) {
-                                                sectionLayout.setBackground(resource);
-
-                                            }
-                                        });
-                                    } else {
-                                        with(JasonViewActivity.this).load(background).into(new SimpleTarget<GlideDrawable>() {
-                                            @Override
-                                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
-                                                sectionLayout.setBackground(resource);
-                                            }
-                                        });
+                                JSONObject c = new JSONObject();
+                                c.put("url", background);
+                                if(background.matches("(file|http[s]?):\\/\\/.*")) {
+                                    if(backgroundImageView == null) {
+                                        RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                                RelativeLayout.LayoutParams.MATCH_PARENT,
+                                                RelativeLayout.LayoutParams.MATCH_PARENT);
+                                        backgroundImageView = new ImageView(JasonViewActivity.this);
+                                        rootLayout.addView(backgroundImageView, 0, rlp);
                                     }
+
+                                    DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
+                                    // gif doesn't work with RESULT cache strategy
+                                    // TODO: Check with Glide V4
+                                    if (background.matches(".*\\.gif")) {
+                                        cacheStrategy = DiskCacheStrategy.SOURCE;
+                                    }
+
+                                    with(JasonViewActivity.this)
+                                            .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                                            .diskCacheStrategy(cacheStrategy)
+                                            .centerCrop()
+                                            .into(new GlideDrawableImageViewTarget(backgroundImageView) {
+
+                                        @Override
+                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> animation) {
+                                            super.onResourceReady(resource, animation);
+                                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
+                                        }
+                                    });
                                 } else if(background == "camera") {
+                                } else if(background.matches("data:image.*")){
+                                    String base64;
+                                    if(background.startsWith("data:image/jpeg")){
+                                        base64 = background.substring("data:image/jpeg;base64,".length());
+                                    } else if(background.startsWith("data:image/png")){
+                                        base64 = background.substring("data:image/png;base64,".length());
+                                    } else if(background.startsWith("data:image/gif")){
+                                        base64 = background.substring("data:image/gif;base64,".length());
+                                    } else {
+                                        base64 = "";    // exception
+                                    }
+                                    byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
+
+                                    with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
+                                        @Override
+                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                        sectionLayout.setBackground(resource);
+                                        }
+                                    });
                                 } else {
+                                    sectionLayout.setBackgroundColor(JasonHelper.parse_color(background));
                                     getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
                                 }
                             } else {
@@ -1464,6 +1525,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                             settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
                                             settings.setJavaScriptEnabled(true);
                                             settings.setDomStorageEnabled(true);
+                                            settings.setMediaPlaybackRequiresUserGesture(false);
                                             settings.setJavaScriptCanOpenWindowsAutomatically(true);
                                             settings.setAppCachePath( getCacheDir().getAbsolutePath() );
                                             settings.setAllowFileAccess( true );
@@ -1549,22 +1611,23 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
 
 
-                    final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
-                    if(head.has("actions") && head.getJSONObject("actions").has("$pull")){
-                        // Setup refresh listener which triggers new data loading
-                        swipeLayout.setEnabled(true);
-                        swipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                            @Override
-                            public void onRefresh() {
-                                try {
-                                    JSONObject action = head.getJSONObject("actions").getJSONObject("$pull");
-                                    call(action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
-                                } catch (Exception e) {
+                    swipeLayout.setEnabled(false);
+                    if(model.jason.has("$jason") && model.jason.getJSONObject("$jason").has("head")){
+                        final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                        if(head.has("actions") && head.getJSONObject("actions").has("$pull")) {
+                            // Setup refresh listener which triggers new data loading
+                            swipeLayout.setEnabled(true);
+                            swipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                                @Override
+                                public void onRefresh() {
+                                    try {
+                                        JSONObject action = head.getJSONObject("actions").getJSONObject("$pull");
+                                        call(action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
+                                    } catch (Exception e) {
+                                    }
                                 }
-                            }
-                        });
-                    } else {
-                        swipeLayout.setEnabled(false);
+                            });
+                        }
                     }
 
 
@@ -1630,14 +1693,14 @@ public class JasonViewActivity extends AppCompatActivity {
             String backgroundColor = header.getJSONObject("style").getString("background");
             toolbar.setBackgroundColor(JasonHelper.parse_color(backgroundColor));
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
         try{
             String color = header.getJSONObject("style").getString("color");
             toolbar.setTitleTextColor(JasonHelper.parse_color(color));
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -1683,7 +1746,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
                 }
             } catch (JSONException e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -1705,7 +1768,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 setup_input(footer.getJSONObject("input"));
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1806,7 +1869,7 @@ public class JasonViewActivity extends AppCompatActivity {
             listView.setClipToPadding(false);
             listView.setPadding(0,0,0,height);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1848,13 +1911,16 @@ public class JasonViewActivity extends AppCompatActivity {
             if(bottomNavigation.getItemsCount() == items.length()){
                 // if the same number as the previous state, try to fill in the items instead of re-instantiating them all
 
+
                 for (int i = 0; i < items.length(); i++) {
                     final JSONObject item = items.getJSONObject(i);
                     if(item.has("image")) {
                         final int index = i;
+                        JSONObject c = new JSONObject();
+                        c.put("url", item.getString("image"));
                         Glide
                                 .with(this)
-                                .load(item.getString("image"))
+                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                 .asBitmap()
                                 .into(new SimpleTarget<Bitmap>(100, 100) {
                                     @Override
@@ -1866,7 +1932,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                                 bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                                             }
                                         } catch (Exception e) {
-                                            Log.d("Error", e.toString());
+                                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                         }
                                         AHBottomNavigationItem tab_item = bottomNavigation.getItem(index);
                                         bottomNavigationItems.put(Integer.valueOf(index), tab_item);
@@ -1882,7 +1948,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             text = item.getString("text");
                             bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                         } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                         AHBottomNavigationItem tab_item = bottomNavigation.getItem(i);
                         bottomNavigationItems.put(Integer.valueOf(i), tab_item);
@@ -1898,31 +1964,33 @@ public class JasonViewActivity extends AppCompatActivity {
                     final JSONObject item = items.getJSONObject(i);
                     final int index = i;
                     if(item.has("image")) {
+                        JSONObject c = new JSONObject();
+                        c.put("url", item.getString("image"));
                         with(this)
-                                .load(item.getString("image"))
-                                .asBitmap()
-                                .into(new SimpleTarget<Bitmap>(100, 100) {
-                                    @Override
-                                    public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
-                                        String text = "";
-                                        try {
-                                            if (item.has("text")) {
-                                                text = item.getString("text");
-                                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
-                                            }
-                                        } catch (Exception e) {
-                                            Log.d("Error", e.toString());
+                            .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                            .asBitmap()
+                            .into(new SimpleTarget<Bitmap>(100, 100) {
+                                @Override
+                                public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
+                                    String text = "";
+                                    try {
+                                        if (item.has("text")) {
+                                            text = item.getString("text");
+                                            bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                                         }
-                                        Drawable drawable = new BitmapDrawable(getResources(), resource);
-                                        AHBottomNavigationItem item = new AHBottomNavigationItem(text, drawable);
-                                        bottomNavigationItems.put(Integer.valueOf(index), item);
-                                        if(bottomNavigationItems.size() >= items.length()){
-                                            for(int j = 0; j < bottomNavigationItems.size(); j++){
-                                                bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
-                                            }
+                                    } catch (Exception e) {
+                                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                                    }
+                                    Drawable drawable = new BitmapDrawable(getResources(), resource);
+                                    AHBottomNavigationItem item = new AHBottomNavigationItem(text, drawable);
+                                    bottomNavigationItems.put(Integer.valueOf(index), item);
+                                    if(bottomNavigationItems.size() >= items.length()){
+                                        for(int j = 0; j < bottomNavigationItems.size(); j++){
+                                            bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
                                         }
                                     }
-                                });
+                                }
+                            });
 
                     } else if(item.has("text")){
                         String text = "";
@@ -1932,7 +2000,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                 bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
                             }
                         } catch (Exception e) {
-                            Log.d("Error", e.toString());
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
 
                         ColorDrawable d = new ColorDrawable(Color.TRANSPARENT);
@@ -1976,7 +2044,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             href(action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
                         }
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                     return true;
                 }
@@ -1985,7 +2053,7 @@ public class JasonViewActivity extends AppCompatActivity {
             listView.setClipToPadding(false);
             listView.setPadding(0,0,0,160);
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1997,19 +2065,22 @@ public class JasonViewActivity extends AppCompatActivity {
                     View layerView = layer_items.get(j);
                     rootLayout.removeView(layerView);
                 }
+                layer_items = new ArrayList<View>();
             }
-            for(int i = 0; i<layers.length(); i++){
-                JSONObject layer = (JSONObject)layers.getJSONObject(i);
-                if(layer.has("type")){
-                    View view = JasonComponentFactory.build(null, layer, null, JasonViewActivity.this);
-                    JasonComponentFactory.build(view, layer, null, JasonViewActivity.this);
-                    stylize_layer(view, layer);
-                    rootLayout.addView(view);
-                    layer_items.add(view);
+            if(layers != null) {
+                for(int i = 0; i<layers.length(); i++){
+                    JSONObject layer = (JSONObject)layers.getJSONObject(i);
+                    if(layer.has("type")){
+                        View view = JasonComponentFactory.build(null, layer, null, JasonViewActivity.this);
+                        JasonComponentFactory.build(view, layer, null, JasonViewActivity.this);
+                        stylize_layer(view, layer);
+                        rootLayout.addView(view);
+                        layer_items.add(view);
+                    }
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -2040,7 +2111,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
             view.setLayoutParams(params);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -2110,7 +2181,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                         call(search.getJSONObject("action").toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
                                     }
                                 } catch (Exception e){
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
                             }
                             return false;
@@ -2178,13 +2249,12 @@ public class JasonViewActivity extends AppCompatActivity {
                         JasonComponentFactory.build(menuButton, json, null, JasonViewActivity.this);
                     }
 
-                    FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams)menuButton.getLayoutParams();
-                    lp.width = FrameLayout.LayoutParams.MATCH_PARENT;
-                    lp.height = FrameLayout.LayoutParams.MATCH_PARENT;
+                    FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                    menuButton.setLayoutParams(lp);
 
                     // Set padding for the menu button
-                    int padding = (int)JasonHelper.pixels(this, "10", "vertical");
-                    itemView.setPadding(padding, 0, padding, 0);
+                    int padding = (int)JasonHelper.pixels(this, "15", "vertical");
+                    itemView.setPadding(padding, padding, padding, padding);
 
 
                     if(json.has("badge")){
@@ -2206,20 +2276,15 @@ public class JasonViewActivity extends AppCompatActivity {
                         v.setTextColor(color);
                         v.setText(badge_text);
 
-                        FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.MATCH_PARENT);
-                        itemView.setLayoutParams(p);
-
-
                         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-                        layoutParams.gravity = Gravity.LEFT | Gravity.TOP;
-
-                        int left = (int)JasonHelper.pixels(this, String.valueOf(-5), "vertical");
-                        int top = (int)JasonHelper.pixels(this, String.valueOf(0), "vertical");
+                        //layoutParams.gravity = Gravity.RIGHT | Gravity.TOP;
+                        int left = (int)JasonHelper.pixels(this, String.valueOf(20), "horizontal");
+                        int top = (int)JasonHelper.pixels(this, String.valueOf(-10), "vertical");
                         if(badge_style.has("left")){
                             left = (int)JasonHelper.pixels(this, badge_style.getString("left"), "horizontal");
                         }
                         if(badge_style.has("top")) {
-                            top = (int)JasonHelper.pixels(this, String.valueOf(Integer.parseInt(badge_style.getString("top")) + 8), "vertical");
+                            top = (int)JasonHelper.pixels(this, String.valueOf(Integer.parseInt(badge_style.getString("top"))), "vertical");
                         }
                         layoutParams.setMargins(left,top,0,0);
                         itemView.addView(v);
@@ -2244,7 +2309,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                     }
                                 }
                             } catch (Exception e) {
-                                Log.d("Error", e.toString());
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                             return true;
                         }
@@ -2253,7 +2318,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
             }
         }catch(Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         return super.onPrepareOptionsMenu(menu);
     }
@@ -2273,6 +2338,8 @@ public class JasonViewActivity extends AppCompatActivity {
                     String type = ((JSONObject) title).getString("type");
                     if (type.equalsIgnoreCase("image")) {
                         String url = ((JSONObject) title).getString("url");
+                        JSONObject c = new JSONObject();
+                        c.put("url", url);
                         int height = header_height;
                         int width = Toolbar.LayoutParams.WRAP_CONTENT;
                         if (((JSONObject) title).has("style")) {
@@ -2281,14 +2348,14 @@ public class JasonViewActivity extends AppCompatActivity {
                                 try {
                                     height = (int) JasonHelper.pixels(this, style.getString("height"), "vertical");
                                 } catch (Exception e) {
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
                             }
                             if (style.has("width")) {
                                 try {
                                     width = (int) JasonHelper.pixels(this, style.getString("width"), "horizontal");
                                 } catch (Exception e) {
-                                    Log.d("Error", e.toString());
+                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                 }
                             }
                         }
@@ -2300,7 +2367,7 @@ public class JasonViewActivity extends AppCompatActivity {
                         params.gravity = Gravity.CENTER_HORIZONTAL;
                         logoView.setLayoutParams(params);
                         Glide.with(this)
-                                .load(url)
+                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                 .into((ImageView) logoView);
                     } else if(type.equalsIgnoreCase("label")){
                         String text = ((JSONObject) title).getString("text");
@@ -2323,7 +2390,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         try {
             for (int i = 0; i < toolbar.getChildCount(); ++i) {
@@ -2346,7 +2413,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
 
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 

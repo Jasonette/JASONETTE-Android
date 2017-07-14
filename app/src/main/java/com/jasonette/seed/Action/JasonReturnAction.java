@@ -90,7 +90,7 @@ public class JasonReturnAction {
                 intent.putExtra("data", data.toString());
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
             JasonHelper.next("success", new JSONObject(), data, event, context);
@@ -104,7 +104,7 @@ public class JasonReturnAction {
                 intent.putExtra("data", data.toString());
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
             JasonHelper.next("error", new JSONObject(), data, event, context);

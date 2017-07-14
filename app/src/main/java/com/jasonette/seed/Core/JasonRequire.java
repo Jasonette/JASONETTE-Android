@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 
+import com.jasonette.seed.Helper.JasonHelper;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,7 +37,24 @@ public class JasonRequire implements Runnable{
         this.context = context;
         this.client = client;
     }
-    public void run(){
+    public void run() {
+        if(this.URL.contains("file://")) {
+            local();
+        } else {
+            remote();
+        }
+    }
+    private void local(){
+        try {
+            Object json = JasonHelper.read_json(this.URL, this.context);
+            private_refs.put(URL, json);
+            latch.countDown();
+        } catch (Exception e){
+            latch.countDown();
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
+    private void remote(){
         Request request;
         Request.Builder builder = new Request.Builder();
 
@@ -108,13 +127,13 @@ public class JasonRequire implements Runnable{
                         }
                         latch.countDown();
                     } catch (JSONException e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }

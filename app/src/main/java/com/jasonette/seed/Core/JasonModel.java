@@ -1,30 +1,22 @@
 package com.jasonette.seed.Core;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.jasonette.seed.Helper.JasonHelper;
+import com.jasonette.seed.Launcher.Launcher;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,7 +55,7 @@ public class JasonModel{
             try {
                 this.params = new JSONObject(intent.getStringExtra("params"));
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -78,7 +70,7 @@ public class JasonModel{
             try {
                 this.cache = new JSONObject(str);
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -93,7 +85,15 @@ public class JasonModel{
                 this.session = new JSONObject(str);
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        };
+
+        try {
+            JSONObject v = new JSONObject();
+            v.put("url", this.url);
+            ((Launcher)(this.view.getApplicationContext())).setEnv("view", v);
+        } catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         };
     }
 
@@ -101,26 +101,23 @@ public class JasonModel{
 
     public void fetch() {
         if(url.startsWith("file://")) {
-            fetch_local();
+            fetch_local(url);
         } else {
-            fetch_http();
+            fetch_http(url);
         }
     }
 
-    private void fetch_local(){
+    public void fetch_local(String url){
         try {
-            jason = JasonHelper.read_json(url, this.view);
-            if(jason.has("$jason")){
-                view.build();
-            } else {
-                Log.d("Error", "Invalid jason");
-            }
+            jason = (JSONObject)JasonHelper.read_json(url, this.view);
+            refs = new JSONObject();
+            resolve_and_build(jason.toString());
         } catch (Exception e) {
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
-    private void fetch_http(){
+    private void fetch_http(String url){
         try{
             Request request;
             Request.Builder builder = new Request.Builder();
@@ -159,21 +156,23 @@ public class JasonModel{
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
+                    fetch_local("file://error.json");
                     e.printStackTrace();
                 }
 
                 @Override
                 public void onResponse(Call call, final Response response) throws IOException {
                     if (!response.isSuccessful()) {
-                        throw new IOException("Unexpected code " + response);
+                        fetch_local("file://error.json");
+                    } else {
+                        String res = response.body().string();
+                        refs = new JSONObject();
+                        resolve_and_build(res);
                     }
-                    String res = response.body().string();
-                    refs = new JSONObject();
-                    resolve_and_build(res);
                 }
             });
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -204,7 +203,7 @@ public class JasonModel{
             try {
                 latch.await();
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
 
@@ -237,14 +236,14 @@ public class JasonModel{
                     resolve_local_reference();
                 } else {
                     if (jason.has("$jason")) {
-                        view.build();
+                        view.build(jason);
                     } else {
 
                     }
                 }
             }
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -278,13 +277,13 @@ public class JasonModel{
                     try {
                         resolve_and_build(resolved_jason.toString());
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });
             JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -312,13 +311,13 @@ public class JasonModel{
                     try {
                         resolve_and_build(resolved_jason.toString());
                     } catch (Exception e) {
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });
             JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -348,9 +347,11 @@ public class JasonModel{
                 // merge with passed in data
                 state.put("$get", var);
                 state.put("$cache", cache);
+                state.put("$global", ((Launcher)(this.view.getApplicationContext())).getGlobal());
+                state.put("$env", ((Launcher)(this.view.getApplicationContext())).getEnv());
                 state.put("$params", params);
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
 

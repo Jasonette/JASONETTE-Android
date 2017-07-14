@@ -101,7 +101,7 @@ public class JasonLabelComponent {
                 return view;
 
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 return new View(context);
             }
         }

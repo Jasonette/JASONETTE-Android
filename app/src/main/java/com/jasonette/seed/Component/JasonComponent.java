@@ -142,7 +142,7 @@ public class JasonComponent {
             return view;
 
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             return new View(root_context);
         }
     }
@@ -173,7 +173,7 @@ public class JasonComponent {
                         }
                     }
                 } catch (Exception e) {
-                    Log.d("Error", e.toString());
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
         };

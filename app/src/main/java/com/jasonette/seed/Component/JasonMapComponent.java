@@ -63,8 +63,8 @@ public class JasonMapComponent {
                 // Add pins when the map is ready
                 mapview.getMapAsync(new MapReadyHandler(component, mapview, context));
                 return mapview;
-            } catch (Exception err) {
-                Log.d("Error", err.toString());
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
             try {
@@ -77,8 +77,8 @@ public class JasonMapComponent {
 
                 ((MapView)view).onResume(); // Trigger onResume
                 return view;
-            } catch (Exception err){
-                Log.d("Error", err.toString());
+            } catch (Exception e){
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
         return new View(context);
@@ -94,8 +94,8 @@ public class JasonMapComponent {
                 latitude = Double.parseDouble(r[0]);
                 longitude = Double.parseDouble(r[1]);
             }
-        } catch (Exception err) {
-            Log.d("Error", err.toString());
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         return new LatLng(latitude, longitude);
     }
@@ -167,8 +167,8 @@ public class JasonMapComponent {
                         map.moveCamera(CameraUpdateFactory.zoomTo(zoom));
                     }
                 }
-            } catch (Exception err) {
-                Log.d("Error", err.toString());
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     }
@@ -179,28 +179,30 @@ public class JasonMapComponent {
         // to let the mapview handle them
         @Override
         public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-            LinearLayout layout = (LinearLayout)rv.findChildViewUnder(e.getX(),e.getY());
-            if(layout != null) {
-                for(int i=0; i<layout.getChildCount(); i++) {
-                    View child= layout.getChildAt(i);
-                    // Weed out non-map views ASAP
-                    if (child.getClass().equals(MapView.class)) {
-                        int left = layout.getLeft() + child.getLeft();
-                        int right = layout.getLeft() + child.getRight();
-                        int top = layout.getTop() + child.getTop();
-                        int bottom = layout.getTop() + child.getBottom();
-                        if(e.getX() > left && e.getX() < right && e.getY() > top && e.getY() < bottom) {
-                            switch (e.getActionMasked()) {
-                                // Pressed on map: stop listview from scrolling
-                                case MotionEvent.ACTION_DOWN:
-                                    rv.requestDisallowInterceptTouchEvent(true);
-                                    break;
+            if((rv.findChildViewUnder(e.getX(), e.getY())) instanceof LinearLayout) {
+                LinearLayout layout = (LinearLayout)rv.findChildViewUnder(e.getX(),e.getY());
+                if (layout != null) {
+                    for (int i = 0; i < layout.getChildCount(); i++) {
+                        View child = layout.getChildAt(i);
+                        // Weed out non-map views ASAP
+                        if (child.getClass().equals(MapView.class)) {
+                            int left = layout.getLeft() + child.getLeft();
+                            int right = layout.getLeft() + child.getRight();
+                            int top = layout.getTop() + child.getTop();
+                            int bottom = layout.getTop() + child.getBottom();
+                            if (e.getX() > left && e.getX() < right && e.getY() > top && e.getY() < bottom) {
+                                switch (e.getActionMasked()) {
+                                    // Pressed on map: stop listview from scrolling
+                                    case MotionEvent.ACTION_DOWN:
+                                        rv.requestDisallowInterceptTouchEvent(true);
+                                        break;
 
-                                // Released on map or cancelled: listview can be normal again
-                                case MotionEvent.ACTION_UP:
-                                case MotionEvent.ACTION_CANCEL:
-                                    rv.requestDisallowInterceptTouchEvent(false);
-                                    break;
+                                    // Released on map or cancelled: listview can be normal again
+                                    case MotionEvent.ACTION_UP:
+                                    case MotionEvent.ACTION_CANCEL:
+                                        rv.requestDisallowInterceptTouchEvent(false);
+                                        break;
+                                }
                             }
                         }
                     }

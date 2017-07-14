@@ -99,7 +99,7 @@ public class JasonButtonComponent{
 
                 view.setPadding(padding_left, padding_top, padding_right, padding_bottom);
             } catch (Exception e) {
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
 
         } else {

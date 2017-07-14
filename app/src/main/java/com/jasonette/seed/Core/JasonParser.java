@@ -41,7 +41,7 @@ public class JasonParser {
                 instance.juice.executeVoidScript(js);
                 instance.juice.getLocker().release();
             } catch (Exception e){
-                Log.d("Error", e.toString());
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
         return instance;
@@ -92,7 +92,7 @@ public class JasonParser {
                         listener.onFinished(res);
 
                     } catch (Exception e){
-                        Log.d("Error", e.toString());
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
 
                     // thread handling - release handle
@@ -100,7 +100,7 @@ public class JasonParser {
                }
             }).start();
         } catch (Exception e){
-            Log.d("Error", e.toString());
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }
