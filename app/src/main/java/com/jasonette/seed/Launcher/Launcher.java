@@ -8,8 +8,6 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
-import android.view.WindowManager;
 
 import com.bumptech.glide.request.target.ViewTarget;
 import com.jasonette.seed.Core.JasonViewActivity;
@@ -26,7 +24,7 @@ import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
 
-import static android.R.attr.action;
+import okhttp3.OkHttpClient;
 
 public class Launcher extends Application {
     private JSONObject handlers;
@@ -67,6 +65,7 @@ public class Launcher extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
         ViewTarget.setTagId(R.id.glide_request);
 
         // Look for all extensions and initialize them if they have initialize class methods
@@ -270,4 +269,7 @@ public class Launcher extends Application {
         }
     }
 
+    public OkHttpClient getHttpClient() {
+        return new OkHttpClient.Builder().build();
+    }
 }

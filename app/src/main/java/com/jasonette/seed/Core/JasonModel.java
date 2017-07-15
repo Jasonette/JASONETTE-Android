@@ -152,7 +152,8 @@ public class JasonModel{
                     .build();
 
 
-            client = new OkHttpClient();
+            client = ((Launcher)view.getApplication()).getHttpClient();
+
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
