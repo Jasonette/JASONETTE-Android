@@ -49,59 +49,49 @@ public class JasonParser {
 
 
     public void parse(final String data_type, final JSONObject data, final Object template, final Context context){
+        try {
+            // thread handling - acquire handle
+            juice.getLocker().acquire();
+            Console console = new Console();
+            V8Object v8Console = new V8Object(juice);
+            juice.add("console", v8Console);
+            v8Console.registerJavaMethod(console, "log", "log", new Class<?>[] { String.class });
+            v8Console.registerJavaMethod(console, "error", "error", new Class<?>[] { String.class });
+            v8Console.registerJavaMethod(console, "trace", "trace", new Class<?>[] {});
 
-        try{
-            new Thread(new Runnable(){
-                @Override public void run() {
+            V8Object parser = juice.getObject("parser");
 
-                    try {
-                        // thread handling - acquire handle
-                        juice.getLocker().acquire();
-                        Console console = new Console();
-                        V8Object v8Console = new V8Object(juice);
-                        juice.add("console", v8Console);
-                        v8Console.registerJavaMethod(console, "log", "log", new Class<?>[] { String.class });
-                        v8Console.registerJavaMethod(console, "error", "error", new Class<?>[] { String.class });
-                        v8Console.registerJavaMethod(console, "trace", "trace", new Class<?>[] {});
+            String templateJson = template.toString();
+            String dataJson = data.toString();
+            String val = "{}";
 
-                        V8Object parser = juice.getObject("parser");
-
-                        String templateJson = template.toString();
-                        String dataJson = data.toString();
-                        String val = "{}";
-
-                        if(data_type.equalsIgnoreCase("json")) {
-                            V8Array parameters = new V8Array(juice).push(templateJson);
-                            parameters.push(dataJson);
-                            parameters.push(true);
-                            val = parser.executeStringFunction("json", parameters);
-                            parameters.release();
-                        } else {
-                            String raw_data = data.getString("$jason");
-                            V8Array parameters = new V8Array(juice).push(templateJson);
-                            parameters.push(raw_data);
-                            parameters.push(true);
-                            val = parser.executeStringFunction("html", parameters);
-                            parameters.release();
-                        }
-                        parser.release();
-                        v8Console.release();
+            if(data_type.equalsIgnoreCase("json")) {
+                V8Array parameters = new V8Array(juice).push(templateJson);
+                parameters.push(dataJson);
+                parameters.push(true);
+                val = parser.executeStringFunction("json", parameters);
+                parameters.release();
+            } else {
+                String raw_data = data.getString("$jason");
+                V8Array parameters = new V8Array(juice).push(templateJson);
+                parameters.push(raw_data);
+                parameters.push(true);
+                val = parser.executeStringFunction("html", parameters);
+                parameters.release();
+            }
+            parser.release();
+            v8Console.release();
 
 
-                        res = new JSONObject(val);
-                        listener.onFinished(res);
+            res = new JSONObject(val);
+            listener.onFinished(res);
 
-                    } catch (Exception e){
-                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                    }
-
-                    // thread handling - release handle
-                    juice.getLocker().release();
-               }
-            }).start();
         } catch (Exception e){
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
+
+        // thread handling - release handle
+        juice.getLocker().release();
     }
 }
 
