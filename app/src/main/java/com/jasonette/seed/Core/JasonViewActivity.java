@@ -1566,33 +1566,25 @@ public class JasonViewActivity extends AppCompatActivity {
                                     }
                                 }
                                 else if(type.equalsIgnoreCase("camera")) {
-                                    int side = BackgroundCameraManager.BACK;
+                                    int side = BackgroundCameraManager.FRONT;
                                     if (background.has("options")) {
                                         JSONObject options = background.getJSONObject("options");
-                                        if (options.has("device") && options.getString("device").equals("front")) {
-                                            side = BackgroundCameraManager.FRONT;
+                                        if (options.has("device") && options.getString("device").equals("back")) {
+                                            side = BackgroundCameraManager.BACK;
                                         }
                                     }
 
-                                    boolean initialized = cameraManager != null;
-                                    if (!initialized) {
-                                        cameraManager = new BackgroundCameraManager(side);
-                                    }
+                                    if (cameraManager == null) {
+                                        cameraManager = new BackgroundCameraManager(JasonViewActivity.this);
+                                        backgroundCameraView = cameraManager.getView();
 
-                                    // startBackground caches the returned view so no problem here
-                                    backgroundCameraView = cameraManager.startBackground(JasonViewActivity.this, new BackgroundCameraManager.BackgroundCameraManagerCallback() {
-                                        @Override
-                                        public void onReady() {
-                                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
-                                        }
-                                    });
-
-                                    if (!initialized) {
                                         RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
                                                 RelativeLayout.LayoutParams.MATCH_PARENT,
                                                 RelativeLayout.LayoutParams.MATCH_PARENT);
                                         rootLayout.addView(backgroundCameraView, 0, rlp);
                                     }
+
+                                    cameraManager.startBackground(JasonViewActivity.this, side);
                                 }
                             }
                         }

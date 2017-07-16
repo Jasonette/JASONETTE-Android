@@ -26,49 +26,55 @@ public class BackgroundCameraManager {
     public static int FRONT = Camera.CameraInfo.CAMERA_FACING_FRONT;
     public static int BACK = Camera.CameraInfo.CAMERA_FACING_BACK;
 
-    private int side;
     private Camera camera;
     private SurfaceView view;
+    private boolean surfaceReady = false;
 
-    public interface BackgroundCameraManagerCallback {
-        void onReady();
+    public BackgroundCameraManager(Activity context) {
+        initView(context);
     }
 
-    public BackgroundCameraManager(int side) {
-        this.side = side;
+    public void startBackground(final Activity context, final int side) {
+        if (camera != null) {
+            stopCamera();
+        }
+
+        final SurfaceHolder holder = view.getHolder();
+        if (!surfaceReady) {
+            holder.addCallback(new SurfaceHolder.Callback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder surfaceHolder) {
+                    startCamera(context, surfaceHolder, side);
+                    surfaceReady = true;
+                }
+
+                @Override
+                public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+                }
+
+                @Override
+                public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+                    stopCamera();
+                }
+            });
+        }
+        else {
+            startCamera(context, holder, side);
+        }
     }
 
-    public SurfaceView startBackground(final Activity context, final BackgroundCameraManagerCallback callback) {
-        initView(context, callback);
+    public SurfaceView getView() {
         return view;
     }
 
-    private void initView(final Activity context, final BackgroundCameraManagerCallback callback) {
+    private void initView(final Activity context) {
         if (view != null) {
             return;
         }
-
         view = new SurfaceView(context);
-        final SurfaceHolder holder = view.getHolder();
-        holder.addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder surfaceHolder) {
-                initCamera(context, surfaceHolder, callback);
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-                stopCamera();
-            }
-        });
     }
 
-    private void initCamera(final Activity context, SurfaceHolder holder, final BackgroundCameraManagerCallback callback) {
+    private void startCamera(final Activity context, SurfaceHolder holder, final int side) {
         int cameraId = -1;
         // Search for the front facing camera
         int numberOfCameras = Camera.getNumberOfCameras();
@@ -95,9 +101,6 @@ public class BackgroundCameraManager {
         }
 
         camera.startPreview();
-
-        // All is ready
-        callback.onReady();
     }
 
     public void stopCamera() {
