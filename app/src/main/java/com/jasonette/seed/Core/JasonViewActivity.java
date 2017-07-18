@@ -268,7 +268,10 @@ public class JasonViewActivity extends AppCompatActivity {
                     Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             } else {
-                model.fetch_local("file://loading.json");
+                if(!model.url.startsWith("file://")) {
+                    // only load loading.json if loading from a remote JSON
+                    model.fetch_local("file://loading.json");
+                }
             }
 
             // Fetch
