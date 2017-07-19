@@ -28,39 +28,14 @@ public class BackgroundCameraManager {
 
     private Camera camera;
     private SurfaceView view;
-    private boolean surfaceReady = false;
+    private int side;
 
     public BackgroundCameraManager(Activity context) {
         initView(context);
     }
 
-    public void startBackground(final Activity context, final int side) {
-        if (camera != null) {
-            stopCamera();
-        }
-
-        final SurfaceHolder holder = view.getHolder();
-        if (!surfaceReady) {
-            holder.addCallback(new SurfaceHolder.Callback() {
-                @Override
-                public void surfaceCreated(SurfaceHolder surfaceHolder) {
-                    startCamera(context, surfaceHolder, side);
-                    surfaceReady = true;
-                }
-
-                @Override
-                public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-                    stopCamera();
-                }
-            });
-        }
-        else {
-            startCamera(context, holder, side);
-        }
+    public void setSide(final int side) {
+        this.side = side;
     }
 
     public SurfaceView getView() {
@@ -72,6 +47,24 @@ public class BackgroundCameraManager {
             return;
         }
         view = new SurfaceView(context);
+        final SurfaceHolder holder = view.getHolder();
+
+        holder.addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder surfaceHolder) {
+                startCamera(context, surfaceHolder, side);
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+                stopCamera();
+            }
+        });
     }
 
     private void startCamera(final Activity context, SurfaceHolder holder, final int side) {
@@ -92,15 +85,19 @@ public class BackgroundCameraManager {
             return;
         }
 
-        camera = Camera.open(cameraId);
-        camera.setDisplayOrientation(getVerticalCameraDisplayOrientation(context, cameraId));
+
         try {
-            camera.setPreviewDisplay(holder);
-        } catch (IOException e) {
+            camera = Camera.open(cameraId);
+            camera.setDisplayOrientation(getVerticalCameraDisplayOrientation(context, cameraId));
+            try {
+                camera.setPreviewDisplay(holder);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            camera.startPreview();
+        } catch (RuntimeException e) {
             e.printStackTrace();
         }
-
-        camera.startPreview();
     }
 
     public void stopCamera() {
