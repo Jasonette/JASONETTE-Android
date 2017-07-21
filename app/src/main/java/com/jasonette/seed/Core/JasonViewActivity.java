@@ -30,8 +30,9 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -47,16 +48,14 @@ import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
-import com.eclipsesource.v8.debug.mirror.Frame;
 import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
-import com.jasonette.seed.Helper.JasonSettings;
 import com.jasonette.seed.Launcher.Launcher;
+import com.jasonette.seed.Lib.BackgroundCameraManager;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
@@ -66,7 +65,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -101,8 +99,11 @@ public class JasonViewActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeLayout;
     public LinearLayout sectionLayout;
     public RelativeLayout rootLayout;
-    public WebView webview;
+    public View backgroundCurrentView;
+    public WebView backgroundWebview;
     public ImageView backgroundImageView;
+    private SurfaceView backgroundCameraView;
+    private BackgroundCameraManager cameraManager;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
@@ -1439,6 +1440,8 @@ public class JasonViewActivity extends AppCompatActivity {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
+
+
         JasonViewActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1451,11 +1454,18 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
                     sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
                     getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
+
                     if (body.has("style")) {
                         JSONObject style = body.getJSONObject("style");
                         if (style.has("background")) {
                             // sectionLayout must be transparent to see the background
                             sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
+
+                            // we remove the current view from the root layout
+                            if (backgroundCurrentView != null) {
+                                rootLayout.removeView(backgroundCurrentView);
+                                backgroundCurrentView = null;
+                            }
 
                             if(style.get("background") instanceof String){
                                 String background = style.getString("background");
@@ -1463,12 +1473,10 @@ public class JasonViewActivity extends AppCompatActivity {
                                 c.put("url", background);
                                 if(background.matches("(file|http[s]?):\\/\\/.*")) {
                                     if(backgroundImageView == null) {
-                                        RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
-                                                RelativeLayout.LayoutParams.MATCH_PARENT,
-                                                RelativeLayout.LayoutParams.MATCH_PARENT);
                                         backgroundImageView = new ImageView(JasonViewActivity.this);
-                                        rootLayout.addView(backgroundImageView, 0, rlp);
                                     }
+
+                                    backgroundCurrentView = backgroundImageView;
 
                                     DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
                                     // gif doesn't work with RESULT cache strategy
@@ -1482,7 +1490,6 @@ public class JasonViewActivity extends AppCompatActivity {
                                             .diskCacheStrategy(cacheStrategy)
                                             .centerCrop()
                                             .into(backgroundImageView);
-                                } else if(background == "camera") {
                                 } else if(background.matches("data:image.*")){
                                     String base64;
                                     if(background.startsWith("data:image/jpeg")){
@@ -1513,14 +1520,14 @@ public class JasonViewActivity extends AppCompatActivity {
                                     if(background.has("text")){
                                         String html = background.getString("text");
                                         CookieManager.getInstance().setAcceptCookie(true);
-                                        if(webview==null) {
-                                            webview = new WebView(JasonViewActivity.this);
-                                            webview.getSettings().setDefaultTextEncodingName("utf-8");
-                                            webview.setWebChromeClient(new WebChromeClient());
-                                            webview.setVerticalScrollBarEnabled(false);
-                                            webview.setHorizontalScrollBarEnabled(false);
-                                            webview.setBackgroundColor(Color.TRANSPARENT);
-                                            WebSettings settings = webview.getSettings();
+                                        if(backgroundWebview==null) {
+                                            backgroundWebview = new WebView(JasonViewActivity.this);
+                                            backgroundWebview.getSettings().setDefaultTextEncodingName("utf-8");
+                                            backgroundWebview.setWebChromeClient(new WebChromeClient());
+                                            backgroundWebview.setVerticalScrollBarEnabled(false);
+                                            backgroundWebview.setHorizontalScrollBarEnabled(false);
+                                            backgroundWebview.setBackgroundColor(Color.TRANSPARENT);
+                                            WebSettings settings = backgroundWebview.getSettings();
                                             settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
                                             settings.setJavaScriptEnabled(true);
                                             settings.setDomStorageEnabled(true);
@@ -1530,11 +1537,6 @@ public class JasonViewActivity extends AppCompatActivity {
                                             settings.setAllowFileAccess( true );
                                             settings.setAppCacheEnabled( true );
                                             settings.setCacheMode( WebSettings.LOAD_DEFAULT );
-                                            RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
-                                                    RelativeLayout.LayoutParams.MATCH_PARENT,
-                                                    RelativeLayout.LayoutParams.MATCH_PARENT);
-                                            webview.setLayoutParams(rlp);
-
 
                                             // not interactive by default;
                                             Boolean responds_to_webview = false;
@@ -1548,22 +1550,46 @@ public class JasonViewActivity extends AppCompatActivity {
                                             }
                                             if(responds_to_webview){
                                                 // webview receives click
-                                                webview.setOnTouchListener(null);
+                                                backgroundWebview.setOnTouchListener(null);
                                             } else {
                                                 // webview shouldn't receive click
-                                                webview.setOnTouchListener(new View.OnTouchListener() {
+                                                backgroundWebview.setOnTouchListener(new View.OnTouchListener() {
                                                     @Override
                                                     public boolean onTouch(View v, MotionEvent event) {
                                                         return true;
                                                     }
                                                 });
                                             }
-
-                                            rootLayout.addView(webview,0);
                                         }
-                                        webview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
+
+                                        backgroundCurrentView = backgroundWebview;
+                                        backgroundWebview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
                                     }
                                 }
+                                else if(type.equalsIgnoreCase("camera")) {
+                                    int side = BackgroundCameraManager.FRONT;
+                                    if (background.has("options")) {
+                                        JSONObject options = background.getJSONObject("options");
+                                        if (options.has("device") && options.getString("device").equals("back")) {
+                                            side = BackgroundCameraManager.BACK;
+                                        }
+                                    }
+
+                                    if (cameraManager == null) {
+                                        cameraManager = new BackgroundCameraManager(JasonViewActivity.this);
+                                        backgroundCameraView = cameraManager.getView();
+                                    }
+
+                                    backgroundCurrentView = backgroundCameraView;
+                                    cameraManager.setSide(side);
+                                }
+                            }
+
+                            if (backgroundCurrentView != null) {
+                                RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                        RelativeLayout.LayoutParams.MATCH_PARENT,
+                                        RelativeLayout.LayoutParams.MATCH_PARENT);
+                                rootLayout.addView(backgroundCurrentView, 0, rlp);
                             }
                         }
                     }
