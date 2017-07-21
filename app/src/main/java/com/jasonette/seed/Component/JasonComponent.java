@@ -18,8 +18,8 @@ import org.json.JSONObject;
 
 public class JasonComponent {
     public static View build(View view, final JSONObject component, final JSONObject parent, final Context root_context) {
-        int width = 0;
-        int height = 0;
+        float width = 0;
+        float height = 0;
         int corner_radius = 0;
 
         view.setTag(component);
@@ -33,17 +33,25 @@ public class JasonComponent {
                 if (style.has("height")) {
                     try {
                         height = (int) JasonHelper.pixels(root_context, style.getString("height"), "vertical");
+                        if (style.has("ratio")) {
+                            Float ratio = JasonHelper.ratio(style.getString("ratio"));
+                            width = height * ratio;
+                        }
                     } catch (Exception e) {
                     }
                 }
                 if (style.has("width")) {
                     try {
                         width = (int) JasonHelper.pixels(root_context, style.getString("width"), "horizontal");
+                        if (style.has("ratio")) {
+                            Float ratio = JasonHelper.ratio(style.getString("ratio"));
+                            height = width / ratio;
+                        }
                     } catch (Exception e) {
                     }
                 }
 
-                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(width, height);
+                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams((int)width, (int)height);
                 view.setLayoutParams(layoutParams);
             } else {
                 // Section item type

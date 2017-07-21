@@ -133,6 +133,19 @@ public class JasonHelper {
         return list;
     }
 
+    public static float ratio(String ratio) {
+        String regex = "^[ ]*([0-9]+)[ ]*[:/][ ]*([0-9]+)[ ]*$";
+        Pattern pat = Pattern.compile(regex);
+        Matcher m = pat.matcher(ratio);
+        if (m.matches()) {
+            Float w = Float.parseFloat(m.group(1));
+            Float h = Float.parseFloat(m.group(2));
+            return w/h;
+        } else {
+            return Float.parseFloat(ratio);
+        }
+    }
+
     public static float pixels(Context context, String size, String direction) {
         String regex_percent_and_pixels = "^([0-9.]+)%[ ]*([+-]?)[ ]*([0-9]+)$";
         Pattern percent_pixels = Pattern.compile(regex_percent_and_pixels);
