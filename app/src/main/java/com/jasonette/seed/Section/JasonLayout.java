@@ -8,8 +8,8 @@ import org.json.JSONObject;
 public class JasonLayout {
     public static LinearLayout.LayoutParams autolayout(Boolean isHorizontalScroll, JSONObject parent, JSONObject item, Context root_context) {
 
-        int width = 0;
-        int height = 0;
+        float width = 0;
+        float height = 0;
         int weight = 0;
 
         try {
@@ -24,6 +24,10 @@ public class JasonLayout {
                 if (style.has("width")) {
                     try {
                         width = (int) JasonHelper.pixels(root_context, style.getString("width"), "horizontal");
+                        if (style.has("ratio")) {
+                            Float ratio = JasonHelper.ratio(style.getString("ratio"));
+                            height = width / ratio;
+                        }
                     } catch (Exception e) { }
                 } else {
                     if(isHorizontalScroll){
@@ -35,6 +39,10 @@ public class JasonLayout {
                 if (style.has("height")) {
                     try {
                         height = (int) JasonHelper.pixels(root_context, style.getString("height"), "vertical");
+                        if (style.has("ratio")) {
+                            Float ratio = JasonHelper.ratio(style.getString("ratio"));
+                            width = height * ratio;
+                        }
                     } catch (Exception e) {
                     }
                 } else {
@@ -47,6 +55,10 @@ public class JasonLayout {
                 if (style.has("height")) {
                     try {
                         height = (int) JasonHelper.pixels(root_context, style.getString("height"), "vertical");
+                        if (style.has("ratio")) {
+                            Float ratio = JasonHelper.ratio(style.getString("ratio"));
+                            width = height * ratio;
+                        }
                     } catch (Exception e) { }
                 } else {
                     if(item_type.equalsIgnoreCase("vertical") || item_type.equalsIgnoreCase("horizontal") || item_type.equalsIgnoreCase("space")){
@@ -62,6 +74,10 @@ public class JasonLayout {
                 if (style.has("width")) {
                     try {
                         width = (int) JasonHelper.pixels(root_context, style.getString("width"), "horizontal");
+                        if (style.has("ratio")) {
+                            Float ratio = JasonHelper.ratio(style.getString("ratio"));
+                            height = width / ratio;
+                        }
                     } catch (Exception e) { }
                 } else {
                     // in case of vertical layout, all its children, regardless of whether they are layout or components,
@@ -76,6 +92,10 @@ public class JasonLayout {
                 if (style.has("width")) {
                     try {
                         width = (int) JasonHelper.pixels(root_context, style.getString("width"), "horizontal");
+                        if (style.has("ratio")) {
+                            Float ratio = JasonHelper.ratio(style.getString("ratio"));
+                            height = width / ratio;
+                        }
                     } catch (Exception e) {
                     }
                 } else {
@@ -87,6 +107,10 @@ public class JasonLayout {
                 if (style.has("height")) {
                     try {
                         height = (int) JasonHelper.pixels(root_context, style.getString("height"), "vertical");
+                        if (style.has("ratio")) {
+                            Float ratio = JasonHelper.ratio(style.getString("ratio"));
+                            width = height * ratio;
+                        }
                     } catch (Exception e) {
                     }
                 } else {
@@ -94,7 +118,7 @@ public class JasonLayout {
                 }
             }
 
-            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams((int)width, (int)height);
             if (weight > 0) {
                 layoutParams.weight = weight;
             }
