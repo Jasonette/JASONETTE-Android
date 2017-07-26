@@ -5,7 +5,6 @@ import android.util.Log;
 
 import com.facebook.stetho.Stetho;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
-import com.facebook.stetho.timber.StethoTree;
 import com.jasonette.seed.R;
 
 import okhttp3.OkHttpClient;
@@ -29,7 +28,10 @@ public class DebugLauncher extends Launcher {
         boolean enableStethoConsole = res.getBoolean(R.bool.enableStethoConsole);
 
         if (enableStethoConsole) {
-            Timber.plant(new StethoTree());
+            Timber.plant(new ConfigurableStethoTree(new ConfigurableStethoTree.Configuration.Builder()
+                   .showTags(true)
+                   .minimumPriority(Log.DEBUG)
+                   .build()));
             Log.i(LOGTAG, "Using Stetho console logging");
         } else  {
             Timber.plant(new Timber.DebugTree());
