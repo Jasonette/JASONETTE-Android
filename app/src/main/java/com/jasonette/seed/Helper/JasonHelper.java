@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.WindowManager;
 
@@ -27,7 +26,10 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import timber.log.Timber;
+
 public class JasonHelper {
+
     public static JSONObject style(JSONObject component, Context root_context) {
         JSONObject style = new JSONObject();
         try {
@@ -45,7 +47,7 @@ public class JasonHelper {
                 }
             }
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
         try {
@@ -60,7 +62,7 @@ public class JasonHelper {
                 }
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
         return style;
     }
@@ -76,7 +78,7 @@ public class JasonHelper {
             }
             return stub;
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             return new JSONObject();
         }
     }
@@ -100,23 +102,33 @@ public class JasonHelper {
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.e(e);
         }
     }
 
+    /**
+     * Parse a string as either a JSON Object or Array.
+     *
+     * @param json
+     * @return a JSONObject or JSONArray based on the Json string,
+     * return an emptry JSONObject if json param is null or on parsing supplied json string.
+     */
     public static Object objectify(String json) {
         try {
+            if (json == null) {
+                return new JSONObject();
+            }
             if (json.trim().startsWith("[")) {
                 // JSONArray
                 return new JSONArray(json);
             } else if (json.trim().startsWith("{")) {
                 return new JSONObject(json);
             } else {
-                return new Object();
+                return new JSONObject();
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-            return new Object();
+            Timber.w(e, "error objectifying: %s", json);
+            return new JSONObject();
         }
     }
 
@@ -128,7 +140,7 @@ public class JasonHelper {
                 list.add(jsonArray.getJSONObject(i));
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
         return list;
     }
@@ -265,7 +277,7 @@ public class JasonHelper {
                 ret = jr;
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             return new JSONObject();
         }
         return ret;
@@ -284,7 +296,7 @@ public class JasonHelper {
             intent.putExtra("action", alert_action.toString());
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 
@@ -342,7 +354,7 @@ public class JasonHelper {
 
             ((Launcher) ((JasonViewActivity) context).getApplicationContext()).once(name, handler);
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
         if (intent != null) {
@@ -373,8 +385,7 @@ public class JasonHelper {
             callback.put("options", callback_options);
             return callback;
         } catch (Exception e) {
-            Log.d("Error", "wasn't able to preserve stack");
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.e(e, "wasn't able to preserve stack for action: %s", action);
             return callback;
         }
     }
