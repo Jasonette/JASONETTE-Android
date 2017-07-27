@@ -1,13 +1,14 @@
 package com.jasonette.seed.Component;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
 import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
+
+import timber.log.Timber;
 
 public class JasonComponentFactory {
     Map<String, Integer> signature_to_type = new HashMap<String,Integer>();
@@ -47,7 +48,7 @@ public class JasonComponentFactory {
 
         }
         catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
         return new View(context);
