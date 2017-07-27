@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
-import android.util.Log;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.model.GlideUrl;
@@ -18,9 +17,10 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Iterator;
+
+import timber.log.Timber;
 
 public class JasonImageHelper {
     public interface JasonImageDownloadListener {
@@ -56,7 +56,7 @@ public class JasonImageHelper {
             Uri bitmapUri = Uri.fromFile(file);
             this.listener.onLoaded(this.data, bitmapUri);
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
     }
@@ -121,7 +121,7 @@ public class JasonImageHelper {
 
                                     listener.onLoaded(byteArray, bitmapUri);
                                 } catch (Exception e) {
-                                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                                    Timber.w(e);
                                 }
 
                             }
@@ -129,7 +129,7 @@ public class JasonImageHelper {
 
             }
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 }
