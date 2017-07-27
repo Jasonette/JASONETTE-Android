@@ -2,19 +2,18 @@ package com.jasonette.seed.Component;
 
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
-import com.jasonette.seed.R;
 import com.jasonette.seed.Section.JasonLayout;
 
 import org.json.JSONObject;
+
+import timber.log.Timber;
 
 public class JasonComponent {
 
@@ -158,7 +157,7 @@ public class JasonComponent {
             return view;
 
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             return new View(root_context);
         }
     }
@@ -189,7 +188,7 @@ public class JasonComponent {
                         }
                     }
                 } catch (Exception e) {
-                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                    Timber.w(e);
                 }
             }
         };

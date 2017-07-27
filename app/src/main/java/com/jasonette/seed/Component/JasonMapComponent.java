@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -30,7 +29,6 @@ import org.json.JSONObject;
 import timber.log.Timber;
 
 import static com.jasonette.seed.Action.JasonGeoAction.COORDS_STRING_FORMAT;
-
 
 public class JasonMapComponent extends JasonComponent {
 
@@ -80,7 +78,7 @@ public class JasonMapComponent extends JasonComponent {
                 mapview.getMapAsync(new MapReadyHandler(component, mapview, context));
                 return mapview;
             } catch (Exception e) {
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                Timber.w(e);
             }
         } else {
             try {
@@ -94,7 +92,7 @@ public class JasonMapComponent extends JasonComponent {
                 ((MapView)view).onResume(); // Trigger onResume
                 return view;
             } catch (Exception e){
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                Timber.w(e);
             }
         }
         return new View(context);
@@ -111,7 +109,7 @@ public class JasonMapComponent extends JasonComponent {
                 longitude = Double.parseDouble(r[1]);
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
         return new LatLng(latitude, longitude);
     }
@@ -224,7 +222,7 @@ public class JasonMapComponent extends JasonComponent {
                 });
 
             } catch (Exception e) {
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                Timber.w(e);
             }
         }
     }
