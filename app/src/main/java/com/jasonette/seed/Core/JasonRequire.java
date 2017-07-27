@@ -21,6 +21,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
+import timber.log.Timber;
 
 public class JasonRequire implements Runnable{
     final String URL;
@@ -63,7 +64,7 @@ public class JasonRequire implements Runnable{
             Thread t = new Thread(r);
             t.start();
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             latch.countDown();
         }
     }
@@ -140,13 +141,13 @@ public class JasonRequire implements Runnable{
                         }
                         latch.countDown();
                     } catch (JSONException e) {
-                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                        Timber.w(e);
                     }
                 }
             });
 
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 }
