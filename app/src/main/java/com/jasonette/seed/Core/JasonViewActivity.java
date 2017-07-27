@@ -30,7 +30,6 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -42,20 +41,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
 import com.jasonette.seed.Lib.BackgroundCameraManager;
+import com.jasonette.seed.Lib.CenteredToolbar;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
@@ -79,7 +77,7 @@ import java.util.concurrent.Executors;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity {
-    private Toolbar toolbar;
+    private CenteredToolbar toolbar;
     private RecyclerView listView;
     public String url;
     public JasonModel model;
@@ -159,7 +157,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
         // 3. Create body.header
         if(toolbar == null) {
-            toolbar = new Toolbar(this);
+            toolbar = new CenteredToolbar(this);
             toolbar.setTitle("");
         }
         setSupportActionBar(toolbar);
@@ -2418,23 +2416,11 @@ public class JasonViewActivity extends AppCompatActivity {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         try {
-            for (int i = 0; i < toolbar.getChildCount(); ++i) {
-                View child = toolbar.getChildAt(i);
-                if (child instanceof TextView) {
-                    ((TextView) child).setTextSize(20);
-                    break;
-                }
-            }
+            toolbar.setTitleSize(20);
             if(header.has("style")) {
                 String f = header.getJSONObject("style").getString("font:android");
                 Typeface font = JasonHelper.get_font(f, this);
-                for (int i = 0; i < toolbar.getChildCount(); ++i) {
-                    View child = toolbar.getChildAt(i);
-                    if (child instanceof TextView) {
-                        ((TextView) child).setTypeface(font);
-                        break;
-                    }
-                }
+                toolbar.setTitleTypeface(font);
             }
 
         } catch (Exception e) {
