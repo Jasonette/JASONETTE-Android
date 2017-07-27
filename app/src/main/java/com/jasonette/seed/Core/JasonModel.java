@@ -3,7 +3,6 @@ package com.jasonette.seed.Core;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.util.Log;
 
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
@@ -25,6 +24,7 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import timber.log.Timber;
 
 public class JasonModel{
     public String url;
@@ -56,7 +56,7 @@ public class JasonModel{
             try {
                 this.params = new JSONObject(intent.getStringExtra("params"));
             } catch (Exception e) {
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                Timber.w(e);
             }
         }
 
@@ -71,7 +71,7 @@ public class JasonModel{
             try {
                 this.cache = new JSONObject(str);
             } catch (Exception e) {
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                Timber.w(e);
             }
         }
 
@@ -86,7 +86,7 @@ public class JasonModel{
                 this.session = new JSONObject(str);
             }
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         };
 
         try {
@@ -94,7 +94,7 @@ public class JasonModel{
             v.put("url", this.url);
             ((Launcher)(this.view.getApplicationContext())).setEnv("view", v);
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         };
     }
 
@@ -125,7 +125,7 @@ public class JasonModel{
             t.start();
 
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 
@@ -184,7 +184,7 @@ public class JasonModel{
                 }
             });
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 
@@ -215,7 +215,7 @@ public class JasonModel{
             try {
                 latch.await();
             } catch (Exception e) {
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                Timber.w(e);
             }
         }
 
@@ -255,7 +255,7 @@ public class JasonModel{
                 }
             }
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 
@@ -289,13 +289,13 @@ public class JasonModel{
                     try {
                         resolve_and_build(resolved_jason.toString());
                     } catch (Exception e) {
-                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                        Timber.w(e);
                     }
                 }
             });
             JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
     }
@@ -323,13 +323,13 @@ public class JasonModel{
                     try {
                         resolve_and_build(resolved_jason.toString());
                     } catch (Exception e) {
-                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                        Timber.w(e);
                     }
                 }
             });
             JasonParser.getInstance(this.view).parse("json", refs, to_resolve, this.view);
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
     }
@@ -363,7 +363,7 @@ public class JasonModel{
                 state.put("$env", ((Launcher)(this.view.getApplicationContext())).getEnv());
                 state.put("$params", params);
             } catch (Exception e) {
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                Timber.w(e);
             }
         } else {
 
