@@ -1,19 +1,17 @@
 package com.jasonette.seed.Action;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
 
-import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
-import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONObject;
+
 import java.io.IOException;
-import java.net.URI;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -31,7 +29,7 @@ public class JasonNetworkAction {
         try{
             final JSONObject options = action.getJSONObject("options");
             if(options.has("url")){
-                String url = options.getString("url");
+                URL url = JasonHelper.resolveUrl(options.getString("url"), context);
 
                 // method
                 String method = "GET";
@@ -43,8 +41,7 @@ public class JasonNetworkAction {
                 SharedPreferences pref = context.getSharedPreferences("session", 0);
                 JSONObject session = null;
 
-                URI uri_for_session = new URI(url.toLowerCase());
-                String session_domain = uri_for_session.getHost();
+                String session_domain = url.getHost();
 
                 if(pref.contains(session_domain)){
                     String str = pref.getString(session_domain, null);
@@ -80,7 +77,7 @@ public class JasonNetworkAction {
                 }
 
                 if(method.equalsIgnoreCase("get")) {
-                    Uri.Builder b = Uri.parse(url).buildUpon();
+                    Uri.Builder b = Uri.parse(url.toString()).buildUpon();
 
                     // Attach Params from Session
                     if(session != null && session.has("body")) {
@@ -100,7 +97,7 @@ public class JasonNetworkAction {
                         Iterator<String> keysIterator = d.keys();
                         try {
                             while (keysIterator.hasNext()) {
-                                String key = (String) keysIterator.next();
+                                String key = keysIterator.next();
                                 String val = d.getString(key);
                                 b.appendQueryParameter(key, val);
                             }
@@ -108,9 +105,6 @@ public class JasonNetworkAction {
 
                         }
                     }
-
-                    Uri uri = b.build();
-                    url = uri.toString();
 
                     request = builder
                             .url(url)
@@ -133,7 +127,7 @@ public class JasonNetworkAction {
                             Iterator<String> keysIterator = d.keys();
                             try {
                                 while (keysIterator.hasNext()) {
-                                    String key = (String) keysIterator.next();
+                                    String key = keysIterator.next();
                                     String val = d.getString(key);
                                     bodyBuilder.add(key, val);
                                 }

@@ -17,12 +17,12 @@ public class JasonCacheAction {
 
             // Merge with the new input
             JSONObject options = action.getJSONObject("options");
-            JSONObject old_cache = new JSONObject(pref.getString(activity.url, "{}"));
+            JSONObject old_cache = new JSONObject(pref.getString(activity.getUrl(), "{}"));
             JSONObject new_cache = JasonHelper.merge(old_cache, options);
 
             // Update SharedPreferences
             String stringified_cache = new_cache.toString();
-            editor.putString(activity.url, stringified_cache);
+            editor.putString(activity.getUrl(), stringified_cache);
             editor.commit();
 
             // Update model
@@ -43,7 +43,7 @@ public class JasonCacheAction {
             JasonViewActivity activity = (JasonViewActivity) context;
             SharedPreferences pref = context.getSharedPreferences("cache", 0);
             SharedPreferences.Editor editor = pref.edit();
-            editor.remove(activity.url);
+            editor.remove(activity.getUrl());
             editor.commit();
 
             // Update model

@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.WindowManager;
 
@@ -22,10 +21,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import timber.log.Timber;
 
 public class JasonHelper {
     public static JSONObject style(JSONObject component, Context root_context) {
@@ -45,7 +48,7 @@ public class JasonHelper {
                 }
             }
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
         try {
@@ -60,7 +63,7 @@ public class JasonHelper {
                 }
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
         return style;
     }
@@ -76,7 +79,7 @@ public class JasonHelper {
             }
             return stub;
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             return new JSONObject();
         }
     }
@@ -100,7 +103,7 @@ public class JasonHelper {
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 
@@ -115,7 +118,7 @@ public class JasonHelper {
                 return new Object();
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             return new Object();
         }
     }
@@ -128,7 +131,7 @@ public class JasonHelper {
                 list.add(jsonArray.getJSONObject(i));
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
         return list;
     }
@@ -278,7 +281,7 @@ public class JasonHelper {
                 ret = jr;
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             return new JSONObject();
         }
         return ret;
@@ -297,7 +300,7 @@ public class JasonHelper {
             intent.putExtra("action", alert_action.toString());
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 
@@ -355,7 +358,7 @@ public class JasonHelper {
 
             ((Launcher) ((JasonViewActivity) context).getApplicationContext()).once(name, handler);
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
         if (intent != null) {
@@ -386,10 +389,27 @@ public class JasonHelper {
             callback.put("options", callback_options);
             return callback;
         } catch (Exception e) {
-            Log.d("Error", "wasn't able to preserve stack");
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.e(e, "Error", "wasn't able to preserve stack");
             return callback;
         }
+    }
+
+    /**
+     * Resolve Urls that maybe relative to a base, root url as provided by the context.
+     *
+     * @param url
+     * @param context
+     * @return
+     * @throws MalformedURLException
+     */
+    public static URL resolveUrl(String url, Context context) throws MalformedURLException {
+        // assume relative
+        if (url.startsWith("/")) {
+            URL resolvedUrl =  new URL(new URL(((JasonViewActivity)context).getUrl()), url);
+            return resolvedUrl;
+        }
+        // Validate the URL
+        return new URL(url);
     }
 
 }

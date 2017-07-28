@@ -18,11 +18,11 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.jasonette.seed.Helper.JasonHelper;
+
 import org.json.JSONObject;
 
 import java.net.URI;
@@ -79,7 +79,7 @@ public class JasonImageComponent {
                 return url;
             } else {
                 LazyHeaders.Builder builder = JasonImageComponent.prepare(component, context);
-                return new GlideUrl(url, builder.build());
+                return new GlideUrl(JasonHelper.resolveUrl(url, context), builder.build());
             }
         } catch (Exception e){
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());

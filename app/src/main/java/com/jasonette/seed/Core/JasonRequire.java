@@ -3,7 +3,6 @@ package com.jasonette.seed.Core;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.util.Log;
 
 import com.jasonette.seed.Helper.JasonHelper;
 
@@ -12,14 +11,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 
-import okhttp3.Request;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.Response;
 import timber.log.Timber;
 
@@ -28,11 +28,22 @@ public class JasonRequire implements Runnable{
     final CountDownLatch latch;
     final Context context;
     final OkHttpClient client;
+    private final String originalURL;
 
     JSONObject private_refs;
 
     public JasonRequire(String url, CountDownLatch latch, JSONObject refs, OkHttpClient client, Context context) {
-        this.URL = url.replace("\\", "");
+        String resolvedUrl = "";
+        try {
+            resolvedUrl = JasonHelper.resolveUrl(url.replace("\\", ""), context).toString();
+        } catch (MalformedURLException e) {
+            Timber.e(e);
+        }
+        // keep the original Url in case its a relative, as we will need to use it and not the
+        // resolved url (from which we actually GET) as the key to add the downloaded contents
+        // from that url into the 'ref' JSONObject method param we are passed in
+        this.originalURL = url;
+        this.URL = resolvedUrl;
         this.latch = latch;
         this.private_refs = refs;
         this.context = context;
@@ -56,7 +67,7 @@ public class JasonRequire implements Runnable{
                     try {
                         private_refs.put(URL, json);
                     } catch (Exception e) {
-                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                       Timber.w(e);
                     }
                     latch.countDown();
                 }
@@ -131,13 +142,13 @@ public class JasonRequire implements Runnable{
                         // store the res under
                         if(res.trim().startsWith("[")) {
                             // array
-                            private_refs.put(URL, new JSONArray(res));
+                            private_refs.put(originalURL, new JSONArray(res));
                         } else if(res.trim().startsWith("{")){
                             // object
-                            private_refs.put(URL, new JSONObject(res));
+                            private_refs.put(originalURL, new JSONObject(res));
                         } else {
                             // string
-                            private_refs.put(URL, res);
+                            private_refs.put(originalURL, res);
                         }
                         latch.countDown();
                     } catch (JSONException e) {
