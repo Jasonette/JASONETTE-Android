@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <bool name="enableStethoConsole">true</bool>
+    <bool name="enableStethoConsole">false</bool>
 </resources>

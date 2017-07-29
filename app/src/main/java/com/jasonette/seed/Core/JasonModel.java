@@ -27,6 +27,8 @@ import okhttp3.Response;
 import timber.log.Timber;
 
 public class JasonModel{
+    public static final String JASON_PROP_NAME = "$jason";
+
     public String url;
     public JSONObject jason;
     public JSONObject rendered;
