@@ -161,6 +161,9 @@ public class JasonMapComponent extends JasonComponent {
                                 marker.showInfoWindow();
                             }
                         }
+                        if (pin.has(ACTION_PROP)) {
+                            marker.setTag(pin);
+                        }
                     }
                 }
 
@@ -186,44 +189,47 @@ public class JasonMapComponent extends JasonComponent {
                 }
 
                 // Attach listener for pin 'clicks'
-                if (component.has(ACTION_PROP) || component.has(HREF_PROP)) {
-                    map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
 
-                        @Override
-                        public boolean onMarkerClick(Marker marker) {
-                            try {
-                                if (component.has(ACTION_PROP)) {
-                                    JSONObject pinData = new JSONObject().put(MAP_PIN_TITLE_PROP, marker.getTitle());
-                                    LatLng pos = marker.getPosition();
-                                    pinData.put(MAP_PIN_COORD_PROP, String.format(COORDS_STRING_FORMAT
-                                            , pos.latitude, pos.longitude));
-                                    pinData.put(MAP_PIN_DESCRIPTION_PROP, marker.getSnippet());
-                                    Intent intent = new Intent(INTENT_ACTION_CALL);
-                                    intent.putExtra(ACTION_PROP, component.get(ACTION_PROP).toString());
-                                    intent.putExtra(DATA_PROP, pinData.toString());
-                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-                                }
-                                else if (component.has(HREF_PROP)) {
-                                    Intent intent = new Intent(INTENT_ACTION_CALL);
-                                    JSONObject href = new JSONObject();
-                                    href.put(TYPE_PROP, "$href");
-                                    href.put(OPTIONS_PROP, component.get(HREF_PROP).toString());
-                                    intent.putExtra(ACTION_PROP, component.get(ACTION_PROP).toString());
-                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-                                }
-                            } catch (JSONException e) {
-                                Timber.e(e);
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        try {
+                            if (marker.getTag() == null) {
+                                return false;
                             }
-                            boolean defaultAction = true;
+                            JSONObject pinJSONObject = (JSONObject) marker.getTag();
+                            if (pinJSONObject.has(ACTION_PROP)) {
+                                JSONObject pinData = new JSONObject().put(MAP_PIN_TITLE_PROP, marker.getTitle());
+                                LatLng pos = marker.getPosition();
+                                pinData.put(MAP_PIN_COORD_PROP, String.format(COORDS_STRING_FORMAT
+                                        , pos.latitude, pos.longitude));
+                                pinData.put(MAP_PIN_DESCRIPTION_PROP, marker.getSnippet());
+                                Intent intent = new Intent(INTENT_ACTION_CALL);
+                                intent.putExtra(ACTION_PROP, pinJSONObject.get(ACTION_PROP).toString());
+                                intent.putExtra(DATA_PROP, pinData.toString());
+                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            }
+                            else if (pinJSONObject.has(HREF_PROP)) {
+                                Intent intent = new Intent(INTENT_ACTION_CALL);
+                                JSONObject href = new JSONObject();
+                                href.put(TYPE_PROP, "$href");
+                                href.put(OPTIONS_PROP, pinJSONObject.get(HREF_PROP).toString());
+                                intent.putExtra(ACTION_PROP, pinJSONObject.get(ACTION_PROP).toString());
+                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            }
+                            boolean defaultAction;
                             try {
-                                defaultAction = JS_FALSE.equalsIgnoreCase((String)component.get(DEFAULT_PIN_ACTION_PROP));
+                                defaultAction = JS_FALSE.equalsIgnoreCase((String)pinJSONObject.get(DEFAULT_PIN_ACTION_PROP));
+                                return defaultAction;
                             } catch (JSONException e) {
                                 // Dont care - if not defined defaults to false
                             }
-                            return defaultAction;
+                        } catch (JSONException e) {
+                            Timber.e(e);
                         }
-                    });
-                }
+                        return false;
+                    }
+                });
 
             } catch (Exception e) {
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
