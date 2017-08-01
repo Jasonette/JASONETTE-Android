@@ -17,6 +17,14 @@ import com.jasonette.seed.Section.JasonLayout;
 import org.json.JSONObject;
 
 public class JasonComponent {
+
+    public static final String INTENT_ACTION_CALL = "call";
+    public static final String ACTION_PROP = "action";
+    public static final String DATA_PROP = "data";
+    public static final String HREF_PROP = "href";
+    public static final String TYPE_PROP = "type";
+    public static final String OPTIONS_PROP = "options";
+
     public static View build(View view, final JSONObject component, final JSONObject parent, final Context root_context) {
         float width = 0;
         float height = 0;

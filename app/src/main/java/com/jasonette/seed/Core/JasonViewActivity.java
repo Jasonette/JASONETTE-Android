@@ -15,11 +15,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -30,7 +30,6 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -43,13 +42,13 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
@@ -817,21 +816,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 String event_string = intent.getStringExtra("event");
 
                 // Wrap return value with $jason
-                JSONObject data;
-
-                // Detect if the result is JSONObject, JSONArray, or String
-                if(data_string.trim().startsWith("[")) {
-                    // JSONArray
-                    JSONArray json = new JSONArray(data_string);
-                    data = new JSONObject().put("$jason", new JSONArray(data_string));
-                } else if(data_string.trim().startsWith("{")){
-                    // JSONObject
-                    JSONObject json = new JSONObject(data_string);
-                    data = new JSONObject().put("$jason", new JSONObject(data_string));
-                } else {
-                    // String
-                    data = new JSONObject().put("$jason", data_string);
-                }
+                JSONObject data = addToObject("$jason", data_string);
 
                 // call next
                 call(action_string, data.toString(), event_string, JasonViewActivity.this);
@@ -849,14 +834,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 String event_string = intent.getStringExtra("event");
 
                 // Wrap return value with $jason
-                JSONObject data;
-                if(data_string.startsWith("[")) {
-                    JSONArray json = new JSONArray(data_string);
-                    data = new JSONObject().put("$jason", new JSONArray(data_string));
-                } else {
-                    JSONObject json = new JSONObject(data_string);
-                    data = new JSONObject().put("$jason", new JSONObject(data_string));
-                }
+                JSONObject data = addToObject("$jason", data_string);
 
                 // call next
                 call(action_string, data.toString(), event_string, JasonViewActivity.this);
@@ -865,6 +843,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
         }
     };
+
     private BroadcastReceiver onCall = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -876,15 +855,36 @@ public class JasonViewActivity extends AppCompatActivity {
                     data_string = new JSONObject().toString();
                 }
 
+                // Wrap return value with $jason
+                JSONObject data = addToObject("$jason", data_string);
+
                 // call next
-                call(action_string, data_string, event_string, JasonViewActivity.this);
+                call(action_string, data.toString(), event_string, JasonViewActivity.this);
             } catch (Exception e){
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     };
 
-
+    private JSONObject addToObject(String prop, String json_data) {
+        JSONObject data = new JSONObject();
+        try {
+            // Detect if the result is JSONObject, JSONArray, or String
+            if(json_data.trim().startsWith("[")) {
+                // JSONArray
+                data = new JSONObject().put("$jason", new JSONArray(json_data));
+            } else if(json_data.trim().startsWith("{")){
+                // JSONObject
+                data = new JSONObject().put("$jason", new JSONObject(json_data));
+            } else {
+                // String
+                data = new JSONObject().put("$jason", json_data);
+            }
+        } catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+        return data;
+    }
 
 
 
