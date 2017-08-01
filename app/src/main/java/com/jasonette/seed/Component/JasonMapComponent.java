@@ -189,13 +189,13 @@ public class JasonMapComponent extends JasonComponent {
                 }
 
                 // Attach listener for pin 'clicks'
-                map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
 
                     @Override
-                    public boolean onMarkerClick(Marker marker) {
+                    public void onInfoWindowClick(Marker marker) {
                         try {
                             if (marker.getTag() == null) {
-                                return false;
+                                return;
                             }
                             JSONObject pinJSONObject = (JSONObject) marker.getTag();
                             if (pinJSONObject.has(ACTION_PROP)) {
@@ -217,17 +217,9 @@ public class JasonMapComponent extends JasonComponent {
                                 intent.putExtra(ACTION_PROP, pinJSONObject.get(ACTION_PROP).toString());
                                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                             }
-                            boolean defaultAction;
-                            try {
-                                defaultAction = JS_FALSE.equalsIgnoreCase((String)pinJSONObject.get(DEFAULT_PIN_ACTION_PROP));
-                                return defaultAction;
-                            } catch (JSONException e) {
-                                // Dont care - if not defined defaults to false
-                            }
                         } catch (JSONException e) {
                             Timber.e(e);
                         }
-                        return false;
                     }
                 });
 
