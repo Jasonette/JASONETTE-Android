@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.jasonette.seed.Core.JasonParser;
 import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
@@ -79,35 +80,37 @@ public class JasonReturnAction {
     attach the original action as event
     when reaching $return.success or $return.error, just replace it with $event.success
     */
-
-
-
-    public void success(final JSONObject action, JSONObject data, final JSONObject event, Context context) {
-        Intent intent = new Intent("call");
-        if(event.has("success")){
+    private void next(final String type, final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
+        if(event.has(type)){
             try{
-                intent.putExtra("action", event.getJSONObject("success").toString());
-                intent.putExtra("data", data.toString());
-                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                JSONObject options = action.getJSONObject("options");
+                JasonParser.getInstance(context).setParserListener(new JasonParser.JasonParserListener() {
+                    @Override
+                    public void onFinished(JSONObject parsed_options) {
+                        try {
+                            Intent intent = new Intent("call");
+                            intent.putExtra("action", event.getJSONObject(type).toString());
+                            intent.putExtra("data", parsed_options.toString());
+                            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                        } catch (Exception e) {
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                        }
+                    }
+                });
+                JasonParser.getInstance(context).parse("json", data, options, context);
             } catch (Exception e){
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
-            JasonHelper.next("success", new JSONObject(), data, event, context);
+            JasonHelper.next(type, new JSONObject(), data, event, context);
         }
     }
-    public void error(final JSONObject action, JSONObject data, final JSONObject event, Context context) {
-        Intent intent = new Intent("call");
-        if(event.has("error")){
-            try{
-                intent.putExtra("action", event.getJSONObject("error").toString());
-                intent.putExtra("data", data.toString());
-                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-            } catch (Exception e){
-                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-            }
-        } else {
-            JasonHelper.next("error", new JSONObject(), data, event, context);
-        }
+
+
+    public void success(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
+        next("success", action, data, event, context);
+    }
+    public void error(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
+        next("error", action, data, event, context);
     }
 }
