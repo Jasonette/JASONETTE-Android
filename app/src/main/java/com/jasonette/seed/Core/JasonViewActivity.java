@@ -2277,10 +2277,11 @@ public class JasonViewActivity extends AppCompatActivity {
                     FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
                     menuButton.setLayoutParams(lp);
 
-                    // Set padding for the menu button
-                    int padding = (int)JasonHelper.pixels(this, "15", "vertical");
-                    itemView.setPadding(padding, padding, padding, padding);
-
+                    // Set padding for the image menu button
+                    if(json.has("image")) {
+                        int padding = (int) JasonHelper.pixels(this, "15", "vertical");
+                        itemView.setPadding(padding, padding, padding, padding);
+                    }
 
                     if(json.has("badge")){
                         String badge_text = "";
