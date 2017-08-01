@@ -53,7 +53,7 @@ import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
 import com.jasonette.seed.Lib.BackgroundCameraManager;
-import com.jasonette.seed.Lib.CenteredToolbar;
+import com.jasonette.seed.Lib.JasonToolbar;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
@@ -77,7 +77,7 @@ import java.util.concurrent.Executors;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity {
-    private CenteredToolbar toolbar;
+    private JasonToolbar toolbar;
     private RecyclerView listView;
     public String url;
     public JasonModel model;
@@ -157,7 +157,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
         // 3. Create body.header
         if(toolbar == null) {
-            toolbar = new CenteredToolbar(this);
+            toolbar = new JasonToolbar(this);
             toolbar.setTitle("");
         }
         setSupportActionBar(toolbar);
@@ -2394,7 +2394,51 @@ public class JasonViewActivity extends AppCompatActivity {
                                 .into((ImageView) logoView);
                     } else if(type.equalsIgnoreCase("label")){
                         String text = ((JSONObject) title).getString("text");
+                        JSONObject style = ((JSONObject) title).getJSONObject("style");
+
+                        if (style instanceof JSONObject) {
+                            // Title alignment
+                            String align = "left";
+                            try {
+                                align = ((JSONObject) style).getString("align");
+                            } catch (JSONException e) {}
+
+                            if (align.equals("center")) {
+                                toolbar.setAlignment(Gravity.CENTER);
+                            }
+                            else if (align.equals("right")) {
+                                toolbar.setAlignment(Gravity.RIGHT);
+                            }
+                            else {
+                                toolbar.setAlignment(Gravity.LEFT);
+                            }
+
+                            // Offsets
+                            int leftOffset = 0;
+                            int rightOffset = 0;
+                            int topOffset = 0;
+
+                            try {
+                                leftOffset = ((JSONObject) style).getInt("left");
+                            } catch (JSONException e) {}
+
+                            try {
+                                rightOffset = ((JSONObject) style).getInt("right");
+                            } catch (JSONException e) {}
+
+                            try {
+                                topOffset = ((JSONObject) style).getInt("top");
+                            } catch (JSONException e) {}
+
+                            toolbar.setLeftOffset(leftOffset);
+                            toolbar.setRightOffset(rightOffset);
+                            toolbar.setTopOffset(topOffset);
+                        }
+
                         toolbar.setTitle(text);
+
+
+
                         if(logoView != null){
                             toolbar.removeView(logoView);
                             logoView = null;

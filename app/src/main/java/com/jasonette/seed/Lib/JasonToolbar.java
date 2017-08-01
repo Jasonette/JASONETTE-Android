@@ -5,24 +5,29 @@ import android.graphics.Typeface;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.widget.TextView;
 
 /**
  * Created by realitix on 27/07/17.
  */
 
-public class CenteredToolbar extends Toolbar {
+public class JasonToolbar extends Toolbar {
     private TextView titleView;
+    private int alignment = Gravity.LEFT;
+    private int leftOffset = 0;
+    private int rightOffset = 0;
+    private int topOffset = 0;
 
-    public CenteredToolbar(Context context) {
+    public JasonToolbar(Context context) {
         super(context);
     }
 
-    public CenteredToolbar(Context context, @Nullable AttributeSet attrs) {
+    public JasonToolbar(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public CenteredToolbar(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public JasonToolbar(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
@@ -30,7 +35,24 @@ public class CenteredToolbar extends Toolbar {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         if (titleView != null) {
-            titleView.setX((getWidth() - titleView.getWidth()) / 2);
+            int offset = 50;
+
+            if (alignment == Gravity.CENTER) {
+                titleView.setX((getWidth() - titleView.getWidth()) / 2);
+            }
+            else if (alignment == Gravity.RIGHT) {
+
+                if (getMenu().size() != 0) {
+                    offset = 150;
+                }
+
+                titleView.setX((getWidth() - titleView.getWidth()) - offset - rightOffset);
+            }
+            else {
+                titleView.setX(offset + leftOffset); // LEFT
+            }
+
+            titleView.setTranslationY(topOffset);
         }
     }
 
@@ -65,5 +87,21 @@ public class CenteredToolbar extends Toolbar {
 
     public void setTitleTypeface(Typeface font) {
         titleView.setTypeface(font);
+    }
+
+    public void setAlignment(int alignment) {
+        this.alignment = alignment;
+    }
+
+    public void setLeftOffset(int offset) {
+        leftOffset = offset;
+    }
+
+    public void setRightOffset(int offset) {
+        this.rightOffset = offset;
+    }
+
+    public void setTopOffset(int offset) {
+        this.topOffset = offset;
     }
 }
