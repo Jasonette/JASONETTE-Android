@@ -186,7 +186,12 @@ public class Launcher extends Application {
                     handler = getHandler(String.valueOf(intent_to_resolve.getInt("name")));
                 }
 
-                Intent intent = (Intent) intent_to_resolve.get("intent");
+                Intent intent;
+                if(intent_to_resolve.has("intent")) {
+                    intent = (Intent) intent_to_resolve.get("intent");
+                } else {
+                    intent = null;
+                }
 
                 String classname = handler.getString("class");
                 classname = "com.jasonette.seed.Action." + classname;
@@ -220,7 +225,7 @@ public class Launcher extends Application {
 
             // reset intent_to_resolve
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void callback(JSONObject handler, String result, JasonViewActivity context){
