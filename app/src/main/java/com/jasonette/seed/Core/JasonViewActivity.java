@@ -2433,11 +2433,14 @@ public class JasonViewActivity extends AppCompatActivity {
                             toolbar.setLeftOffset(leftOffset);
                             toolbar.setRightOffset(rightOffset);
                             toolbar.setTopOffset(topOffset);
+
+                            // Size
+                            try {
+                                toolbar.setTitleSize(Float.parseFloat(((JSONObject) style).getString("size")));
+                            } catch (JSONException e) {}
                         }
 
                         toolbar.setTitle(text);
-
-
 
                         if(logoView != null){
                             toolbar.removeView(logoView);
