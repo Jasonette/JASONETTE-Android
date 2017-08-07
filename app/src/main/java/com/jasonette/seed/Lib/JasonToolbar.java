@@ -8,6 +8,10 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.widget.TextView;
 
+import com.jasonette.seed.Helper.JasonHelper;
+
+import org.json.JSONObject;
+
 /**
  * Created by realitix on 27/07/17.
  */
@@ -16,7 +20,6 @@ public class JasonToolbar extends Toolbar {
     private TextView titleView;
     private int alignment = Gravity.LEFT;
     private int leftOffset = 0;
-    private int rightOffset = 0;
     private int topOffset = 0;
 
     public JasonToolbar(Context context) {
@@ -40,16 +43,8 @@ public class JasonToolbar extends Toolbar {
             if (alignment == Gravity.CENTER) {
                 titleView.setX((getWidth() - titleView.getWidth()) / 2);
             }
-            else if (alignment == Gravity.RIGHT) {
-
-                if (getMenu().size() != 0) {
-                    offset = 150;
-                }
-
-                titleView.setX((getWidth() - titleView.getWidth()) - offset - rightOffset);
-            }
-            else {
-                titleView.setX(offset + leftOffset); // LEFT
+            else { // LEFT
+                titleView.setX(offset + leftOffset);
             }
 
             titleView.setTranslationY(topOffset);
@@ -76,6 +71,10 @@ public class JasonToolbar extends Toolbar {
         titleView.setText(title);
     }
 
+    public void setTitleFont(JSONObject style) {
+        JasonHelper.setTextViewFont(titleView, style, getContext());
+    }
+
     @Override
     public void setTitleTextColor(int color) {
         titleView.setTextColor(color);
@@ -95,10 +94,6 @@ public class JasonToolbar extends Toolbar {
 
     public void setLeftOffset(int offset) {
         leftOffset = offset;
-    }
-
-    public void setRightOffset(int offset) {
-        this.rightOffset = offset;
     }
 
     public void setTopOffset(int offset) {

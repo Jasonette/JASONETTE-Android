@@ -2348,7 +2348,15 @@ public class JasonViewActivity extends AppCompatActivity {
 
     void setup_title(JSONObject header) {
         try {
+            // Default title values
             toolbar.setTitle("");
+            toolbar.setTitleSize(20);
+
+            // Global font
+            if(header.has("style")) {
+                toolbar.setTitleFont(header.getJSONObject("style"));
+            }
+
             if (header.has("title")) {
                 Object title = header.get("title");
                 if (title instanceof String) {
@@ -2406,16 +2414,12 @@ public class JasonViewActivity extends AppCompatActivity {
                             if (align.equals("center")) {
                                 toolbar.setAlignment(Gravity.CENTER);
                             }
-                            else if (align.equals("right")) {
-                                toolbar.setAlignment(Gravity.RIGHT);
-                            }
                             else {
                                 toolbar.setAlignment(Gravity.LEFT);
                             }
 
                             // Offsets
                             int leftOffset = 0;
-                            int rightOffset = 0;
                             int topOffset = 0;
 
                             try {
@@ -2423,21 +2427,19 @@ public class JasonViewActivity extends AppCompatActivity {
                             } catch (JSONException e) {}
 
                             try {
-                                rightOffset = ((JSONObject) style).getInt("right");
-                            } catch (JSONException e) {}
-
-                            try {
                                 topOffset = ((JSONObject) style).getInt("top");
                             } catch (JSONException e) {}
 
                             toolbar.setLeftOffset(leftOffset);
-                            toolbar.setRightOffset(rightOffset);
                             toolbar.setTopOffset(topOffset);
 
                             // Size
                             try {
                                 toolbar.setTitleSize(Float.parseFloat(((JSONObject) style).getString("size")));
                             } catch (JSONException e) {}
+
+                            // Font
+                            toolbar.setTitleFont(style);
                         }
 
                         toolbar.setTitle(text);
@@ -2462,17 +2464,7 @@ public class JasonViewActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
-        try {
-            toolbar.setTitleSize(20);
-            if(header.has("style")) {
-                String f = header.getJSONObject("style").getString("font:android");
-                Typeface font = JasonHelper.get_font(f, this);
-                toolbar.setTitleTypeface(font);
-            }
 
-        } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-        }
     }
 
     /******************

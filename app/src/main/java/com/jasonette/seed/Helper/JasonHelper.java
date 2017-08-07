@@ -10,11 +10,13 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -379,4 +381,42 @@ public class JasonHelper {
         }
     }
 
+    public static void setTextViewFont(TextView view, JSONObject style, Context context) {
+        try {
+            if (style.has("font:android")) {
+                String f = style.getString("font:android");
+                if (f.equalsIgnoreCase("bold")) {
+                    view.setTypeface(Typeface.DEFAULT_BOLD);
+                } else if (f.equalsIgnoreCase("sans")) {
+                    view.setTypeface(Typeface.SANS_SERIF);
+                } else if (f.equalsIgnoreCase("serif")) {
+                    view.setTypeface(Typeface.SERIF);
+                } else if (f.equalsIgnoreCase("monospace")) {
+                    view.setTypeface(Typeface.MONOSPACE);
+                } else if (f.equalsIgnoreCase("default")) {
+                    view.setTypeface(Typeface.DEFAULT);
+                } else {
+                    try {
+                        Typeface font_type = Typeface.createFromAsset(context.getAssets(), "fonts/" + style.getString("font:android") + ".ttf");
+                        view.setTypeface(font_type);
+                    } catch (Exception e) {
+                    }
+                }
+            } else if (style.has("font")) {
+                if (style.getString("font").toLowerCase().contains("bold")) {
+                    if (style.getString("font").toLowerCase().contains("italic")) {
+                        view.setTypeface(Typeface.DEFAULT_BOLD, Typeface.ITALIC);
+                    } else {
+                        view.setTypeface(Typeface.DEFAULT_BOLD);
+                    }
+                } else {
+                    if (style.getString("font").toLowerCase().contains("italic")) {
+                        view.setTypeface(Typeface.DEFAULT, Typeface.ITALIC);
+                    } else {
+                        view.setTypeface(Typeface.DEFAULT);
+                    }
+                }
+            }
+        } catch (JSONException e) {}
+    }
 }
