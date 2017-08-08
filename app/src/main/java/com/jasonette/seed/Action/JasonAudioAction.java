@@ -12,19 +12,17 @@ import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
 
-import java.io.File;
-
-import cafe.adriel.androidaudioconverter.AndroidAudioConverter;
-import cafe.adriel.androidaudioconverter.callback.IConvertCallback;
-import cafe.adriel.androidaudioconverter.callback.ILoadCallback;
-import cafe.adriel.androidaudioconverter.model.AudioFormat;
 import cafe.adriel.androidaudiorecorder.AndroidAudioRecorder;
 import cafe.adriel.androidaudiorecorder.model.AudioChannel;
 import cafe.adriel.androidaudiorecorder.model.AudioSampleRate;
 import cafe.adriel.androidaudiorecorder.model.AudioSource;
+import timber.log.Timber;
 
 public class JasonAudioAction {
+
     private MediaPlayer player;
+    private String mFileUrl;
+
     public void play(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         try {
             if (action.has("options")) {
@@ -57,12 +55,14 @@ public class JasonAudioAction {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
+
     public void pause(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         if(player!=null){
             player.pause();
         }
         JasonHelper.next("success", action, new JSONObject(), event, context);
     }
+
     public void stop(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         if(player!=null){
             player.stop();
@@ -71,6 +71,7 @@ public class JasonAudioAction {
         }
         JasonHelper.next("success", action, new JSONObject(), event, context);
     }
+
     public void duration(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         if (player != null) {
             try {
@@ -98,6 +99,7 @@ public class JasonAudioAction {
             }
         }
     }
+
     public void position(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         if (player != null) {
             try {
@@ -126,6 +128,7 @@ public class JasonAudioAction {
             }
         }
     }
+
     public void seek(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         if(player!=null) {
             try {
@@ -153,17 +156,8 @@ public class JasonAudioAction {
                     color = JasonHelper.parse_color(options.getString("color"));
                 }
             }
-            AndroidAudioConverter.load(context, new ILoadCallback() {
-                @Override
-                public void onSuccess() {
-                }
-                @Override
-                public void onFailure(Exception e) {
-                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                }
-            });
 
-            String filePath = Environment.getExternalStorageDirectory() + "/recorded_audio.wav";
+            String filePath = Environment.getExternalStorageDirectory() + "/recorded_audio.m4a";
             int requestCode = (int)(System.currentTimeMillis() % 10000);
             AndroidAudioRecorder.with((JasonViewActivity)context)
                     .setFilePath(filePath)
@@ -179,63 +173,49 @@ public class JasonAudioAction {
 
                     .record();
 
-            JSONObject callback = new JSONObject();
-            callback.put("class", "JasonAudioAction");
-            callback.put("method", "process");
-            JasonHelper.dispatchIntent(String.valueOf(requestCode), action, data, event, context, null, callback);
+            try {
+                mFileUrl = "file://" + filePath;
+
+                JSONObject callback = new JSONObject();
+                callback.put("class", "JasonAudioAction");
+                callback.put("method", "completeRecording");
+
+                JasonHelper.dispatchIntent(String.valueOf(requestCode), action, data, event, context, null, callback);
+            } catch (Exception e) {
+                Timber.e(e);
+            }
+
         } catch (SecurityException e){
             JasonHelper.permission_exception("$audio.record", context);
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
+            try {
+                JSONObject err = new JSONObject();
+                err.put("message", e.toString());
+                JasonHelper.next("error", action, err, event, context);
+            } catch (Exception e2){
+                Timber.e(e2);
+            }
         }
     }
 
+    public void completeRecording(Intent intent, final JSONObject options) {
+        Timber.d("recording completed, sending action: %s");
 
-    // util
-    public void process(Intent intent, final JSONObject options) {
-        convert(options);
-    }
-
-    private void convert(final JSONObject options){
-        File file = new File(Environment.getExternalStorageDirectory() + "/recorded_audio.wav");
         try {
             final JSONObject action = options.getJSONObject("action");
             final JSONObject data = options.getJSONObject("data");
             final JSONObject event = options.getJSONObject("event");
             final Context context = (Context) options.get("context");
 
-            IConvertCallback callback = new IConvertCallback() {
-                @Override
-                public void onSuccess(File convertedFile) {
-                    try {
-                        JSONObject ret = new JSONObject();
-                        String filePath = "file://" + convertedFile.getAbsolutePath();
-                        ret.put("file_url", filePath);
-                        ret.put("url", filePath);
-                        ret.put("content_type", "audio/m4a");
-                        JasonHelper.next("success", action, ret, event, context);
-                    } catch (Exception e) {
-                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                    }
-                }
-                @Override
-                public void onFailure(Exception error) {
-                    try {
-                        JSONObject err = new JSONObject();
-                        err.put("message", error.toString());
-                        JasonHelper.next("error", action, err, event, context);
-                    } catch (Exception e){
-                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                    }
-                }
-            };
-            AndroidAudioConverter.with(context)
-                    .setFile(file)
-                    .setFormat(AudioFormat.M4A)
-                    .setCallback(callback)
-                    .convert();
+
+            JSONObject ret = new JSONObject();
+            ret.put("file_url", mFileUrl);
+            ret.put("url", mFileUrl);
+            ret.put("content_type", "audio/m4a");
+            JasonHelper.next("success", action, ret, event, context);
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.e(e);
         }
     }
 }

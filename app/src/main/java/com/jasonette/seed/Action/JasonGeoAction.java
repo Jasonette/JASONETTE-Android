@@ -13,6 +13,9 @@ import com.jasonette.seed.Helper.JasonHelper;
 import org.json.JSONObject;
 
 public class JasonGeoAction {
+
+    public static final String COORDS_STRING_FORMAT = "%f,%f";
+
     public void get(final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         try {
             final LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -23,7 +26,7 @@ public class JasonGeoAction {
                         locationManager.removeUpdates(this);
 
                         JSONObject ret = new JSONObject();
-                        String val = String.format("%f,%f", location.getLatitude(), location.getLongitude());
+                        String val = String.format(COORDS_STRING_FORMAT, location.getLatitude(), location.getLongitude());
                         ret.put("coord", val);
                         ret.put("value", val);
                         JasonHelper.next("success", action, ret, event, context);

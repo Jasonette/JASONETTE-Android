@@ -48,6 +48,7 @@ public class JasonModel{
     public JasonModel(String url, Intent intent, JasonViewActivity view){
         this.url = url;
         this.view = view;
+        this.client = ((Launcher)view.getApplication()).getHttpClient();
 
         // $params
         this.params = new JSONObject();
@@ -163,7 +164,6 @@ public class JasonModel{
                     .build();
 
 
-            client = ((Launcher)view.getApplication()).getHttpClient();
 
             client.newCall(request).enqueue(new Callback() {
                 @Override
