@@ -1,51 +1,64 @@
 package com.jasonette.seed.Action;
 
 import android.content.Context;
-import android.util.Log;
 
-//import com.eclipsesource.v8.JavaVoidCallback;
+import com.jasonette.seed.Core.JSEngineHelper;
 import com.jasonette.seed.Helper.JasonHelper;
 
+import org.json.JSONObject;
+
+import timber.log.Timber;
+
+//import com.eclipsesource.v8.JavaVoidCallback;
 //import com.eclipsesource.v8.V8;
 //import com.eclipsesource.v8.V8Array;
 //import com.eclipsesource.v8.V8Object;
-import org.json.JSONObject;
-
-import java.lang.Thread;
 
 public class JasonConvertAction {
+    private static final String CSV_HTML_ASSET = "csv.html";
+    private static final String CONVERT_CSV_FUNCTION_NAME = "csv.run";
+
+
     private JSONObject action;
     private Context context;
     private JSONObject event_cache;
+    private JSEngineHelper mJSEngine;
 
     public void csv(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
-//        this.action = action;
-//        this.context = context;
-//        event_cache = event;
-//        try{
-//            final JSONObject options = action.getJSONObject("options");
-//            String result = "[]";
-//            if(options.has("data")) {
-//                String csv_data = options.getString("data");
-//                if (!csv_data.isEmpty()) {
-//                    String js = JasonHelper.read_file("csv", context);
-//                    V8 runtime = V8.createV8Runtime();
-//                    runtime.executeVoidScript(js);
-//                    V8Object csv = runtime.getObject("csv");
-//                    V8Array parameters = new V8Array(runtime).push(csv_data.toString());
-//                    V8Array val = csv.executeArrayFunction("run", parameters);
-//                    parameters.release();
-//                    csv.release();
-//
-//                    result = stringify(runtime, val);
-//
-//                    runtime.release();
-//                }
-//            }
-//            JasonHelper.next("success", action, result, event, context);
-//        } catch (Exception e){
-//            handle_exception(e);
-//        }
+        try {
+            this.action = action;
+            this.context = context;
+            event_cache = event;
+
+            final JSONObject options = action.getJSONObject("options");
+
+            if(options.has("data")) {
+                String csv_data = options.getString("data");
+                if (!csv_data.isEmpty()) {
+                    String script = String.format("%s(\"%s\");", CONVERT_CSV_FUNCTION_NAME, csv_data.toString());
+
+                    String html = JasonHelper.read_file(CSV_HTML_ASSET, context);
+                    mJSEngine = new JSEngineHelper(context, html);
+                    mJSEngine.evaluate(script, new JSEngineHelper.WebViewResultListener() {
+                        @Override
+                        public void onResult(Object json) {
+                            if (json != null) {
+                                JasonHelper.next("success", action, json.toString(), event, context);
+                            } else {
+                                Timber.e("null returned by JS");
+                                JasonHelper.next("error", action, "{}", event, context);
+                            }
+                        }
+                    });
+                }
+            } else {
+                String result = "[]";
+                JasonHelper.next("success", action, result, event, context);
+            }
+
+        } catch (Exception e){
+            handle_exception(e);
+        }
     }
 
     public void rss(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
@@ -109,7 +122,7 @@ public class JasonConvertAction {
             error.put("data", exc.toString());
             JasonHelper.next("error", action, error, event_cache, context);
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.e(e);
         }
     }
 
