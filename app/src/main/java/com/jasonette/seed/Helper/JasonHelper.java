@@ -127,7 +127,7 @@ public class JasonHelper {
                 return new JSONObject();
             }
         } catch (Exception e) {
-            Timber.w(e, "error objectifying: %s", json);
+            Timber.w(e, "error objectifying");
             return new JSONObject();
         }
     }

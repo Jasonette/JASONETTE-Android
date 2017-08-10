@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang=en>
+<head>
+    <meta charset=utf-8>
+    <title>Parser</title>
+</head>
+<body>
+    <script>
+    // The rss JS script expects a custom global function called "callback" which is injected
+    // into the JS engine by the calling Java code. But using webview means we it can only
+    // inject global object so this shim function just hides that difference from rss script.
+
+        var callback = function(items) {
+          rssResult.callback(JSON.stringify(items));
+        }
+    </script>
+    <script src="file:///android_asset/rss" type="text/javascript"></script>
+</body>
+</html>

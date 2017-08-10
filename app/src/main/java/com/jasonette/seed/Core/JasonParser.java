@@ -16,7 +16,6 @@ public class JasonParser {
     private static final String JSON_DATA_TYPE_VALUE = "json";
     private static final String PARSER_JSON_FUNCTION_NAME = "parser.json";
     private static final String PARSER_HTML_FUNCTION_NAME = "parser.html";
-    private static final long WEBVIEW_READY_TIMEOUT_MS = 1000;
 
     private static JasonParser instance = null;
     private static JSEngineHelper mJSEngine;
@@ -40,7 +39,7 @@ public class JasonParser {
             instance = new JasonParser();
             try {
                 String parserHtml = JasonHelper.read_file(PARSER_HTML_ASSET, context);
-                mJSEngine = new JSEngineHelper(context, parserHtml);
+                mJSEngine = new JSEngineHelper(context, parserHtml, JSEngineHelper.ASSETS_URL_PREFIX+PARSER_HTML_ASSET);
 
             } catch (Exception e){
                 Timber.w(e);
