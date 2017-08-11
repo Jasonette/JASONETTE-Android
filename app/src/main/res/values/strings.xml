@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">Jasonette</string>
-    <string name="url">http://10.0.2.2:8080/app.json</string>
+    <string name="url">https://jasonette.github.io/Jasonpedia/hello.json</string>
 </resources>

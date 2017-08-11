@@ -38,11 +38,12 @@ public class JasonConvertAction {
             if(options.has("data")) {
                 String csv_data = options.getString("data");
                 if (!csv_data.isEmpty()) {
-                    String script = String.format("%s(\"%s\");", CONVERT_CSV_FUNCTION_NAME, csv_data.toString());
+                    // escape newlines, ref: https://stackoverflow.com/a/19909669/85472
+                    String escData = csv_data.toString().replaceAll("(\\r|\\n|\\r\\n)+", "\\\\n");
+                    String script = String.format("%s(\"%s\");", CONVERT_CSV_FUNCTION_NAME, escData);
 
                     String html = JasonHelper.read_file(CSV_HTML_ASSET, context);
                     mCSVJSEngine = new JSEngineHelper(context, html, JSEngineHelper.ASSETS_URL_PREFIX+CSV_HTML_ASSET);
-                    Timber.d("eval script: %s", script);
                     mCSVJSEngine.evaluate(script, new JSEngineHelper.WebViewResultListener() {
                         @Override
                         public void onResult(Object json) {
@@ -75,12 +76,14 @@ public class JasonConvertAction {
             if(options.has("data")) {
                 String rss_data = options.getString("data");
                 if (!rss_data.isEmpty()) {
-                    String script = String.format("%s('%s')", CONVERT_RSS_FUNCTION_NAME, StringEscapeUtils.escapeJavaScript(rss_data.toString()));
+                    String escData = StringEscapeUtils.escapeJavaScript(rss_data.toString());
+                    String script = String.format("%s(\"%s\")", CONVERT_RSS_FUNCTION_NAME, escData);
 
                     String html = JasonHelper.read_file(RSS_HTML_ASSET, context);
                     mRSSJSEngine = new JSEngineHelper(context, html,
                             JSEngineHelper.ASSETS_URL_PREFIX+RSS_HTML_ASSET,
                             new RssResult(), RSS_RESULT_GLOBAL_OBJECT);
+
                     mRSSJSEngine.evaluate(script, new JSEngineHelper.WebViewResultListener() {
                         @Override
                         public void onResult(Object json) {
