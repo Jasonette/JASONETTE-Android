@@ -4,13 +4,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Environment;
+import android.util.Base64;
 import android.util.Log;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
+
+import java.io.InputStream;
 
 import cafe.adriel.androidaudiorecorder.AndroidAudioRecorder;
 import cafe.adriel.androidaudiorecorder.model.AudioChannel;
@@ -208,11 +212,20 @@ public class JasonAudioAction {
             final JSONObject event = options.getJSONObject("event");
             final Context context = (Context) options.get("context");
 
+            InputStream stream = context.getContentResolver().openInputStream(Uri.parse(mFileUrl));
+            byte[] byteArray = JasonHelper.readBytes(stream);
+            String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("data:audio/m4a;base64,");
+            stringBuilder.append(encoded);
+            String data_uri = stringBuilder.toString();
 
             JSONObject ret = new JSONObject();
             ret.put("file_url", mFileUrl);
             ret.put("url", mFileUrl);
             ret.put("content_type", "audio/m4a");
+            ret.put("data_uri", data_uri);
             JasonHelper.next("success", action, ret, event, context);
         } catch (Exception e) {
             Timber.e(e);
