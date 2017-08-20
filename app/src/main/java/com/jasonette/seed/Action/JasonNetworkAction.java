@@ -9,6 +9,7 @@ import android.util.Log;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
+import com.jasonette.seed.Launcher.DebugLauncher;
 import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONObject;
@@ -25,6 +26,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import timber.log.Timber;
 
 public class JasonNetworkAction {
     private void _request(final JSONObject callback, final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
@@ -160,12 +162,12 @@ public class JasonNetworkAction {
                 }
 
 
-                OkHttpClient client = new OkHttpClient();
+                OkHttpClient client = ((Launcher)context.getApplicationContext()).getHttpClient();
 
                 client.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
-                        e.printStackTrace();
+                        Timber.e(e);
                         try {
                             if (action.has("error")) {
 
