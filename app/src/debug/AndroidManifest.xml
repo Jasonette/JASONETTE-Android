@@ -41,6 +41,19 @@
             android:name="com.commonsware.cwac.cam2.CameraActivity"
             android:process=":cwac_cam2"
             android:theme="@style/CameraTheme"/>
+        <service
+            android:name=".Service.push.JasonPushRegisterService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+            </intent-filter>
+        </service>
+        <service
+            android:name=".Service.push.JasonPushMessageService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+
 
         <!-- Uncomment below line and add your Google Maps API key -->
         <!--
