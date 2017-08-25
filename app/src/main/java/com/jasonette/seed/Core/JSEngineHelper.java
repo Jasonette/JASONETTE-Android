@@ -105,14 +105,16 @@ public class JSEngineHelper {
 
     public void evaluate(final String script, final WebViewResultListener listener) {
         mResultListener = listener;
+        try {
+            mWebviewReadyLatch.await(WEBVIEW_READY_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            Timber.d("Webview Unlatched");
+        } catch (InterruptedException e) {
+            Timber.w(e);
+        }
         mMainLoopHandler.post(new Runnable() {
             @Override
             public void run() {
-                try {
-                    mWebviewReadyLatch.await(WEBVIEW_READY_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    Timber.w(e);
-                }
+                Timber.d("Webview Eval: %s", script);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                     mWebView.evaluateJavascript(script, new ValueCallback<String>() {
                         @Override
