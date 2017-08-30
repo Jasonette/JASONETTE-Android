@@ -2378,16 +2378,20 @@ public class JasonViewActivity extends AppCompatActivity {
 
                     if (style != null) {
                         // title alignment
-                        String align = "left";
+                        String align;
                         try {
                             align = style.getString("align");
-                        } catch (JSONException e) {
-                            toolbar.setAlignment(-1);
-                        }
 
-                        if (align.equals("center")) {
-                            toolbar.setAlignment(Gravity.CENTER);
-                        } else {
+                            if (align.equals("center")) {
+                                toolbar.setAlignment(Gravity.CENTER);
+                            }
+                            else if (align.equals("left")) {
+                                toolbar.setAlignment(Gravity.LEFT);
+                            }
+                            else {
+                                toolbar.setAlignment(-1);
+                            }
+                        } catch (JSONException e) {
                             toolbar.setAlignment(-1);
                         }
 
