@@ -2368,15 +2368,55 @@ public class JasonViewActivity extends AppCompatActivity {
                         logoView = null;
                     }
                 } else if (title instanceof JSONObject) {
-                    String type = ((JSONObject) title).getString("type");
+                    JSONObject t = ((JSONObject) title);
+                    String type = t.getString("type");
+                    JSONObject style = null;
+
+                    if (t.has("style")) {
+                        style = t.getJSONObject("style");
+                    }
+
+                    if (style != null) {
+                        // title alignment
+                        String align = "left";
+                        try {
+                            align = style.getString("align");
+                        } catch (JSONException e) {
+                            toolbar.setAlignment(-1);
+                        }
+
+                        if (align.equals("center")) {
+                            toolbar.setAlignment(Gravity.CENTER);
+                        } else {
+                            toolbar.setAlignment(-1);
+                        }
+
+                        // offsets
+                        int leftOffset = 0;
+                        int topOffset = 0;
+
+                        try {
+                            leftOffset = style.getInt("left");
+                        } catch (JSONException e) {
+                        }
+
+                        try {
+                            topOffset = style.getInt("top");
+                        } catch (JSONException e) {
+                        }
+
+                        toolbar.setLeftOffset(leftOffset);
+                        toolbar.setTopOffset(topOffset);
+                    }
+
+                    // image options
                     if (type.equalsIgnoreCase("image")) {
-                        String url = ((JSONObject) title).getString("url");
+                        String url = t.getString("url");
                         JSONObject c = new JSONObject();
                         c.put("url", url);
                         int height = header_height;
                         int width = Toolbar.LayoutParams.WRAP_CONTENT;
-                        if (((JSONObject) title).has("style")) {
-                            JSONObject style = ((JSONObject) title).getJSONObject("style");
+                        if (style != null) {
                             if (style.has("height")) {
                                 try {
                                     height = (int) JasonHelper.pixels(this, style.getString("height"), "vertical");
@@ -2392,55 +2432,22 @@ public class JasonViewActivity extends AppCompatActivity {
                                 }
                             }
                         }
-                        if (logoView == null) {
-                            logoView = new ImageView(JasonViewActivity.this);
-                            toolbar.addView(logoView);
-                        }
-                        Toolbar.LayoutParams params = new Toolbar.LayoutParams(width, height);
-                        params.gravity = Gravity.CENTER_HORIZONTAL;
-                        logoView.setLayoutParams(params);
-                        Glide.with(this)
-                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
-                                .into((ImageView) logoView);
-                    } else if(type.equalsIgnoreCase("label")){
+
+                        toolbar.setImageHeight(height);
+                        toolbar.setImageWidth(width);
+                        toolbar.setImage(c);
+                    }
+                    // label options
+                    else if(type.equalsIgnoreCase("label")){
                         String text = ((JSONObject) title).getString("text");
-                        JSONObject style = ((JSONObject) title).getJSONObject("style");
 
-                        if (style instanceof JSONObject) {
-                            // Title alignment
-                            String align = "left";
+                        if (style != null) {
+                            // size
                             try {
-                                align = ((JSONObject) style).getString("align");
+                                toolbar.setTitleSize(Float.parseFloat(style.getString("size")));
                             } catch (JSONException e) {}
 
-                            if (align.equals("center")) {
-                                toolbar.setAlignment(Gravity.CENTER);
-                            }
-                            else {
-                                toolbar.setAlignment(Gravity.LEFT);
-                            }
-
-                            // Offsets
-                            int leftOffset = 0;
-                            int topOffset = 0;
-
-                            try {
-                                leftOffset = ((JSONObject) style).getInt("left");
-                            } catch (JSONException e) {}
-
-                            try {
-                                topOffset = ((JSONObject) style).getInt("top");
-                            } catch (JSONException e) {}
-
-                            toolbar.setLeftOffset(leftOffset);
-                            toolbar.setTopOffset(topOffset);
-
-                            // Size
-                            try {
-                                toolbar.setTitleSize(Float.parseFloat(((JSONObject) style).getString("size")));
-                            } catch (JSONException e) {}
-
-                            // Font
+                            // font
                             toolbar.setTitleFont(style);
                         }
 

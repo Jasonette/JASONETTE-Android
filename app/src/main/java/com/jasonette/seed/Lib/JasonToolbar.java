@@ -6,8 +6,11 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.view.Gravity;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
@@ -18,9 +21,12 @@ import org.json.JSONObject;
 
 public class JasonToolbar extends Toolbar {
     private TextView titleView;
-    private int alignment = Gravity.LEFT;
-    private int leftOffset = 0;
-    private int topOffset = 0;
+    private ImageView logoView;
+    private int alignment = -1;
+    private int leftOffset;
+    private int topOffset;
+    private int imageWidth;
+    private int imageHeight;
 
     public JasonToolbar(Context context) {
         super(context);
@@ -35,24 +41,13 @@ public class JasonToolbar extends Toolbar {
     }
 
     @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-        if (titleView != null) {
-            int offset = 50;
-
-            if (alignment == Gravity.CENTER) {
-                titleView.setX((getWidth() - titleView.getWidth()) / 2);
-            }
-            else { // LEFT
-                titleView.setX(offset + leftOffset);
-            }
-
-            titleView.setTranslationY(topOffset);
-        }
-    }
-
-    @Override
     public void setTitle(CharSequence title) {
+        // remove image view before inserting title view
+        if (logoView != null && logoView.getParent() == this) {
+            removeView(logoView);
+        }
+
+        // remove title if empty
         if (title.length() <= 0) {
             if (titleView != null && titleView.getParent() == this) {
                 removeView(titleView);
@@ -60,15 +55,54 @@ public class JasonToolbar extends Toolbar {
             return;
         }
 
+        // create title only on the first call
         if (titleView == null) {
             titleView = new TextView(getContext());
         }
 
-        if ( titleView.getParent() != this ) {
+        // insert into toolbar
+        if (titleView.getParent() != this) {
             addView(titleView, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         }
 
+        // manage positioning
+        Toolbar.LayoutParams params = new Toolbar.LayoutParams(Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT);
+        params.gravity = (alignment == -1) ? Gravity.LEFT : alignment;
+        params.leftMargin = leftOffset;
+        params.topMargin = topOffset;
+        titleView.setLayoutParams(params);
+
+        // set text
         titleView.setText(title);
+    }
+
+    public void setImage(JSONObject url) {
+        // remove title view before inserting image view
+        if (titleView != null && titleView.getParent() == this) {
+            removeView(titleView);
+        }
+
+        // create the image view only on the first call
+        if (logoView == null) {
+            logoView = new ImageView(getContext());
+        }
+
+        // insert into toolbar
+        if (logoView.getParent() != this) {
+            addView(logoView);
+        }
+
+        // manage positioning
+        Toolbar.LayoutParams params = new Toolbar.LayoutParams(imageWidth, imageHeight);
+        params.gravity = (alignment == -1) ? Gravity.CENTER : alignment;
+        params.leftMargin = leftOffset;
+        params.topMargin = topOffset;
+        logoView.setLayoutParams(params);
+
+        // load image with glide
+        Glide.with(getContext())
+                .load(JasonImageComponent.resolve_url(url, getContext()))
+                .into(logoView);
     }
 
     public void setTitleFont(JSONObject style) {
@@ -97,6 +131,14 @@ public class JasonToolbar extends Toolbar {
     }
 
     public void setTopOffset(int offset) {
-        this.topOffset = offset;
+        topOffset = offset;
+    }
+
+    public void setImageHeight(int height) {
+        imageHeight = height;
+    }
+
+    public void setImageWidth(int width) {
+        imageWidth = width;
     }
 }
