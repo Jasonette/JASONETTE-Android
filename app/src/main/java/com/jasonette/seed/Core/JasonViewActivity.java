@@ -2379,6 +2379,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     if (style != null) {
                         // title alignment
                         String align;
+                        toolbar.setAlignment(-1);
                         try {
                             align = style.getString("align");
 
@@ -2388,11 +2389,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             else if (align.equals("left")) {
                                 toolbar.setAlignment(Gravity.LEFT);
                             }
-                            else {
-                                toolbar.setAlignment(-1);
-                            }
                         } catch (JSONException e) {
-                            toolbar.setAlignment(-1);
                         }
 
                         // offsets
