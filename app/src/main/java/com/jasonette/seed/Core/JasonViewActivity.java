@@ -2144,6 +2144,9 @@ public class JasonViewActivity extends AppCompatActivity {
         try {
             menu = toolbar.getMenu();
             if (model.rendered != null) {
+                if(!model.rendered.has("header")){
+                    setup_title(new JSONObject());
+                }
                 JSONObject header = model.rendered.getJSONObject("header");
 
                 header_height = toolbar.getHeight();
@@ -2361,6 +2364,10 @@ public class JasonViewActivity extends AppCompatActivity {
 
             if (header.has("title")) {
                 Object title = header.get("title");
+
+                // set align:center by default
+                toolbar.setAlignment(Gravity.CENTER);
+
                 if (title instanceof String) {
                     toolbar.setTitle(header.getString("title"));
                     if(logoView != null){
@@ -2397,12 +2404,12 @@ public class JasonViewActivity extends AppCompatActivity {
                         int topOffset = 0;
 
                         try {
-                            leftOffset = style.getInt("left");
+                            leftOffset = (int)JasonHelper.pixels(JasonViewActivity.this, style.getString("left"), "horizontal");
                         } catch (JSONException e) {
                         }
 
                         try {
-                            topOffset = style.getInt("top");
+                            topOffset = (int)JasonHelper.pixels(JasonViewActivity.this, style.getString("top"), "vertical");
                         } catch (JSONException e) {
                         }
 
