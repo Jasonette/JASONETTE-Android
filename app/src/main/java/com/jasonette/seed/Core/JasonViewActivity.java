@@ -41,8 +41,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
-
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
@@ -55,6 +53,7 @@ import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
 import com.jasonette.seed.Lib.BackgroundCameraManager;
+import com.jasonette.seed.Lib.JasonToolbar;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
@@ -78,7 +77,7 @@ import java.util.concurrent.Executors;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity {
-    private Toolbar toolbar;
+    private JasonToolbar toolbar;
     private RecyclerView listView;
     public String url;
     public JasonModel model;
@@ -158,7 +157,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
         // 3. Create body.header
         if(toolbar == null) {
-            toolbar = new Toolbar(this);
+            toolbar = new JasonToolbar(this);
             toolbar.setTitle("");
         }
         setSupportActionBar(toolbar);
@@ -2145,6 +2144,9 @@ public class JasonViewActivity extends AppCompatActivity {
         try {
             menu = toolbar.getMenu();
             if (model.rendered != null) {
+                if(!model.rendered.has("header")){
+                    setup_title(new JSONObject());
+                }
                 JSONObject header = model.rendered.getJSONObject("header");
 
                 header_height = toolbar.getHeight();
@@ -2351,9 +2353,21 @@ public class JasonViewActivity extends AppCompatActivity {
 
     void setup_title(JSONObject header) {
         try {
+            // Default title values
             toolbar.setTitle("");
+            toolbar.setTitleSize(20);
+
+            // Global font
+            if(header.has("style")) {
+                toolbar.setTitleFont(header.getJSONObject("style"));
+            }
+
             if (header.has("title")) {
                 Object title = header.get("title");
+
+                // set align:center by default
+                toolbar.setAlignment(Gravity.CENTER);
+
                 if (title instanceof String) {
                     toolbar.setTitle(header.getString("title"));
                     if(logoView != null){
@@ -2361,15 +2375,56 @@ public class JasonViewActivity extends AppCompatActivity {
                         logoView = null;
                     }
                 } else if (title instanceof JSONObject) {
-                    String type = ((JSONObject) title).getString("type");
+                    JSONObject t = ((JSONObject) title);
+                    String type = t.getString("type");
+                    JSONObject style = null;
+
+                    if (t.has("style")) {
+                        style = t.getJSONObject("style");
+                    }
+
+                    if (style != null) {
+                        // title alignment
+                        String align;
+                        toolbar.setAlignment(-1);
+                        try {
+                            align = style.getString("align");
+
+                            if (align.equals("center")) {
+                                toolbar.setAlignment(Gravity.CENTER);
+                            }
+                            else if (align.equals("left")) {
+                                toolbar.setAlignment(Gravity.LEFT);
+                            }
+                        } catch (JSONException e) {
+                        }
+
+                        // offsets
+                        int leftOffset = 0;
+                        int topOffset = 0;
+
+                        try {
+                            leftOffset = (int)JasonHelper.pixels(JasonViewActivity.this, style.getString("left"), "horizontal");
+                        } catch (JSONException e) {
+                        }
+
+                        try {
+                            topOffset = (int)JasonHelper.pixels(JasonViewActivity.this, style.getString("top"), "vertical");
+                        } catch (JSONException e) {
+                        }
+
+                        toolbar.setLeftOffset(leftOffset);
+                        toolbar.setTopOffset(topOffset);
+                    }
+
+                    // image options
                     if (type.equalsIgnoreCase("image")) {
-                        String url = ((JSONObject) title).getString("url");
+                        String url = t.getString("url");
                         JSONObject c = new JSONObject();
                         c.put("url", url);
                         int height = header_height;
                         int width = Toolbar.LayoutParams.WRAP_CONTENT;
-                        if (((JSONObject) title).has("style")) {
-                            JSONObject style = ((JSONObject) title).getJSONObject("style");
+                        if (style != null) {
                             if (style.has("height")) {
                                 try {
                                     height = (int) JasonHelper.pixels(this, style.getString("height"), "vertical");
@@ -2385,19 +2440,27 @@ public class JasonViewActivity extends AppCompatActivity {
                                 }
                             }
                         }
-                        if (logoView == null) {
-                            logoView = new ImageView(JasonViewActivity.this);
-                            toolbar.addView(logoView);
-                        }
-                        Toolbar.LayoutParams params = new Toolbar.LayoutParams(width, height);
-                        params.gravity = Gravity.CENTER_HORIZONTAL;
-                        logoView.setLayoutParams(params);
-                        Glide.with(this)
-                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
-                                .into((ImageView) logoView);
-                    } else if(type.equalsIgnoreCase("label")){
+
+                        toolbar.setImageHeight(height);
+                        toolbar.setImageWidth(width);
+                        toolbar.setImage(c);
+                    }
+                    // label options
+                    else if(type.equalsIgnoreCase("label")){
                         String text = ((JSONObject) title).getString("text");
+
+                        if (style != null) {
+                            // size
+                            try {
+                                toolbar.setTitleSize(Float.parseFloat(style.getString("size")));
+                            } catch (JSONException e) {}
+
+                            // font
+                            toolbar.setTitleFont(style);
+                        }
+
                         toolbar.setTitle(text);
+
                         if(logoView != null){
                             toolbar.removeView(logoView);
                             logoView = null;
@@ -2418,29 +2481,7 @@ public class JasonViewActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
-        try {
-            for (int i = 0; i < toolbar.getChildCount(); ++i) {
-                View child = toolbar.getChildAt(i);
-                if (child instanceof TextView) {
-                    ((TextView) child).setTextSize(20);
-                    break;
-                }
-            }
-            if(header.has("style")) {
-                String f = header.getJSONObject("style").getString("font:android");
-                Typeface font = JasonHelper.get_font(f, this);
-                for (int i = 0; i < toolbar.getChildCount(); ++i) {
-                    View child = toolbar.getChildAt(i);
-                    if (child instanceof TextView) {
-                        ((TextView) child).setTypeface(font);
-                        break;
-                    }
-                }
-            }
 
-        } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-        }
     }
 
     /******************
