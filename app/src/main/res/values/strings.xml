@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Jasonette</string>
-    <string name="url">https://jasonette.github.io/Jasonpedia/hello.json</string>
+    <string name="app_name">WeatherMe</string>
+    <string name="url">http://www.jasonbase.com/things/1wn</string>
 </resources>
