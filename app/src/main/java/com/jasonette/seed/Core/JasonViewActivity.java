@@ -2150,16 +2150,19 @@ public class JasonViewActivity extends AppCompatActivity {
                 JSONObject header = model.rendered.getJSONObject("header");
 
                 header_height = toolbar.getHeight();
+
                 setup_title(header);
 
                 if(header.has("search")){
                     SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
                     final JSONObject search = header.getJSONObject("search");
-                    if(searchView == null) {
+                    if (searchView == null) {
                         searchView = new SearchView(this);
                         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
 
-
+                        // put the search icon on the right hand side of the toolbar
+                        searchView.setLayoutParams(new Toolbar.LayoutParams(Gravity.RIGHT));
+                        
                         toolbar.addView(searchView);
                     } else {
                         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
