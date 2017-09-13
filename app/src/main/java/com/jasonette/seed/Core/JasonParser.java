@@ -37,9 +37,11 @@ public class JasonParser {
         {
             instance = new JasonParser();
             try {
-                String js = JasonHelper.read_file("parser", context);
+                String js = JasonHelper.read_file("st", context);
+                String xhtmljs = JasonHelper.read_file("xhtml", context);
                 instance.juice = V8.createV8Runtime();
                 instance.juice.executeVoidScript(js);
+                instance.juice.executeVoidScript(xhtmljs);
                 instance.juice.getLocker().release();
             } catch (Exception e){
                 Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
@@ -65,24 +67,25 @@ public class JasonParser {
                         v8Console.registerJavaMethod(console, "error", "error", new Class<?>[] { String.class });
                         v8Console.registerJavaMethod(console, "trace", "trace", new Class<?>[] {});
 
-                        V8Object parser = juice.getObject("parser");
 
                         String templateJson = template.toString();
                         String dataJson = data.toString();
                         String val = "{}";
 
+                        V8Object parser = juice.getObject("JSON");
                         if(data_type.equalsIgnoreCase("json")) {
                             V8Array parameters = new V8Array(juice).push(templateJson);
                             parameters.push(dataJson);
                             parameters.push(true);
-                            val = parser.executeStringFunction("json", parameters);
+                            val = parser.executeStringFunction("transform", parameters);
                             parameters.release();
                         } else {
                             String raw_data = data.getString("$jason");
-                            V8Array parameters = new V8Array(juice).push(templateJson);
+                            V8Array parameters = new V8Array(juice).push("html");
+                            parameters.push(templateJson);
                             parameters.push(raw_data);
                             parameters.push(true);
-                            val = parser.executeStringFunction("html", parameters);
+                            val = juice.executeStringFunction("to_json", parameters);
                             parameters.release();
                         }
                         parser.release();
