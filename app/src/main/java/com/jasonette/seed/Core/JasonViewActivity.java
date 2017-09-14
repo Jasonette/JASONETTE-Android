@@ -1602,32 +1602,25 @@ public class JasonViewActivity extends AppCompatActivity {
                     // Set sections
                     if (body.has("sections")) {
                         setup_sections(body.getJSONArray("sections"));
-                        if(body.has("style") && body.getJSONObject("style").has("border")){
-                            String border = body.getJSONObject("style").getString("border");
-                            if(border.equalsIgnoreCase("none")){
-                                if(divider != null){
-                                    listView.removeItemDecoration(divider);
-                                    divider = null;
-                                }
+                        String border = "#eaeaea"; // Default color
 
-                            } else {
-                                int color = JasonHelper.parse_color(border);
-                                listView.removeItemDecoration(divider);
-                                divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
-                                            .color(color)
-                                            .showLastDivider()
-                                            .positionInsideItem(true)
-                                            .build();
-                                listView.addItemDecoration(divider);
-                            }
-                        } else {
+                        if (body.has("style") && body.getJSONObject("style").has("border")) {
+                            border = body.getJSONObject("style").getString("border");
+                        }
+
+                        if (divider != null) {
                             listView.removeItemDecoration(divider);
-                            int color = JasonHelper.parse_color("#eaeaea"); // default color
+                            divider = null;
+                        }
+
+                        if (!border.equalsIgnoreCase("none")) {
+                            int color = JasonHelper.parse_color(border);
+                            listView.removeItemDecoration(divider);
                             divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
-                                    .color(color)
-                                    .showLastDivider()
-                                    .positionInsideItem(true)
-                                    .build();
+                                        .color(color)
+                                        .showLastDivider()
+                                        .positionInsideItem(true)
+                                        .build();
                             listView.addItemDecoration(divider);
                         }
                     } else {
