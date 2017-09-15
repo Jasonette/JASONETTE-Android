@@ -25,6 +25,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import okhttp3.OkHttpClient;
+import com.jasonette.seed.BuildConfig;
+
 
 public class Launcher extends Application {
     private JSONObject handlers;
@@ -137,6 +139,11 @@ public class Launcher extends Application {
             device.put("os", os);
 
             this.env.put("device", device);
+
+            JSONObject app = new JSONObject();
+            app.put("version", BuildConfig.VERSION_NAME);
+            app.put("build", Integer.toString(BuildConfig.VERSION_CODE));
+            this.env.put("app", app);
 
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
