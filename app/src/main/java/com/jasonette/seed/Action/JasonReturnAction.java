@@ -83,7 +83,12 @@ public class JasonReturnAction {
     private void next(final String type, final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
         if(event.has(type)){
             try{
-                JSONObject options = action.getJSONObject("options");
+                JSONObject options;
+                if (action.has("options")) {
+                    options = action.getJSONObject("options");
+                } else {
+                    options = new JSONObject();
+                }
                 JasonParser.getInstance(context).setParserListener(new JasonParser.JasonParserListener() {
                     @Override
                     public void onFinished(JSONObject parsed_options) {
