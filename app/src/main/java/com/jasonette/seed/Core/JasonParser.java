@@ -50,6 +50,22 @@ public class JasonParser {
         return instance;
     }
 
+    public static void inject(String js) {
+        instance.juice.executeVoidScript(js);
+    }
+    public static void reset() {
+        try {
+            String js = JasonHelper.read_file("st", context);
+            String xhtmljs = JasonHelper.read_file("xhtml", context);
+            instance.juice = V8.createV8Runtime();
+            instance.juice.executeVoidScript(js);
+            instance.juice.executeVoidScript(xhtmljs);
+            instance.juice.getLocker().release();
+        } catch (Exception e){
+            Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
+
 
     public void parse(final String data_type, final JSONObject data, final Object template, final Context context){
 
@@ -67,15 +83,18 @@ public class JasonParser {
                         v8Console.registerJavaMethod(console, "error", "error", new Class<?>[] { String.class });
                         v8Console.registerJavaMethod(console, "trace", "trace", new Class<?>[] {});
 
-
                         String templateJson = template.toString();
                         String dataJson = data.toString();
                         String val = "{}";
 
                         V8Object parser = juice.getObject("JSON");
+                        // Get global variables (excluding natively injected variables which will never be used in the template)
+                        String globals = juice.executeStringScript("JSON.stringify(Object.keys(this).filter(function(key){return ['ST', 'to_json', 'setImmediate', 'clearImmediate', 'console'].indexOf(key) === -1;}));");
                         if(data_type.equalsIgnoreCase("json")) {
-                            V8Array parameters = new V8Array(juice).push(templateJson);
+                            V8Array parameters = new V8Array(juice);
+                            parameters.push(templateJson);
                             parameters.push(dataJson);
+                            parameters.push(globals);
                             parameters.push(true);
                             val = parser.executeStringFunction("transform", parameters);
                             parameters.release();
@@ -90,7 +109,6 @@ public class JasonParser {
                         }
                         parser.release();
                         v8Console.release();
-
 
                         res = new JSONObject(val);
                         listener.onFinished(res);
