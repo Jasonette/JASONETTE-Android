@@ -248,6 +248,7 @@ public class JasonModel{
                     resolve_local_reference();
                 } else {
                     if (jason.has("$jason")) {
+                        view.loaded = false;
                         view.build(jason);
                     } else {
 

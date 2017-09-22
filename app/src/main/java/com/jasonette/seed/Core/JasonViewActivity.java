@@ -86,7 +86,7 @@ public class JasonViewActivity extends AppCompatActivity {
     private ArrayList<RecyclerView.OnItemTouchListener> listViewOnItemTouchListeners;
 
     private boolean firstResume = true;
-    private boolean loaded;
+    public boolean loaded;
     private boolean fetched;
 
     private int header_height;
