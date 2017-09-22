@@ -42,16 +42,18 @@ public class JasonScriptAction {
                     }
                 }
 
-                CountDownLatch latch = new CountDownLatch(urlItems.length());
-                ExecutorService taskExecutor = Executors.newFixedThreadPool(urlItems.length());
-                for (int i = 0; i < urlItems.length() ; i++) {
-                    String url = urlItems.getString(i);
-                    taskExecutor.submit(new JasonRequire(url, latch, refs, client, context));
-                }
-                try {
-                    latch.await();
-                } catch (Exception e) {
-                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                if (urlItems.length() > 0) {
+                    CountDownLatch latch = new CountDownLatch(urlItems.length());
+                    ExecutorService taskExecutor = Executors.newFixedThreadPool(urlItems.length());
+                    for (int i = 0; i < urlItems.length() ; i++) {
+                        String url = urlItems.getString(i);
+                        taskExecutor.submit(new JasonRequire(url, latch, refs, client, context));
+                    }
+                    try {
+                        latch.await();
+                    } catch (Exception e) {
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                    }
                 }
 
                 // remote inject
