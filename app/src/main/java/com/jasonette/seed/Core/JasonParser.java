@@ -1,6 +1,7 @@
 package com.jasonette.seed.Core;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.eclipsesource.v8.V8;
 import com.eclipsesource.v8.V8Array;
@@ -103,6 +104,7 @@ public class JasonParser {
                             V8Array parameters = new V8Array(juice).push("html");
                             parameters.push(templateJson);
                             parameters.push(raw_data);
+                            parameters.push(globals);
                             parameters.push(true);
                             val = juice.executeStringFunction("to_json", parameters);
                             parameters.release();
