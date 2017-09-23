@@ -19,6 +19,7 @@ import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth10aService;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.jasonette.seed.Helper.JasonHelper;
+import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -557,7 +558,7 @@ public class JasonOauthAction {
                 } else {
                     uri_builder.appendQueryParameter("client_id", client_id);
                     uri_builder.appendQueryParameter("client_secret", client_secret);
-                    client = new OkHttpClient();
+                    client = ((Launcher)context.getApplicationContext()).getHttpClient();
                 }
 
                 Request request;

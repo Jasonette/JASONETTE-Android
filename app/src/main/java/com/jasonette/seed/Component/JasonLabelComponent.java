@@ -27,40 +27,8 @@ public class JasonLabelComponent {
                     int color = JasonHelper.parse_color(style.getString("color"));
                     ((TextView)view).setTextColor(color);
                 }
-                if (style.has("font:android")){
-                    String f = style.getString("font:android");
-                    if(f.equalsIgnoreCase("bold")){
-                        ((TextView) view).setTypeface(Typeface.DEFAULT_BOLD);
-                    } else if(f.equalsIgnoreCase("sans")){
-                        ((TextView) view).setTypeface(Typeface.SANS_SERIF);
-                    } else if(f.equalsIgnoreCase("serif")){
-                        ((TextView) view).setTypeface(Typeface.SERIF);
-                    } else if(f.equalsIgnoreCase("monospace")){
-                        ((TextView) view).setTypeface(Typeface.MONOSPACE);
-                    } else if(f.equalsIgnoreCase("default")){
-                        ((TextView) view).setTypeface(Typeface.DEFAULT);
-                    } else {
-                        try {
-                            Typeface font_type = Typeface.createFromAsset(context.getAssets(), "fonts/" + style.getString("font:android") + ".ttf");
-                            ((TextView) view).setTypeface(font_type);
-                        } catch (Exception e) {
-                        }
-                    }
-                } else if (style.has("font")){
-                   if(style.getString("font").toLowerCase().contains("bold")) {
-                       if (style.getString("font").toLowerCase().contains("italic")) {
-                           ((TextView) view).setTypeface(Typeface.DEFAULT_BOLD, Typeface.ITALIC);
-                       } else {
-                           ((TextView) view).setTypeface(Typeface.DEFAULT_BOLD);
-                       }
-                   } else {
-                       if (style.getString("font").toLowerCase().contains("italic")) {
-                           ((TextView) view).setTypeface(Typeface.DEFAULT, Typeface.ITALIC);
-                       } else {
-                           ((TextView) view).setTypeface(Typeface.DEFAULT);
-                       }
-                   }
-                }
+
+                JasonHelper.setTextViewFont(((TextView)view), style, context);
 
                 int g = 0;
                 if (style.has("align")) {

@@ -7,28 +7,31 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import timber.log.Timber;
+
 public class JasonHelper {
+
     public static JSONObject style(JSONObject component, Context root_context) {
         JSONObject style = new JSONObject();
         try {
@@ -46,7 +49,7 @@ public class JasonHelper {
                 }
             }
         } catch (Exception e){
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
         try {
@@ -61,7 +64,7 @@ public class JasonHelper {
                 }
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
         return style;
     }
@@ -77,7 +80,7 @@ public class JasonHelper {
             }
             return stub;
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             return new JSONObject();
         }
     }
@@ -101,23 +104,33 @@ public class JasonHelper {
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.e(e);
         }
     }
 
+    /**
+     * Parse a string as either a JSON Object or Array.
+     *
+     * @param json
+     * @return a JSONObject or JSONArray based on the Json string,
+     * return an emptry JSONObject if json param is null or on parsing supplied json string.
+     */
     public static Object objectify(String json) {
         try {
+            if (json == null) {
+                return new JSONObject();
+            }
             if (json.trim().startsWith("[")) {
                 // JSONArray
                 return new JSONArray(json);
             } else if (json.trim().startsWith("{")) {
                 return new JSONObject(json);
             } else {
-                return new Object();
+                return new JSONObject();
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-            return new Object();
+            Timber.w(e, "error objectifying: %s", json);
+            return new JSONObject();
         }
     }
 
@@ -129,9 +142,22 @@ public class JasonHelper {
                 list.add(jsonArray.getJSONObject(i));
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
         return list;
+    }
+
+    public static float ratio(String ratio) {
+        String regex = "^[ ]*([0-9]+)[ ]*[:/][ ]*([0-9]+)[ ]*$";
+        Pattern pat = Pattern.compile(regex);
+        Matcher m = pat.matcher(ratio);
+        if (m.matches()) {
+            Float w = Float.parseFloat(m.group(1));
+            Float h = Float.parseFloat(m.group(2));
+            return w/h;
+        } else {
+            return Float.parseFloat(ratio);
+        }
     }
 
     public static float pixels(Context context, String size, String direction) {
@@ -266,7 +292,7 @@ public class JasonHelper {
                 ret = jr;
             }
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
             return new JSONObject();
         }
         return ret;
@@ -285,7 +311,7 @@ public class JasonHelper {
             intent.putExtra("action", alert_action.toString());
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
     }
 
@@ -343,7 +369,7 @@ public class JasonHelper {
 
             ((Launcher) ((JasonViewActivity) context).getApplicationContext()).once(name, handler);
         } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.w(e);
         }
 
         if (intent != null) {
@@ -374,10 +400,47 @@ public class JasonHelper {
             callback.put("options", callback_options);
             return callback;
         } catch (Exception e) {
-            Log.d("Error", "wasn't able to preserve stack");
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            Timber.e(e, "wasn't able to preserve stack for action: %s", action);
             return callback;
         }
     }
 
+    public static void setTextViewFont(TextView view, JSONObject style, Context context) {
+        try {
+            if (style.has("font:android")) {
+                String f = style.getString("font:android");
+                if (f.equalsIgnoreCase("bold")) {
+                    view.setTypeface(Typeface.DEFAULT_BOLD);
+                } else if (f.equalsIgnoreCase("sans")) {
+                    view.setTypeface(Typeface.SANS_SERIF);
+                } else if (f.equalsIgnoreCase("serif")) {
+                    view.setTypeface(Typeface.SERIF);
+                } else if (f.equalsIgnoreCase("monospace")) {
+                    view.setTypeface(Typeface.MONOSPACE);
+                } else if (f.equalsIgnoreCase("default")) {
+                    view.setTypeface(Typeface.DEFAULT);
+                } else {
+                    try {
+                        Typeface font_type = Typeface.createFromAsset(context.getAssets(), "fonts/" + style.getString("font:android") + ".ttf");
+                        view.setTypeface(font_type);
+                    } catch (Exception e) {
+                    }
+                }
+            } else if (style.has("font")) {
+                if (style.getString("font").toLowerCase().contains("bold")) {
+                    if (style.getString("font").toLowerCase().contains("italic")) {
+                        view.setTypeface(Typeface.DEFAULT_BOLD, Typeface.ITALIC);
+                    } else {
+                        view.setTypeface(Typeface.DEFAULT_BOLD);
+                    }
+                } else {
+                    if (style.getString("font").toLowerCase().contains("italic")) {
+                        view.setTypeface(Typeface.DEFAULT, Typeface.ITALIC);
+                    } else {
+                        view.setTypeface(Typeface.DEFAULT);
+                    }
+                }
+            }
+        } catch (JSONException e) {}
+    }
 }

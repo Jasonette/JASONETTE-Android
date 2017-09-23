@@ -1,6 +1,8 @@
 package com.jasonette.seed.Component;
 
 import android.content.Context;
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -22,11 +24,25 @@ import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import timber.log.Timber;
 
-public class JasonMapComponent {
+import static com.jasonette.seed.Action.JasonGeoAction.COORDS_STRING_FORMAT;
+
+
+public class JasonMapComponent extends JasonComponent {
+
     static int EQUATOR_LENGTH = 40075004;
+
+    private static final String DEFAULT_PIN_ACTION_PROP = "default_action";
+
+    private static final String MAP_PIN_TITLE_PROP = "title";
+    private static final String MAP_PIN_COORD_PROP = "coord";
+    private static final String MAP_PIN_DESCRIPTION_PROP = "description";
+
+    public static final String JS_FALSE = "false";
 
     public static View build(View view, final JSONObject component, final JSONObject parent, final Context context) {
         if(view == null){
@@ -101,6 +117,7 @@ public class JasonMapComponent {
     }
 
     static class MapReadyHandler implements OnMapReadyCallback {
+
         private JSONObject component;
         private MapView view;
         private Context context;
@@ -122,7 +139,7 @@ public class JasonMapComponent {
         }
 
         @Override
-        public void onMapReady(GoogleMap map) {
+        public void onMapReady(final GoogleMap map) {
             try {
                 // Add pins to the map
                 if (component.has("pins")) {
@@ -143,6 +160,9 @@ public class JasonMapComponent {
                             if (style.has("selected") && style.getBoolean("selected")) {
                                 marker.showInfoWindow();
                             }
+                        }
+                        if (pin.has(ACTION_PROP)) {
+                            marker.setTag(pin);
                         }
                     }
                 }
@@ -167,6 +187,42 @@ public class JasonMapComponent {
                         map.moveCamera(CameraUpdateFactory.zoomTo(zoom));
                     }
                 }
+
+                // Attach listener for pin 'clicks'
+                map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+
+                    @Override
+                    public void onInfoWindowClick(Marker marker) {
+                        try {
+                            if (marker.getTag() == null) {
+                                return;
+                            }
+                            JSONObject pinJSONObject = (JSONObject) marker.getTag();
+                            if (pinJSONObject.has(ACTION_PROP)) {
+                                JSONObject pinData = new JSONObject().put(MAP_PIN_TITLE_PROP, marker.getTitle());
+                                LatLng pos = marker.getPosition();
+                                pinData.put(MAP_PIN_COORD_PROP, String.format(COORDS_STRING_FORMAT
+                                        , pos.latitude, pos.longitude));
+                                pinData.put(MAP_PIN_DESCRIPTION_PROP, marker.getSnippet());
+                                Intent intent = new Intent(INTENT_ACTION_CALL);
+                                intent.putExtra(ACTION_PROP, pinJSONObject.get(ACTION_PROP).toString());
+                                intent.putExtra(DATA_PROP, pinData.toString());
+                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            }
+                            else if (pinJSONObject.has(HREF_PROP)) {
+                                Intent intent = new Intent(INTENT_ACTION_CALL);
+                                JSONObject href = new JSONObject();
+                                href.put(TYPE_PROP, "$href");
+                                href.put(OPTIONS_PROP, pinJSONObject.get(HREF_PROP).toString());
+                                intent.putExtra(ACTION_PROP, pinJSONObject.get(ACTION_PROP).toString());
+                                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                            }
+                        } catch (JSONException e) {
+                            Timber.e(e);
+                        }
+                    }
+                });
+
             } catch (Exception e) {
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }

@@ -15,11 +15,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -30,8 +30,8 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -41,22 +41,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
-import com.eclipsesource.v8.debug.mirror.Frame;
 import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
-import com.jasonette.seed.Helper.JasonSettings;
 import com.jasonette.seed.Launcher.Launcher;
+import com.jasonette.seed.Lib.BackgroundCameraManager;
+import com.jasonette.seed.Lib.JasonToolbar;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
 import com.jasonette.seed.Section.ItemAdapter;
@@ -66,7 +63,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -81,7 +77,7 @@ import java.util.concurrent.Executors;
 import static com.bumptech.glide.Glide.with;
 
 public class JasonViewActivity extends AppCompatActivity {
-    private Toolbar toolbar;
+    private JasonToolbar toolbar;
     private RecyclerView listView;
     public String url;
     public JasonModel model;
@@ -90,7 +86,7 @@ public class JasonViewActivity extends AppCompatActivity {
     private ArrayList<RecyclerView.OnItemTouchListener> listViewOnItemTouchListeners;
 
     private boolean firstResume = true;
-    private boolean loaded;
+    public boolean loaded;
     private boolean fetched;
 
     private int header_height;
@@ -101,8 +97,11 @@ public class JasonViewActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeLayout;
     public LinearLayout sectionLayout;
     public RelativeLayout rootLayout;
-    public WebView webview;
+    public View backgroundCurrentView;
+    public WebView backgroundWebview;
     public ImageView backgroundImageView;
+    private SurfaceView backgroundCameraView;
+    private BackgroundCameraManager cameraManager;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
@@ -158,7 +157,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
         // 3. Create body.header
         if(toolbar == null) {
-            toolbar = new Toolbar(this);
+            toolbar = new JasonToolbar(this);
             toolbar.setTitle("");
         }
         setSupportActionBar(toolbar);
@@ -268,7 +267,10 @@ public class JasonViewActivity extends AppCompatActivity {
                     Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             } else {
-                model.fetch_local("file://loading.json");
+                if(!model.url.startsWith("file://")) {
+                    // only load loading.json if loading from a remote JSON
+                    model.fetch_local("file://loading.json");
+                }
             }
 
             // Fetch
@@ -813,21 +815,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 String event_string = intent.getStringExtra("event");
 
                 // Wrap return value with $jason
-                JSONObject data;
-
-                // Detect if the result is JSONObject, JSONArray, or String
-                if(data_string.trim().startsWith("[")) {
-                    // JSONArray
-                    JSONArray json = new JSONArray(data_string);
-                    data = new JSONObject().put("$jason", new JSONArray(data_string));
-                } else if(data_string.trim().startsWith("{")){
-                    // JSONObject
-                    JSONObject json = new JSONObject(data_string);
-                    data = new JSONObject().put("$jason", new JSONObject(data_string));
-                } else {
-                    // String
-                    data = new JSONObject().put("$jason", data_string);
-                }
+                JSONObject data = addToObject("$jason", data_string);
 
                 // call next
                 call(action_string, data.toString(), event_string, JasonViewActivity.this);
@@ -845,14 +833,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 String event_string = intent.getStringExtra("event");
 
                 // Wrap return value with $jason
-                JSONObject data;
-                if(data_string.startsWith("[")) {
-                    JSONArray json = new JSONArray(data_string);
-                    data = new JSONObject().put("$jason", new JSONArray(data_string));
-                } else {
-                    JSONObject json = new JSONObject(data_string);
-                    data = new JSONObject().put("$jason", new JSONObject(data_string));
-                }
+                JSONObject data = addToObject("$jason", data_string);
 
                 // call next
                 call(action_string, data.toString(), event_string, JasonViewActivity.this);
@@ -861,6 +842,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
         }
     };
+
     private BroadcastReceiver onCall = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -872,15 +854,36 @@ public class JasonViewActivity extends AppCompatActivity {
                     data_string = new JSONObject().toString();
                 }
 
+                // Wrap return value with $jason
+                JSONObject data = addToObject("$jason", data_string);
+
                 // call next
-                call(action_string, data_string, event_string, JasonViewActivity.this);
+                call(action_string, data.toString(), event_string, JasonViewActivity.this);
             } catch (Exception e){
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     };
 
-
+    private JSONObject addToObject(String prop, String json_data) {
+        JSONObject data = new JSONObject();
+        try {
+            // Detect if the result is JSONObject, JSONArray, or String
+            if(json_data.trim().startsWith("[")) {
+                // JSONArray
+                data = new JSONObject().put("$jason", new JSONArray(json_data));
+            } else if(json_data.trim().startsWith("{")){
+                // JSONObject
+                data = new JSONObject().put("$jason", new JSONObject(json_data));
+            } else {
+                // String
+                data = new JSONObject().put("$jason", json_data);
+            }
+        } catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+        return data;
+    }
 
 
 
@@ -1436,6 +1439,8 @@ public class JasonViewActivity extends AppCompatActivity {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
+
+
         JasonViewActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1448,21 +1453,29 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
                     sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
                     getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
+
                     if (body.has("style")) {
                         JSONObject style = body.getJSONObject("style");
                         if (style.has("background")) {
+                            // sectionLayout must be transparent to see the background
+                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
+
+                            // we remove the current view from the root layout
+                            if (backgroundCurrentView != null) {
+                                rootLayout.removeView(backgroundCurrentView);
+                                backgroundCurrentView = null;
+                            }
+
                             if(style.get("background") instanceof String){
                                 String background = style.getString("background");
                                 JSONObject c = new JSONObject();
                                 c.put("url", background);
                                 if(background.matches("(file|http[s]?):\\/\\/.*")) {
                                     if(backgroundImageView == null) {
-                                        RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
-                                                RelativeLayout.LayoutParams.MATCH_PARENT,
-                                                RelativeLayout.LayoutParams.MATCH_PARENT);
                                         backgroundImageView = new ImageView(JasonViewActivity.this);
-                                        rootLayout.addView(backgroundImageView, 0, rlp);
                                     }
+
+                                    backgroundCurrentView = backgroundImageView;
 
                                     DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
                                     // gif doesn't work with RESULT cache strategy
@@ -1475,15 +1488,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                             .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                             .diskCacheStrategy(cacheStrategy)
                                             .centerCrop()
-                                            .into(new GlideDrawableImageViewTarget(backgroundImageView) {
-
-                                        @Override
-                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> animation) {
-                                            super.onResourceReady(resource, animation);
-                                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
-                                        }
-                                    });
-                                } else if(background == "camera") {
+                                            .into(backgroundImageView);
                                 } else if(background.matches("data:image.*")){
                                     String base64;
                                     if(background.startsWith("data:image/jpeg")){
@@ -1514,14 +1519,14 @@ public class JasonViewActivity extends AppCompatActivity {
                                     if(background.has("text")){
                                         String html = background.getString("text");
                                         CookieManager.getInstance().setAcceptCookie(true);
-                                        if(webview==null) {
-                                            webview = new WebView(JasonViewActivity.this);
-                                            webview.getSettings().setDefaultTextEncodingName("utf-8");
-                                            webview.setWebChromeClient(new WebChromeClient());
-                                            webview.setVerticalScrollBarEnabled(false);
-                                            webview.setHorizontalScrollBarEnabled(false);
-                                            webview.setBackgroundColor(Color.TRANSPARENT);
-                                            WebSettings settings = webview.getSettings();
+                                        if(backgroundWebview==null) {
+                                            backgroundWebview = new WebView(JasonViewActivity.this);
+                                            backgroundWebview.getSettings().setDefaultTextEncodingName("utf-8");
+                                            backgroundWebview.setWebChromeClient(new WebChromeClient());
+                                            backgroundWebview.setVerticalScrollBarEnabled(false);
+                                            backgroundWebview.setHorizontalScrollBarEnabled(false);
+                                            backgroundWebview.setBackgroundColor(Color.TRANSPARENT);
+                                            WebSettings settings = backgroundWebview.getSettings();
                                             settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
                                             settings.setJavaScriptEnabled(true);
                                             settings.setDomStorageEnabled(true);
@@ -1531,11 +1536,6 @@ public class JasonViewActivity extends AppCompatActivity {
                                             settings.setAllowFileAccess( true );
                                             settings.setAppCacheEnabled( true );
                                             settings.setCacheMode( WebSettings.LOAD_DEFAULT );
-                                            RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
-                                                    RelativeLayout.LayoutParams.MATCH_PARENT,
-                                                    RelativeLayout.LayoutParams.MATCH_PARENT);
-                                            webview.setLayoutParams(rlp);
-
 
                                             // not interactive by default;
                                             Boolean responds_to_webview = false;
@@ -1549,22 +1549,46 @@ public class JasonViewActivity extends AppCompatActivity {
                                             }
                                             if(responds_to_webview){
                                                 // webview receives click
-                                                webview.setOnTouchListener(null);
+                                                backgroundWebview.setOnTouchListener(null);
                                             } else {
                                                 // webview shouldn't receive click
-                                                webview.setOnTouchListener(new View.OnTouchListener() {
+                                                backgroundWebview.setOnTouchListener(new View.OnTouchListener() {
                                                     @Override
                                                     public boolean onTouch(View v, MotionEvent event) {
                                                         return true;
                                                     }
                                                 });
                                             }
-
-                                            rootLayout.addView(webview,0);
                                         }
-                                        webview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
+
+                                        backgroundCurrentView = backgroundWebview;
+                                        backgroundWebview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
                                     }
                                 }
+                                else if(type.equalsIgnoreCase("camera")) {
+                                    int side = BackgroundCameraManager.FRONT;
+                                    if (background.has("options")) {
+                                        JSONObject options = background.getJSONObject("options");
+                                        if (options.has("device") && options.getString("device").equals("back")) {
+                                            side = BackgroundCameraManager.BACK;
+                                        }
+                                    }
+
+                                    if (cameraManager == null) {
+                                        cameraManager = new BackgroundCameraManager(JasonViewActivity.this);
+                                        backgroundCameraView = cameraManager.getView();
+                                    }
+
+                                    backgroundCurrentView = backgroundCameraView;
+                                    cameraManager.setSide(side);
+                                }
+                            }
+
+                            if (backgroundCurrentView != null) {
+                                RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                        RelativeLayout.LayoutParams.MATCH_PARENT,
+                                        RelativeLayout.LayoutParams.MATCH_PARENT);
+                                rootLayout.addView(backgroundCurrentView, 0, rlp);
                             }
                         }
                     }
@@ -1574,36 +1598,32 @@ public class JasonViewActivity extends AppCompatActivity {
                     // Set header
                     if (body.has("header")) {
                         setup_header(body.getJSONObject("header"));
+                        toolbar.setVisibility(View.VISIBLE);
+                    } else {
+                        toolbar.setVisibility(View.GONE);
                     }
                     // Set sections
                     if (body.has("sections")) {
                         setup_sections(body.getJSONArray("sections"));
-                        if(body.has("style") && body.getJSONObject("style").has("border")){
-                            String border = body.getJSONObject("style").getString("border");
-                            if(border.equalsIgnoreCase("none")){
-                                if(divider != null){
-                                    listView.removeItemDecoration(divider);
-                                    divider = null;
-                                }
+                        String border = "#eaeaea"; // Default color
 
-                            } else {
-                                int color = JasonHelper.parse_color(border);
-                                listView.removeItemDecoration(divider);
-                                divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
-                                            .color(color)
-                                            .showLastDivider()
-                                            .positionInsideItem(true)
-                                            .build();
-                                listView.addItemDecoration(divider);
-                            }
-                        } else {
+                        if (body.has("style") && body.getJSONObject("style").has("border")) {
+                            border = body.getJSONObject("style").getString("border");
+                        }
+
+                        if (divider != null) {
                             listView.removeItemDecoration(divider);
-                            int color = JasonHelper.parse_color("#eaeaea"); // default color
+                            divider = null;
+                        }
+
+                        if (!border.equalsIgnoreCase("none")) {
+                            int color = JasonHelper.parse_color(border);
+                            listView.removeItemDecoration(divider);
                             divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
-                                    .color(color)
-                                    .showLastDivider()
-                                    .positionInsideItem(true)
-                                    .build();
+                                        .color(color)
+                                        .showLastDivider()
+                                        .positionInsideItem(true)
+                                        .build();
                             listView.addItemDecoration(divider);
                         }
                     } else {
@@ -2120,19 +2140,25 @@ public class JasonViewActivity extends AppCompatActivity {
         try {
             menu = toolbar.getMenu();
             if (model.rendered != null) {
+                if(!model.rendered.has("header")){
+                    setup_title(new JSONObject());
+                }
                 JSONObject header = model.rendered.getJSONObject("header");
 
                 header_height = toolbar.getHeight();
+
                 setup_title(header);
 
                 if(header.has("search")){
                     SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
                     final JSONObject search = header.getJSONObject("search");
-                    if(searchView == null) {
+                    if (searchView == null) {
                         searchView = new SearchView(this);
                         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
 
-
+                        // put the search icon on the right hand side of the toolbar
+                        searchView.setLayoutParams(new Toolbar.LayoutParams(Gravity.RIGHT));
+                        
                         toolbar.addView(searchView);
                     } else {
                         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
@@ -2252,10 +2278,11 @@ public class JasonViewActivity extends AppCompatActivity {
                     FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
                     menuButton.setLayoutParams(lp);
 
-                    // Set padding for the menu button
-                    int padding = (int)JasonHelper.pixels(this, "15", "vertical");
-                    itemView.setPadding(padding, padding, padding, padding);
-
+                    // Set padding for the image menu button
+                    if(json.has("image")) {
+                        int padding = (int) JasonHelper.pixels(this, "15", "vertical");
+                        itemView.setPadding(padding, padding, padding, padding);
+                    }
 
                     if(json.has("badge")){
                         String badge_text = "";
@@ -2325,9 +2352,21 @@ public class JasonViewActivity extends AppCompatActivity {
 
     void setup_title(JSONObject header) {
         try {
+            // Default title values
             toolbar.setTitle("");
+            toolbar.setTitleSize(20);
+
+            // Global font
+            if(header.has("style")) {
+                toolbar.setTitleFont(header.getJSONObject("style"));
+            }
+
             if (header.has("title")) {
                 Object title = header.get("title");
+
+                // set align:center by default
+                toolbar.setAlignment(Gravity.CENTER);
+
                 if (title instanceof String) {
                     toolbar.setTitle(header.getString("title"));
                     if(logoView != null){
@@ -2335,15 +2374,56 @@ public class JasonViewActivity extends AppCompatActivity {
                         logoView = null;
                     }
                 } else if (title instanceof JSONObject) {
-                    String type = ((JSONObject) title).getString("type");
+                    JSONObject t = ((JSONObject) title);
+                    String type = t.getString("type");
+                    JSONObject style = null;
+
+                    if (t.has("style")) {
+                        style = t.getJSONObject("style");
+                    }
+
+                    if (style != null) {
+                        // title alignment
+                        String align;
+                        toolbar.setAlignment(-1);
+                        try {
+                            align = style.getString("align");
+
+                            if (align.equals("center")) {
+                                toolbar.setAlignment(Gravity.CENTER);
+                            }
+                            else if (align.equals("left")) {
+                                toolbar.setAlignment(Gravity.LEFT);
+                            }
+                        } catch (JSONException e) {
+                        }
+
+                        // offsets
+                        int leftOffset = 0;
+                        int topOffset = 0;
+
+                        try {
+                            leftOffset = (int)JasonHelper.pixels(JasonViewActivity.this, style.getString("left"), "horizontal");
+                        } catch (JSONException e) {
+                        }
+
+                        try {
+                            topOffset = (int)JasonHelper.pixels(JasonViewActivity.this, style.getString("top"), "vertical");
+                        } catch (JSONException e) {
+                        }
+
+                        toolbar.setLeftOffset(leftOffset);
+                        toolbar.setTopOffset(topOffset);
+                    }
+
+                    // image options
                     if (type.equalsIgnoreCase("image")) {
-                        String url = ((JSONObject) title).getString("url");
+                        String url = t.getString("url");
                         JSONObject c = new JSONObject();
                         c.put("url", url);
                         int height = header_height;
                         int width = Toolbar.LayoutParams.WRAP_CONTENT;
-                        if (((JSONObject) title).has("style")) {
-                            JSONObject style = ((JSONObject) title).getJSONObject("style");
+                        if (style != null) {
                             if (style.has("height")) {
                                 try {
                                     height = (int) JasonHelper.pixels(this, style.getString("height"), "vertical");
@@ -2359,19 +2439,27 @@ public class JasonViewActivity extends AppCompatActivity {
                                 }
                             }
                         }
-                        if (logoView == null) {
-                            logoView = new ImageView(JasonViewActivity.this);
-                            toolbar.addView(logoView);
-                        }
-                        Toolbar.LayoutParams params = new Toolbar.LayoutParams(width, height);
-                        params.gravity = Gravity.CENTER_HORIZONTAL;
-                        logoView.setLayoutParams(params);
-                        Glide.with(this)
-                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
-                                .into((ImageView) logoView);
-                    } else if(type.equalsIgnoreCase("label")){
+
+                        toolbar.setImageHeight(height);
+                        toolbar.setImageWidth(width);
+                        toolbar.setImage(c);
+                    }
+                    // label options
+                    else if(type.equalsIgnoreCase("label")){
                         String text = ((JSONObject) title).getString("text");
+
+                        if (style != null) {
+                            // size
+                            try {
+                                toolbar.setTitleSize(Float.parseFloat(style.getString("size")));
+                            } catch (JSONException e) {}
+
+                            // font
+                            toolbar.setTitleFont(style);
+                        }
+
                         toolbar.setTitle(text);
+
                         if(logoView != null){
                             toolbar.removeView(logoView);
                             logoView = null;
@@ -2392,29 +2480,7 @@ public class JasonViewActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
-        try {
-            for (int i = 0; i < toolbar.getChildCount(); ++i) {
-                View child = toolbar.getChildAt(i);
-                if (child instanceof TextView) {
-                    ((TextView) child).setTextSize(20);
-                    break;
-                }
-            }
-            if(header.has("style")) {
-                String f = header.getJSONObject("style").getString("font:android");
-                Typeface font = JasonHelper.get_font(f, this);
-                for (int i = 0; i < toolbar.getChildCount(); ++i) {
-                    View child = toolbar.getChildAt(i);
-                    if (child instanceof TextView) {
-                        ((TextView) child).setTypeface(font);
-                        break;
-                    }
-                }
-            }
 
-        } catch (Exception e) {
-            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-        }
     }
 
     /******************

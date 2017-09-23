@@ -48,6 +48,7 @@ public class JasonModel{
     public JasonModel(String url, Intent intent, JasonViewActivity view){
         this.url = url;
         this.view = view;
+        this.client = ((Launcher)view.getApplication()).getHttpClient();
 
         // $params
         this.params = new JSONObject();
@@ -107,11 +108,22 @@ public class JasonModel{
         }
     }
 
-    public void fetch_local(String url){
+    public void fetch_local(final String url){
+        final JasonViewActivity context = this.view;
         try {
-            jason = (JSONObject)JasonHelper.read_json(url, this.view);
-            refs = new JSONObject();
-            resolve_and_build(jason.toString());
+            Runnable r = new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    jason = (JSONObject)JasonHelper.read_json(url, context);
+                    refs = new JSONObject();
+                    resolve_and_build(jason.toString());
+                }
+            };
+            Thread t = new Thread(r);
+            t.start();
+
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
@@ -152,7 +164,7 @@ public class JasonModel{
                     .build();
 
 
-            client = new OkHttpClient();
+
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
@@ -236,6 +248,7 @@ public class JasonModel{
                     resolve_local_reference();
                 } else {
                     if (jason.has("$jason")) {
+                        view.loaded = false;
                         view.build(jason);
                     } else {
 

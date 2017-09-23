@@ -8,8 +8,6 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
-import android.view.WindowManager;
 
 import com.bumptech.glide.request.target.ViewTarget;
 import com.jasonette.seed.Core.JasonViewActivity;
@@ -26,7 +24,9 @@ import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
 
-import static android.R.attr.action;
+import okhttp3.OkHttpClient;
+import com.jasonette.seed.BuildConfig;
+
 
 public class Launcher extends Application {
     private JSONObject handlers;
@@ -67,6 +67,7 @@ public class Launcher extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
         ViewTarget.setTagId(R.id.glide_request);
 
         // Look for all extensions and initialize them if they have initialize class methods
@@ -139,6 +140,11 @@ public class Launcher extends Application {
 
             this.env.put("device", device);
 
+            JSONObject app = new JSONObject();
+            app.put("version", BuildConfig.VERSION_NAME);
+            app.put("build", Integer.toString(BuildConfig.VERSION_CODE));
+            this.env.put("app", app);
+
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
@@ -187,7 +193,12 @@ public class Launcher extends Application {
                     handler = getHandler(String.valueOf(intent_to_resolve.getInt("name")));
                 }
 
-                Intent intent = (Intent) intent_to_resolve.get("intent");
+                Intent intent;
+                if(intent_to_resolve.has("intent")) {
+                    intent = (Intent) intent_to_resolve.get("intent");
+                } else {
+                    intent = null;
+                }
 
                 String classname = handler.getString("class");
                 classname = "com.jasonette.seed.Action." + classname;
@@ -221,7 +232,7 @@ public class Launcher extends Application {
 
             // reset intent_to_resolve
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
     public void callback(JSONObject handler, String result, JasonViewActivity context){
@@ -270,4 +281,7 @@ public class Launcher extends Application {
         }
     }
 
+    public OkHttpClient getHttpClient() {
+        return new OkHttpClient.Builder().build();
+    }
 }

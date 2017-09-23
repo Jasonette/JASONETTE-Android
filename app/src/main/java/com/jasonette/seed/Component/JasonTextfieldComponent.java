@@ -104,6 +104,22 @@ public class JasonTextfieldComponent {
                     ((EditText)view).setText(component.getString("value"));
                 }
 
+                // keyboard
+                if(component.has("keyboard")){
+                    String keyboard = component.getString("keyboard");
+                    if(keyboard.equalsIgnoreCase("text")) {
+                        ((EditText) view).setInputType(InputType.TYPE_CLASS_TEXT);
+                    } else if(keyboard.equalsIgnoreCase("number")) {
+                        ((EditText) view).setInputType(InputType.TYPE_CLASS_NUMBER);
+                    } else if(keyboard.equalsIgnoreCase("phone")) {
+                        ((EditText) view).setInputType(InputType.TYPE_CLASS_PHONE);
+                    } else if(keyboard.equalsIgnoreCase("url")) {
+                        ((EditText) view).setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+                    } else if(keyboard.equalsIgnoreCase("email")) {
+                        ((EditText) view).setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+                    }
+                }
+
                 // Data binding
                 if(component.has("name")){
                     ((EditText)view).addTextChangedListener(new TextWatcher() {

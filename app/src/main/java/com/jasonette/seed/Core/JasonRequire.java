@@ -46,12 +46,25 @@ public class JasonRequire implements Runnable{
     }
     private void local(){
         try {
-            Object json = JasonHelper.read_json(this.URL, this.context);
-            private_refs.put(URL, json);
-            latch.countDown();
-        } catch (Exception e){
-            latch.countDown();
+            Runnable r = new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    Object json = JasonHelper.read_json(URL, context);
+                    try {
+                        private_refs.put(URL, json);
+                    } catch (Exception e) {
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                    }
+                    latch.countDown();
+                }
+            };
+            Thread t = new Thread(r);
+            t.start();
+        } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            latch.countDown();
         }
     }
     private void remote(){
