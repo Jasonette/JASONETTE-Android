@@ -1598,6 +1598,9 @@ public class JasonViewActivity extends AppCompatActivity {
                     // Set header
                     if (body.has("header")) {
                         setup_header(body.getJSONObject("header"));
+                        toolbar.setVisibility(View.VISIBLE);
+                    } else {
+                        toolbar.setVisibility(View.GONE);
                     }
                     // Set sections
                     if (body.has("sections")) {
