@@ -9,7 +9,6 @@ import android.util.Log;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
-import com.jasonette.seed.Launcher.DebugLauncher;
 import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONObject;
