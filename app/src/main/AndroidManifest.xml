@@ -38,7 +38,12 @@
         <activity
             android:name="com.commonsware.cwac.cam2.CameraActivity"
             android:process=":cwac_cam2"
-            android:theme="@style/CameraTheme" />
+            android:theme="@style/CameraTheme"/>
+        
+        <!-- Uncomment below line and add your Google Maps API key -->
+        <!--
+            <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR GOOGLE MAPS API KEY HERE"/>
+         -->
 
         <!-- Uncomment below to support push notification -->
         <!--
@@ -56,10 +61,6 @@
         </service>
         -->
 
-        <!-- Uncomment below line and add your Google Maps API key -->
-        <!--
-            <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR GOOGLE MAPS API KEY HERE"/>
-         -->
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE"/>
