@@ -41,6 +41,9 @@
             android:name="com.commonsware.cwac.cam2.CameraActivity"
             android:process=":cwac_cam2"
             android:theme="@style/CameraTheme"/>
+
+        <!-- Uncomment below to support push notification -->
+        <!--
         <service
             android:name=".Service.push.JasonPushRegisterService">
             <intent-filter>
@@ -53,6 +56,7 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
+        -->
 
 
         <!-- Uncomment below line and add your Google Maps API key -->

@@ -25,6 +25,10 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+    compile 'com.google.firebase:firebase-messaging:10.0.1'
+    debugCompile 'com.facebook.stetho:stetho:1.5.0'
+    debugCompile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
+    debugCompile 'com.facebook.stetho:stetho-timber:1.5.0'
     compile 'com.android.support:appcompat-v7:25.0.1'
     compile 'com.google.android.gms:play-services-maps:10.0.1'
     compile 'com.squareup.okhttp3:okhttp:3.4.2'
@@ -42,9 +46,5 @@ dependencies {
     compile 'com.github.maks:AndroidAudioRecorder:0.3.0-jasonette'
     compile 'com.github.florent37:singledateandtimepicker:1.0.8'
     compile 'com.jakewharton.timber:timber:4.5.1'
-    compile 'com.google.firebase:firebase-messaging:10.0.1'
-    debugCompile 'com.facebook.stetho:stetho:1.5.0'
-    debugCompile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
-    debugCompile 'com.facebook.stetho:stetho-timber:1.5.0'
 }
 apply plugin: 'com.google.gms.google-services'
