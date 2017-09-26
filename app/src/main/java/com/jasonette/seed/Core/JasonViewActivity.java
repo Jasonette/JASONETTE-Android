@@ -319,6 +319,8 @@ public class JasonViewActivity extends AppCompatActivity {
         // Register to receive messages.
         // We are registering an observer (mMessageReceiver) to receive Intents
         // with actions named "custom-event-name".
+        Launcher.setCurrentContext(this);
+
         LocalBroadcastManager.getInstance(this).registerReceiver(onSuccess, new IntentFilter("success"));
         LocalBroadcastManager.getInstance(this).registerReceiver(onError, new IntentFilter("error"));
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));

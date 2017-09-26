@@ -43,9 +43,27 @@
         <!-- Uncomment below line and add your Google Maps API key -->
         <!--
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR GOOGLE MAPS API KEY HERE"/>
+         -->
+
+        <!-- Uncomment below to support push notification -->
+        <!--
+        <service
+            android:name=".Service.push.JasonPushRegisterService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+            </intent-filter>
+        </service>
+        <service
+            android:name=".Service.push.JasonPushMessageService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
         -->
+
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <!-- Uncomment below line to enable $util.addressbook -->
     <!--

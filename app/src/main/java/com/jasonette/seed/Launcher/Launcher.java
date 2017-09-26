@@ -1,5 +1,6 @@
 package com.jasonette.seed.Launcher;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
@@ -32,6 +33,16 @@ public class Launcher extends Application {
     private JSONObject handlers;
     private JSONObject global;
     private JSONObject env;
+    private static Context currentContext;
+
+    // get current context from anywhere
+    public static Context getCurrentContext() {
+        return currentContext;
+    }
+    public static void setCurrentContext(Context context) {
+        currentContext = context;
+    }
+
 
     public JSONObject getEnv(){
         return this.env;
@@ -259,6 +270,7 @@ public class Launcher extends Application {
 
         }
     }
+
 
     // Private
 
