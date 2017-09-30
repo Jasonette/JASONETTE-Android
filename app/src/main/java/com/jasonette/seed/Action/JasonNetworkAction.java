@@ -119,11 +119,18 @@ public class JasonNetworkAction {
                 } else {
 
                     if(options.has("header") && options.getJSONObject("header").has("content_type")) {
+                        String content_type = options.getJSONObject("header").getString("content_type");
+                        MediaType mediaType;
+                        if (content_type.equalsIgnoreCase("json")) {
+                            mediaType = MediaType.parse("application/json; charset=utf-8");
+                        } else {
+                            mediaType = MediaType.parse(content_type);
+                        }
                         Request.Builder requestBuilder = new Request.Builder();
                         byte[] d = Base64.decode(options.getString("data"), Base64.DEFAULT);
                         request = requestBuilder
                                 .url(url)
-                                .put(RequestBody.create(MediaType.parse(options.getJSONObject("header").getString("content_type")), d))
+                                .put(RequestBody.create(mediaType, d))
                                 .build();
                     } else {
                         // Params
