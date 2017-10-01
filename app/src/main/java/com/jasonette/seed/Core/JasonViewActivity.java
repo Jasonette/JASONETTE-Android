@@ -254,6 +254,9 @@ public class JasonViewActivity extends AppCompatActivity {
             // 2. if it does, use that to construct the model and setup_body
             // 3. Go on to fetching (it will be re-rendered if fetch is successful)
 
+            // reset "offline mode"
+            model.offline = false;
+
             SharedPreferences pref = getSharedPreferences("offline", 0);
             String signature = model.url + model.params.toString();
             if(pref.contains(signature)){
@@ -262,6 +265,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     JSONObject offline_cache = new JSONObject(offline);
                     model.jason = offline_cache.getJSONObject("jason");
                     model.rendered = offline_cache.getJSONObject("rendered");
+                    model.offline = true;   // we confirm that this model is offline so it shouldn't trigger error.json when network fails
                     setup_body(model.rendered);
                 } catch (Exception e) {
                     Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
