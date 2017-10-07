@@ -248,41 +248,44 @@ public class JasonViewActivity extends AppCompatActivity {
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
-
-            // offline: true logic
-            // 1. check if the url + params signature exists
-            // 2. if it does, use that to construct the model and setup_body
-            // 3. Go on to fetching (it will be re-rendered if fetch is successful)
-
-            // reset "offline mode"
-            model.offline = false;
-
-            SharedPreferences pref = getSharedPreferences("offline", 0);
-            String signature = model.url + model.params.toString();
-            if(pref.contains(signature)){
-                String offline = pref.getString(signature, null);
-                try {
-                    JSONObject offline_cache = new JSONObject(offline);
-                    model.jason = offline_cache.getJSONObject("jason");
-                    model.rendered = offline_cache.getJSONObject("rendered");
-                    model.offline = true;   // we confirm that this model is offline so it shouldn't trigger error.json when network fails
-                    setup_body(model.rendered);
-                } catch (Exception e) {
-                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                }
-            } else {
-                if(!model.url.startsWith("file://")) {
-                    // only load loading.json if loading from a remote JSON
-                    model.fetch_local("file://loading.json");
-                }
-            }
-
-            // Fetch
-            model.fetch();
+            onRefresh();
         }
 
     }
 
+    private void onRefresh() {
+        // offline: true logic
+        // 1. check if the url + params signature exists
+        // 2. if it does, use that to construct the model and setup_body
+        // 3. Go on to fetching (it will be re-rendered if fetch is successful)
+
+        // reset "offline mode"
+        model.offline = false;
+
+        SharedPreferences pref = getSharedPreferences("offline", 0);
+        String signature = model.url + model.params.toString();
+        if(pref.contains(signature)){
+            String offline = pref.getString(signature, null);
+            try {
+                JSONObject offline_cache = new JSONObject(offline);
+                model.jason = offline_cache.getJSONObject("jason");
+                model.rendered = offline_cache.getJSONObject("rendered");
+                model.offline = true;   // we confirm that this model is offline so it shouldn't trigger error.json when network fails
+                setup_body(model.rendered);
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            }
+        } else {
+            if(!model.url.startsWith("file://")) {
+                // only load loading.json if loading from a remote JSON
+                model.fetch_local("file://loading.json");
+            }
+        }
+
+        // Fetch
+        model.fetch();
+
+    }
 
     
     @Override
@@ -1286,7 +1289,7 @@ public class JasonViewActivity extends AppCompatActivity {
                         intent.putExtra("params", params);
                     }
                     model = new JasonModel(url, intent, this);
-                    model.fetch();
+                    onRefresh();
                 } else {
                     Intent intent = new Intent(this, JasonViewActivity.class);
                     intent.putExtra("url", url);
@@ -1327,7 +1330,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
     public void reload ( final JSONObject action, JSONObject data, JSONObject event, Context context){
         if(model != null){
-            model.fetch();
+            onRefresh();
             try {
                 JasonHelper.next("success", action, new JSONObject(), event, context);
             } catch (Exception e) {
