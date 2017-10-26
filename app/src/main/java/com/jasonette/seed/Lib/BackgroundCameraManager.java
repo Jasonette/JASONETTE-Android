@@ -2,21 +2,25 @@ package com.jasonette.seed.Lib;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.SurfaceTexture;
+import android.graphics.Point;
 
 import android.hardware.Camera;
-import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.util.Log;
-import android.util.Size;
+import android.util.SparseArray;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.TextureView;
+
+import com.google.android.gms.vision.CameraSource;
+import com.google.android.gms.vision.Detector;
+import com.google.android.gms.vision.barcode.Barcode;
+import com.google.android.gms.vision.barcode.BarcodeDetector;
+import com.jasonette.seed.Core.JasonViewActivity;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Created by realitix on 06/07/17.
@@ -26,9 +30,12 @@ public class BackgroundCameraManager {
     public static int FRONT = Camera.CameraInfo.CAMERA_FACING_FRONT;
     public static int BACK = Camera.CameraInfo.CAMERA_FACING_BACK;
 
+    private BarcodeDetector detector;
+    private CameraSource cameraSource;
     private Camera camera;
     private SurfaceView view;
     private int side;
+    public boolean is_open;
 
     public BackgroundCameraManager(Activity context) {
         initView(context);
@@ -46,20 +53,68 @@ public class BackgroundCameraManager {
         if (view != null) {
             return;
         }
+        is_open = false;
         view = new SurfaceView(context);
         final SurfaceHolder holder = view.getHolder();
 
+        detector = new BarcodeDetector.Builder(context)
+                .setBarcodeFormats(Barcode.QR_CODE)
+                .build();
+        detector.setProcessor(new Detector.Processor<Barcode>() {
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public void receiveDetections(Detector.Detections<Barcode> detections) {
+                if (is_open) {
+                    final SparseArray<Barcode> detected_items = detections.getDetectedItems();
+                    if (detected_items.size() != 0) {
+                        for (int i = 0; i < detected_items.size(); i++) {
+                            int key = detected_items.keyAt(i);
+                            // get the object by the key.
+                            final Barcode obj = detected_items.get(key);
+                            is_open = false;
+                            try {
+                                JSONObject payload = new JSONObject();
+                                String content = obj.rawValue;
+                                JSONArray corners = new JSONArray();
+                                for (int j = 0; j < obj.cornerPoints.length; j++) {
+                                    Point p = obj.cornerPoints[j];
+                                    JSONObject point = new JSONObject();
+                                    point.put("top", p.y);
+                                    point.put("left", p.x);
+                                    corners.put(point);
+                                }
+                                payload.put("content", content);
+                                payload.put("corners", corners);
+                                payload.put("type", "qrcode");
+
+                                JSONObject response = new JSONObject();
+                                response.put("$jason", payload);
+
+                                ((JasonViewActivity)context).simple_trigger("$vision.onscan", response, context);
+                            } catch (Exception e) {
+
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+        cameraSource = new CameraSource
+                .Builder(context, detector)
+                .build();
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
                 startCamera(context, surfaceHolder, side);
             }
-
             @Override
             public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
 
             }
-
             @Override
             public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
                 stopCamera();
@@ -85,7 +140,6 @@ public class BackgroundCameraManager {
             return;
         }
 
-
         try {
             camera = Camera.open(cameraId);
             camera.setDisplayOrientation(getVerticalCameraDisplayOrientation(context, cameraId));
@@ -95,13 +149,18 @@ public class BackgroundCameraManager {
                 e.printStackTrace();
             }
             camera.startPreview();
-        } catch (RuntimeException e) {
+            cameraSource.start(holder);
+
+            ((JasonViewActivity)context).simple_trigger("$vision.ready", new JSONObject(), context);
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void stopCamera() {
         camera.stopPreview();
+        cameraSource.stop();
         camera.release();
     }
 
