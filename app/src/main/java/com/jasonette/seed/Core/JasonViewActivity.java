@@ -1381,6 +1381,24 @@ public class JasonViewActivity extends AppCompatActivity {
         }).start();
     }
 
+    public void scroll (final JSONObject action, JSONObject data, final JSONObject event, final Context context) {
+        try {
+            if (action.has("options")) {
+                JSONObject options = action.getJSONObject("options");
+                if (options.has("position")) {
+                    String position = options.getString("position");
+                    if(position.equalsIgnoreCase("top")) {
+                        listView.smoothScrollToPosition(0);
+                    } else if(position.equalsIgnoreCase("bottom")) {
+                        listView.smoothScrollToPosition(listView.getAdapter().getItemCount() - 1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+        JasonHelper.next("success", action, new JSONObject(), event, context);
+    }
     /*************************************************************
      *
      * JASON VIEW
