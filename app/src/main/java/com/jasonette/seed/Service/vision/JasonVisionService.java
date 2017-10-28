@@ -53,6 +53,28 @@ public class JasonVisionService {
         view = new SurfaceView(context);
         final SurfaceHolder holder = view.getHolder();
 
+        /*
+         * Barcode detection
+         *
+         * When a code is recognized, this service:
+         *
+         * [1] triggers the event "$vision.onscan" with the following payload:
+         *
+         * {
+         *   "$jason": {
+         *     "type": "org.iso.QRCode",
+         *     "content": "hello world"
+         *   }
+         * }
+         *
+         * the "type" attribute is different for iOS and Android. In case of Android it returns a number code specified at:
+         *  https://developers.google.com/android/reference/com/google/android/gms/vision/barcode/Barcode.html#constants
+         *
+         * [2] Then immediately stops scanning.
+         * [3] To start scanning again, you need to call $vision.scan again
+         *
+         */
+
         detector = new BarcodeDetector.Builder(context)
                 .setBarcodeFormats(Barcode.QR_CODE)
                 .build();
@@ -68,7 +90,6 @@ public class JasonVisionService {
                     if (detected_items.size() != 0) {
                         for (int i = 0; i < detected_items.size(); i++) {
                             int key = detected_items.keyAt(i);
-                            // get the object by the key.
                             final Barcode obj = detected_items.get(key);
                             is_open = false;
                             try {
