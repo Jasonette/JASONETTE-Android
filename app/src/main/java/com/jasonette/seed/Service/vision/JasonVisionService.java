@@ -1,9 +1,6 @@
-package com.jasonette.seed.Lib;
+package com.jasonette.seed.Service.vision;
 
 import android.app.Activity;
-import android.content.Context;
-import android.graphics.Point;
-
 import android.hardware.Camera;
 import android.util.Log;
 import android.util.SparseArray;
@@ -17,7 +14,6 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 import com.jasonette.seed.Core.JasonViewActivity;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -26,7 +22,7 @@ import java.io.IOException;
  * Created by realitix on 06/07/17.
  */
 
-public class BackgroundCameraManager {
+public class JasonVisionService {
     public static int FRONT = Camera.CameraInfo.CAMERA_FACING_FRONT;
     public static int BACK = Camera.CameraInfo.CAMERA_FACING_BACK;
 
@@ -37,7 +33,7 @@ public class BackgroundCameraManager {
     private int side;
     public boolean is_open;
 
-    public BackgroundCameraManager(Activity context) {
+    public JasonVisionService(Activity context) {
         initView(context);
     }
 
@@ -77,7 +73,7 @@ public class BackgroundCameraManager {
                             is_open = false;
                             try {
                                 JSONObject payload = new JSONObject();
-                                String content = obj.rawValue;
+                                /*
                                 JSONArray corners = new JSONArray();
                                 for (int j = 0; j < obj.cornerPoints.length; j++) {
                                     Point p = obj.cornerPoints[j];
@@ -86,9 +82,10 @@ public class BackgroundCameraManager {
                                     point.put("left", p.x);
                                     corners.put(point);
                                 }
-                                payload.put("content", content);
                                 payload.put("corners", corners);
-                                payload.put("type", "qrcode");
+                                */
+                                payload.put("content", obj.rawValue);
+                                payload.put("type", obj.format);
 
                                 JSONObject response = new JSONObject();
                                 response.put("$jason", payload);
@@ -187,3 +184,5 @@ public class BackgroundCameraManager {
         return result;
     }
 }
+
+

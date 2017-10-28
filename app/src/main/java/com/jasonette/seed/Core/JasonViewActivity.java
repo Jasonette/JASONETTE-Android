@@ -52,7 +52,7 @@ import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
-import com.jasonette.seed.Lib.BackgroundCameraManager;
+import com.jasonette.seed.Service.vision.JasonVisionService;
 import com.jasonette.seed.Lib.JasonToolbar;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
@@ -101,7 +101,7 @@ public class JasonViewActivity extends AppCompatActivity {
     public WebView backgroundWebview;
     public ImageView backgroundImageView;
     private SurfaceView backgroundCameraView;
-    public BackgroundCameraManager cameraManager;
+    public JasonVisionService cameraManager;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
@@ -1537,9 +1537,9 @@ public class JasonViewActivity extends AppCompatActivity {
                                         });
                                     } else {
                                         if (background.equalsIgnoreCase("camera")) {
-                                            int side = BackgroundCameraManager.FRONT;
+                                            int side = JasonVisionService.FRONT;
                                             if (cameraManager == null) {
-                                                cameraManager = new BackgroundCameraManager(JasonViewActivity.this);
+                                                cameraManager = new JasonVisionService(JasonViewActivity.this);
                                                 backgroundCameraView = cameraManager.getView();
                                             }
                                             cameraManager.setSide(side);
@@ -1602,16 +1602,16 @@ public class JasonViewActivity extends AppCompatActivity {
                                             backgroundWebview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
                                         }
                                     } else if (type.equalsIgnoreCase("camera")) {
-                                        int side = BackgroundCameraManager.FRONT;
+                                        int side = JasonVisionService.FRONT;
                                         if (background.has("options")) {
                                             JSONObject options = background.getJSONObject("options");
                                             if (options.has("device") && options.getString("device").equals("back")) {
-                                                side = BackgroundCameraManager.BACK;
+                                                side = JasonVisionService.BACK;
                                             }
                                         }
 
                                         if (cameraManager == null) {
-                                            cameraManager = new BackgroundCameraManager(JasonViewActivity.this);
+                                            cameraManager = new JasonVisionService(JasonViewActivity.this);
                                             backgroundCameraView = cameraManager.getView();
                                         }
                                         cameraManager.setSide(side);
