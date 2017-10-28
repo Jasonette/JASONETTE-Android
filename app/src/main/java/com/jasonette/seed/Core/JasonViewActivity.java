@@ -52,7 +52,7 @@ import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
-import com.jasonette.seed.Lib.BackgroundCameraManager;
+import com.jasonette.seed.Service.vision.JasonVisionService;
 import com.jasonette.seed.Lib.JasonToolbar;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
 import com.jasonette.seed.R;
@@ -101,12 +101,13 @@ public class JasonViewActivity extends AppCompatActivity {
     public WebView backgroundWebview;
     public ImageView backgroundImageView;
     private SurfaceView backgroundCameraView;
-    private BackgroundCameraManager cameraManager;
+    public JasonVisionService cameraManager;
     private AHBottomNavigation bottomNavigation;
     private LinearLayout footerInput;
     private View footer_input_textfield;
     private SearchView searchView;
     private HorizontalDividerItemDecoration divider;
+    private String previous_background;
     ArrayList<View> layer_items;
 
     Parcelable listState;
@@ -1470,134 +1471,160 @@ public class JasonViewActivity extends AppCompatActivity {
                             sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
 
                             // we remove the current view from the root layout
+                            Boolean needs_redraw = false;
                             if (backgroundCurrentView != null) {
+                                String current_background = style.toString();
+                                if(previous_background == null) {
+                                    needs_redraw = true;
+                                    rootLayout.removeView(backgroundCurrentView);
+                                    backgroundCurrentView = null;
+                                } else if(current_background.equalsIgnoreCase(previous_background)) {
+                                    needs_redraw = false;
+                                } else {
+                                    needs_redraw = true;
+                                    rootLayout.removeView(backgroundCurrentView);
+                                    backgroundCurrentView = null;
+                                }
+                                previous_background = current_background;
+                            } else {
+                                needs_redraw = true;
                                 rootLayout.removeView(backgroundCurrentView);
                                 backgroundCurrentView = null;
                             }
 
-                            if(style.get("background") instanceof String){
-                                String background = style.getString("background");
-                                JSONObject c = new JSONObject();
-                                c.put("url", background);
-                                if(background.matches("(file|http[s]?):\\/\\/.*")) {
-                                    if(backgroundImageView == null) {
-                                        backgroundImageView = new ImageView(JasonViewActivity.this);
-                                    }
-
-                                    backgroundCurrentView = backgroundImageView;
-
-                                    DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
-                                    // gif doesn't work with RESULT cache strategy
-                                    // TODO: Check with Glide V4
-                                    if (background.matches(".*\\.gif")) {
-                                        cacheStrategy = DiskCacheStrategy.SOURCE;
-                                    }
-
-                                    with(JasonViewActivity.this)
-                                            .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
-                                            .diskCacheStrategy(cacheStrategy)
-                                            .centerCrop()
-                                            .into(backgroundImageView);
-                                } else if(background.matches("data:image.*")){
-                                    String base64;
-                                    if(background.startsWith("data:image/jpeg")){
-                                        base64 = background.substring("data:image/jpeg;base64,".length());
-                                    } else if(background.startsWith("data:image/png")){
-                                        base64 = background.substring("data:image/png;base64,".length());
-                                    } else if(background.startsWith("data:image/gif")){
-                                        base64 = background.substring("data:image/gif;base64,".length());
-                                    } else {
-                                        base64 = "";    // exception
-                                    }
-                                    byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
-
-                                    with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
-                                        @Override
-                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
-                                        sectionLayout.setBackground(resource);
+                            if(needs_redraw) {
+                                if (style.get("background") instanceof String) {
+                                    String background = style.getString("background");
+                                    JSONObject c = new JSONObject();
+                                    c.put("url", background);
+                                    if (background.matches("(file|http[s]?):\\/\\/.*")) {
+                                        if (backgroundImageView == null) {
+                                            backgroundImageView = new ImageView(JasonViewActivity.this);
                                         }
-                                    });
-                                } else {
-                                    sectionLayout.setBackgroundColor(JasonHelper.parse_color(background));
-                                    getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
-                                }
-                            } else {
-                                JSONObject background = style.getJSONObject("background");
-                                String type = background.getString("type");
-                                if(type.equalsIgnoreCase("html")){
-                                    if(background.has("text")){
-                                        String html = background.getString("text");
-                                        CookieManager.getInstance().setAcceptCookie(true);
-                                        if(backgroundWebview==null) {
-                                            backgroundWebview = new WebView(JasonViewActivity.this);
-                                            backgroundWebview.getSettings().setDefaultTextEncodingName("utf-8");
-                                            backgroundWebview.setWebChromeClient(new WebChromeClient());
-                                            backgroundWebview.setVerticalScrollBarEnabled(false);
-                                            backgroundWebview.setHorizontalScrollBarEnabled(false);
-                                            backgroundWebview.setBackgroundColor(Color.TRANSPARENT);
-                                            WebSettings settings = backgroundWebview.getSettings();
-                                            settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
-                                            settings.setJavaScriptEnabled(true);
-                                            settings.setDomStorageEnabled(true);
-                                            settings.setMediaPlaybackRequiresUserGesture(false);
-                                            settings.setJavaScriptCanOpenWindowsAutomatically(true);
-                                            settings.setAppCachePath( getCacheDir().getAbsolutePath() );
-                                            settings.setAllowFileAccess( true );
-                                            settings.setAppCacheEnabled( true );
-                                            settings.setCacheMode( WebSettings.LOAD_DEFAULT );
 
-                                            // not interactive by default;
-                                            Boolean responds_to_webview = false;
-                                            if(background.has("action")){
-                                                if(background.getJSONObject("action").has("type")){
-                                                    String action_type = background.getJSONObject("action").getString("type");
-                                                    if(action_type.equalsIgnoreCase("$default")){
-                                                        responds_to_webview = true;
+                                        backgroundCurrentView = backgroundImageView;
+
+                                        DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
+                                        // gif doesn't work with RESULT cache strategy
+                                        // TODO: Check with Glide V4
+                                        if (background.matches(".*\\.gif")) {
+                                            cacheStrategy = DiskCacheStrategy.SOURCE;
+                                        }
+
+                                        with(JasonViewActivity.this)
+                                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                                                .diskCacheStrategy(cacheStrategy)
+                                                .centerCrop()
+                                                .into(backgroundImageView);
+                                    } else if (background.matches("data:image.*")) {
+                                        String base64;
+                                        if (background.startsWith("data:image/jpeg")) {
+                                            base64 = background.substring("data:image/jpeg;base64,".length());
+                                        } else if (background.startsWith("data:image/png")) {
+                                            base64 = background.substring("data:image/png;base64,".length());
+                                        } else if (background.startsWith("data:image/gif")) {
+                                            base64 = background.substring("data:image/gif;base64,".length());
+                                        } else {
+                                            base64 = "";    // exception
+                                        }
+                                        byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
+
+                                        with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
+                                            @Override
+                                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                                sectionLayout.setBackground(resource);
+                                            }
+                                        });
+                                    } else {
+                                        if (background.equalsIgnoreCase("camera")) {
+                                            int side = JasonVisionService.FRONT;
+                                            if (cameraManager == null) {
+                                                cameraManager = new JasonVisionService(JasonViewActivity.this);
+                                                backgroundCameraView = cameraManager.getView();
+                                            }
+                                            cameraManager.setSide(side);
+                                            backgroundCurrentView = backgroundCameraView;
+                                        } else {
+                                            sectionLayout.setBackgroundColor(JasonHelper.parse_color(background));
+                                            getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
+                                        }
+                                    }
+                                } else {
+                                    JSONObject background = style.getJSONObject("background");
+                                    String type = background.getString("type");
+                                    if (type.equalsIgnoreCase("html")) {
+                                        if (background.has("text")) {
+                                            String html = background.getString("text");
+                                            CookieManager.getInstance().setAcceptCookie(true);
+                                            if (backgroundWebview == null) {
+                                                backgroundWebview = new WebView(JasonViewActivity.this);
+                                                backgroundWebview.getSettings().setDefaultTextEncodingName("utf-8");
+                                                backgroundWebview.setWebChromeClient(new WebChromeClient());
+                                                backgroundWebview.setVerticalScrollBarEnabled(false);
+                                                backgroundWebview.setHorizontalScrollBarEnabled(false);
+                                                backgroundWebview.setBackgroundColor(Color.TRANSPARENT);
+                                                WebSettings settings = backgroundWebview.getSettings();
+                                                settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+                                                settings.setJavaScriptEnabled(true);
+                                                settings.setDomStorageEnabled(true);
+                                                settings.setMediaPlaybackRequiresUserGesture(false);
+                                                settings.setJavaScriptCanOpenWindowsAutomatically(true);
+                                                settings.setAppCachePath(getCacheDir().getAbsolutePath());
+                                                settings.setAllowFileAccess(true);
+                                                settings.setAppCacheEnabled(true);
+                                                settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+
+                                                // not interactive by default;
+                                                Boolean responds_to_webview = false;
+                                                if (background.has("action")) {
+                                                    if (background.getJSONObject("action").has("type")) {
+                                                        String action_type = background.getJSONObject("action").getString("type");
+                                                        if (action_type.equalsIgnoreCase("$default")) {
+                                                            responds_to_webview = true;
+                                                        }
                                                     }
                                                 }
+                                                if (responds_to_webview) {
+                                                    // webview receives click
+                                                    backgroundWebview.setOnTouchListener(null);
+                                                } else {
+                                                    // webview shouldn't receive click
+                                                    backgroundWebview.setOnTouchListener(new View.OnTouchListener() {
+                                                        @Override
+                                                        public boolean onTouch(View v, MotionEvent event) {
+                                                            return true;
+                                                        }
+                                                    });
+                                                }
                                             }
-                                            if(responds_to_webview){
-                                                // webview receives click
-                                                backgroundWebview.setOnTouchListener(null);
-                                            } else {
-                                                // webview shouldn't receive click
-                                                backgroundWebview.setOnTouchListener(new View.OnTouchListener() {
-                                                    @Override
-                                                    public boolean onTouch(View v, MotionEvent event) {
-                                                        return true;
-                                                    }
-                                                });
+
+                                            backgroundCurrentView = backgroundWebview;
+                                            backgroundWebview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
+                                        }
+                                    } else if (type.equalsIgnoreCase("camera")) {
+                                        int side = JasonVisionService.FRONT;
+                                        if (background.has("options")) {
+                                            JSONObject options = background.getJSONObject("options");
+                                            if (options.has("device") && options.getString("device").equals("back")) {
+                                                side = JasonVisionService.BACK;
                                             }
                                         }
 
-                                        backgroundCurrentView = backgroundWebview;
-                                        backgroundWebview.loadDataWithBaseURL("http://localhost/", html, "text/html", "utf-8", null);
-                                    }
-                                }
-                                else if(type.equalsIgnoreCase("camera")) {
-                                    int side = BackgroundCameraManager.FRONT;
-                                    if (background.has("options")) {
-                                        JSONObject options = background.getJSONObject("options");
-                                        if (options.has("device") && options.getString("device").equals("back")) {
-                                            side = BackgroundCameraManager.BACK;
+                                        if (cameraManager == null) {
+                                            cameraManager = new JasonVisionService(JasonViewActivity.this);
+                                            backgroundCameraView = cameraManager.getView();
                                         }
+                                        cameraManager.setSide(side);
+                                        backgroundCurrentView = backgroundCameraView;
                                     }
-
-                                    if (cameraManager == null) {
-                                        cameraManager = new BackgroundCameraManager(JasonViewActivity.this);
-                                        backgroundCameraView = cameraManager.getView();
-                                    }
-
-                                    backgroundCurrentView = backgroundCameraView;
-                                    cameraManager.setSide(side);
                                 }
-                            }
 
-                            if (backgroundCurrentView != null) {
-                                RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
-                                        RelativeLayout.LayoutParams.MATCH_PARENT,
-                                        RelativeLayout.LayoutParams.MATCH_PARENT);
-                                rootLayout.addView(backgroundCurrentView, 0, rlp);
+                                if (backgroundCurrentView != null) {
+                                    RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                            RelativeLayout.LayoutParams.MATCH_PARENT,
+                                            RelativeLayout.LayoutParams.MATCH_PARENT);
+                                    rootLayout.addView(backgroundCurrentView, 0, rlp);
+                                }
                             }
                         }
                     }
