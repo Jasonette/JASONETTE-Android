@@ -7,8 +7,16 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.jasonette.seed.Component.JasonComponentFactory;
+import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Core.JasonViewActivity;
 import org.json.JSONArray;
@@ -44,6 +52,7 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
     Map<Integer, String> type_to_signature = new HashMap<Integer, String>();
     ViewHolderFactory factory = new ViewHolderFactory();
     Boolean isHorizontalScroll = false;
+    ImageView backgroundImageView;
 
 
     /********************************************************
@@ -379,6 +388,16 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
 
         }
 
+        class BackgroundImage extends SimpleTarget<GlideDrawable> {
+            LinearLayout layout;
+            public BackgroundImage(LinearLayout layout) {
+                this.layout = layout;
+            }
+            @Override
+            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                this.layout.setBackground(resource);
+            }
+        }
 
         public LinearLayout buildLayout(LinearLayout layout, JSONObject item, JSONObject parent, int level) {
 
@@ -467,6 +486,33 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
                     }
                     layout.setPadding(padding_left, padding_top, padding_right, padding_bottom);
 
+                    // background
+                    if (style.has("background")) {
+                        if(level == 0) {
+                            // top level. allow image background
+                            String background = style.getString("background");
+                            if (background.matches("(file|http[s]?):\\/\\/.*")) {
+                                JSONObject c = new JSONObject();
+                                c.put("url", background);
+                                DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
+                                // gif doesn't work with RESULT cache strategy
+                                // TODO: Check with Glide V4
+                                if (background.matches(".*\\.gif")) {
+                                    cacheStrategy = DiskCacheStrategy.SOURCE;
+                                }
+                                Glide.with(root_context)
+                                        .load(JasonImageComponent.resolve_url(c, root_context))
+                                        .diskCacheStrategy(cacheStrategy)
+                                        .into(new BackgroundImage(layout));
+                            } else {
+                                // plain background
+                                layout.setBackgroundColor(JasonHelper.parse_color(style.getString("background")));
+                            }
+                        } else {
+                            layout.setBackgroundColor(JasonHelper.parse_color(style.getString("background")));
+                        }
+                    }
+
 
                     // spacing
                     for (int i = 0; i < components.length(); i++) {
@@ -501,10 +547,6 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
                         }
                     }
 
-                    // background
-                    if (style.has("background")) {
-                        layout.setBackgroundColor(JasonHelper.parse_color(style.getString("background")));
-                    }
 
                     layout.requestLayout();
 
