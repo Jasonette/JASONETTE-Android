@@ -123,6 +123,8 @@ public class JasonTextareaComponent {
                         ((EditText) view).setInputType(InputType.TYPE_CLASS_TEXT);
                     } else if(keyboard.equalsIgnoreCase("number")) {
                         ((EditText) view).setInputType(InputType.TYPE_CLASS_NUMBER);
+                    } else if(keyboard.equalsIgnoreCase("decimal")) {
+                        ((EditText) view).setInputType(InputType.TYPE_CLASS_NUMBER);
                     } else if(keyboard.equalsIgnoreCase("phone")) {
                         ((EditText) view).setInputType(InputType.TYPE_CLASS_PHONE);
                     } else if(keyboard.equalsIgnoreCase("url")) {
