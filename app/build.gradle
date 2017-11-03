@@ -34,7 +34,6 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.6.0'
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'jp.wasabeef:glide-transformations:2.0.1'
-    //compile 'com.eclipsesource.j2v8:j2v8:4.5.0@aar'
     compile 'com.eclipsesource.j2v8:j2v8:4.8.0@aar'
     compile 'com.android.support:recyclerview-v7:25.0.1'
     compile 'com.android.support:design:25.0.1'
