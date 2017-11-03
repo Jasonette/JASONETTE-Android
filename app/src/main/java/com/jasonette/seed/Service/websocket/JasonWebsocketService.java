@@ -16,9 +16,39 @@ import okio.ByteString;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
-/**
- * Created by e on 11/3/17.
- */
+/*****************************************
+
+ ### Events:
+     - There are 4 events: $websocket.onopen, $websocket.onclose, $websocket.onmessage, $websocket.onerror
+
+ [1] $websocket.onopen
+     - Triggered when $websocket.open action succeeds.
+     - You can start sending messages after this event.
+     - Response Payload: none
+
+ [2] $websocket.onclose
+     - Triggered when $websocket.close action succeeds or the socket closes
+     - Response Payload: none
+
+ [3] $websocket.onerror
+     - Triggered when there's an error
+     - Response Payload:
+     {
+         "$jason": {
+             "error": [THE ERROR MESSAGE]
+         }
+     }
+
+ [4] $websocket.onmessage
+     - Triggered whenever there's an incoming message
+     - Response Payload:
+     {
+         "$jason": {
+             "message": [THE INCOMING MESSAGE STRING]
+         }
+     }
+
+ *****************************************/
 
 public class JasonWebsocketService {
     private final class JasonWebSocketListener extends WebSocketListener {
@@ -132,7 +162,7 @@ public class JasonWebsocketService {
     public void send(JSONObject action) {
         try {
             JSONObject options = action.getJSONObject("options");
-            String text = options.getString("text");
+            String text = options.getString("message");
             ws.send(text);
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
