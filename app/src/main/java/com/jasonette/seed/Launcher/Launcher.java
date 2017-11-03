@@ -22,18 +22,31 @@ import org.json.JSONTokener;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
 
 import okhttp3.OkHttpClient;
 import com.jasonette.seed.BuildConfig;
+import com.jasonette.seed.Service.websocket.JasonWebsocketService;
 
 
 public class Launcher extends Application {
     private JSONObject handlers;
     private JSONObject global;
     private JSONObject env;
+    private JSONObject services;
     private static Context currentContext;
+
+    public void call(String serviceName, String methodName, JSONObject action) {
+        try {
+            Object service = services.get(serviceName);
+            Method method = service.getClass().getMethod(methodName, action.getClass());
+            method.invoke(service, action);
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
 
     // get current context from anywhere
     public static Context getCurrentContext() {
@@ -106,6 +119,11 @@ public class Launcher extends Application {
                 } catch (Exception e) {
                 }
             }
+
+            services = new JSONObject();
+            JasonWebsocketService websocketService = new JasonWebsocketService(this);
+            services.put("JasonWebsocketService", websocketService);
+
 
             // handler init
             handlers = new JSONObject();
