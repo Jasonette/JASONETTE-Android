@@ -558,7 +558,7 @@ public class JasonOauthAction {
                 } else {
                     uri_builder.appendQueryParameter("client_id", client_id);
                     uri_builder.appendQueryParameter("client_secret", client_secret);
-                    client = ((Launcher)context.getApplicationContext()).getHttpClient();
+                    client = ((Launcher)context.getApplicationContext()).getHttpClient(0);
                 }
 
                 Request request;

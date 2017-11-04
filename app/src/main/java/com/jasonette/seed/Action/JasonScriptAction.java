@@ -29,7 +29,7 @@ public class JasonScriptAction {
             if(options.has("items")) {
                 JSONArray items = options.getJSONArray("items");
                 JSONObject refs = new JSONObject();
-                OkHttpClient client = ((Launcher)context.getApplicationContext()).getHttpClient();
+                OkHttpClient client = ((Launcher)context.getApplicationContext()).getHttpClient(0);
 
                 JSONArray urlItems = new JSONArray();
                 JSONArray inlineItems = new JSONArray();

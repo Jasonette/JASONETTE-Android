@@ -24,6 +24,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import com.jasonette.seed.BuildConfig;
@@ -293,7 +294,14 @@ public class Launcher extends Application {
         }
     }
 
-    public OkHttpClient getHttpClient() {
-        return new OkHttpClient.Builder().build();
+    public OkHttpClient getHttpClient(long timeout) {
+        if(timeout > 0) {
+            return new OkHttpClient.Builder()
+                    .writeTimeout(timeout, TimeUnit.SECONDS)
+                    .readTimeout(timeout, TimeUnit.SECONDS)
+                    .build();
+        } else {
+            return new OkHttpClient.Builder().build();
+        }
     }
 }
