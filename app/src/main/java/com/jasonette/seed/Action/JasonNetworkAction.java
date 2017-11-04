@@ -171,7 +171,20 @@ public class JasonNetworkAction {
                 }
 
 
-                OkHttpClient client = ((Launcher)context.getApplicationContext()).getHttpClient();
+                OkHttpClient client;
+                if(options.has("timeout")) {
+                    Object timeout = options.get("timeout");
+                    if(timeout instanceof Long) {
+                        client = ((Launcher)context.getApplicationContext()).getHttpClient((long)timeout);
+                    } else if (timeout instanceof String){
+                        Long timeout_int = Long.parseLong((String)timeout);
+                        client = ((Launcher)context.getApplicationContext()).getHttpClient(timeout_int);
+                    } else {
+                        client = ((Launcher)context.getApplicationContext()).getHttpClient(0);
+                    }
+                } else{
+                    client = ((Launcher)context.getApplicationContext()).getHttpClient(0);
+                }
 
                 client.newCall(request).enqueue(new Callback() {
                     @Override

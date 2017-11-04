@@ -2,11 +2,10 @@ package com.jasonette.seed.Launcher;
 
 import android.content.res.Resources;
 import android.util.Log;
-
 import com.facebook.stetho.Stetho;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.jasonette.seed.R;
-
+import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import timber.log.Timber;
 
@@ -40,10 +39,18 @@ public class DebugLauncher extends Launcher {
     }
 
     @Override
-    public OkHttpClient getHttpClient() {
-        return new OkHttpClient.Builder()
-                .addNetworkInterceptor(new StethoInterceptor())
-                .build();
+    public OkHttpClient getHttpClient(long timeout) {
+        if(timeout > 0) {
+            return new OkHttpClient.Builder()
+                    .readTimeout(timeout, TimeUnit.SECONDS)
+                    .writeTimeout(timeout, TimeUnit.SECONDS)
+                    .addNetworkInterceptor(new StethoInterceptor())
+                    .build();
+        } else {
+            return new OkHttpClient.Builder()
+                    .addNetworkInterceptor(new StethoInterceptor())
+                    .build();
+        }
     }
 
 }

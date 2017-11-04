@@ -49,7 +49,7 @@ public class JasonModel{
     public JasonModel(String url, Intent intent, JasonViewActivity view){
         this.url = url;
         this.view = view;
-        this.client = ((Launcher)view.getApplication()).getHttpClient();
+        this.client = ((Launcher)view.getApplication()).getHttpClient(0);
         this.offline = false;
 
         // $params
