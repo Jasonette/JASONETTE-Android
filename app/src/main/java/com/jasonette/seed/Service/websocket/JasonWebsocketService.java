@@ -147,7 +147,7 @@ public class JasonWebsocketService {
         try {
             JSONObject options = action.getJSONObject("options");
             String url = options.getString("url");
-            OkHttpClient client = launcher.getHttpClient();
+            OkHttpClient client = launcher.getHttpClient(0);
             Request request = new Request.Builder().url(url).build();
             listener = new JasonWebSocketListener();
             ws = client.newWebSocket(request, listener);
