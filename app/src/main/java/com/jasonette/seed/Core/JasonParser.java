@@ -64,7 +64,7 @@ public class JasonParser {
             String dataJson = data.toString();
             String val = "{}";
 
-            V8Object parser = juice.getObject("JSON");
+            V8Object parser = juice.getObject("ST");
             // Get global variables (excluding natively injected variables which will never be used in the template)
             String globals = juice.executeStringScript("JSON.stringify(Object.keys(this).filter(function(key){return ['ST', 'to_json', 'setImmediate', 'clearImmediate', 'console'].indexOf(key) === -1;}));");
             if(data_type.equalsIgnoreCase("json")) {
