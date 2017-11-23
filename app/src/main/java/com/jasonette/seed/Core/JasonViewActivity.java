@@ -52,6 +52,7 @@ import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
+import com.jasonette.seed.Service.agent.JasonAgentService;
 import com.jasonette.seed.Service.vision.JasonVisionService;
 import com.jasonette.seed.Lib.JasonToolbar;
 import com.jasonette.seed.Lib.MaterialBadgeTextView;
@@ -112,6 +113,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
     Parcelable listState;
     JSONObject intent_to_resolve;
+    public JSONObject agents = new JSONObject();
 
     /*************************************************************
      *
@@ -1421,6 +1423,27 @@ public class JasonViewActivity extends AppCompatActivity {
 
                 if (jason.getJSONObject("$jason").has("head")) {
                     final JSONObject head = jason.getJSONObject("$jason").getJSONObject("head");
+
+                    if (head.has("agents")) {
+                        final JSONObject agents = head.getJSONObject("agents");
+                        Iterator<String> iterator = agents.keys();
+                        while (iterator.hasNext()) {
+                            final String key = iterator.next();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        JasonAgentService agentService = (JasonAgentService)((Launcher)getApplicationContext()).services.get("JasonAgentService");
+                                        WebView agent = agentService.setup(JasonViewActivity.this, agents.getJSONObject(key), key);
+                                        rootLayout.addView(agent);
+                                    } catch (JSONException e) {
+                                    }
+                                }
+                            });
+                        }
+
+                    }
+
                     if (head.has("data")) {
                         if (head.has("templates")) {
                             if (head.getJSONObject("templates").has("body")) {
@@ -1433,6 +1456,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             }
                         }
                     }
+
                 }
 
                 onLoad();
