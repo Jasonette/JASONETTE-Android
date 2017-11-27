@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import com.jasonette.seed.BuildConfig;
+import com.jasonette.seed.Service.key.JasonKeyService;
 import com.jasonette.seed.Service.websocket.JasonWebsocketService;
 
 
@@ -44,6 +45,15 @@ public class Launcher extends Application {
             Object service = services.get(serviceName);
             Method method = service.getClass().getMethod(methodName, action.getClass());
             method.invoke(service, action);
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
+    public void forward(String serviceName, String methodName, final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        try {
+            Object service = services.get(serviceName);
+            Method method = service.getClass().getMethod(methodName, action.getClass(), data.getClass(), event.getClass(), Context.class);
+            method.invoke(service, action, data, event, context);
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
@@ -124,6 +134,9 @@ public class Launcher extends Application {
             services = new JSONObject();
             JasonWebsocketService websocketService = new JasonWebsocketService(this);
             services.put("JasonWebsocketService", websocketService);
+            JasonKeyService keyService = new JasonKeyService(this);
+            services.put("JasonKeyService", keyService);
+
 
 
             // handler init
