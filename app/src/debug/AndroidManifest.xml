@@ -41,6 +41,7 @@
             android:name="com.commonsware.cwac.cam2.CameraActivity"
             android:process=":cwac_cam2"
             android:theme="@style/CameraTheme"/>
+        <activity android:name=".Lib.PasscodeActivity"/>
 
         <!-- Uncomment below to support push notification -->
         <!--

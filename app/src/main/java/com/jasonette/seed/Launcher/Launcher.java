@@ -37,7 +37,7 @@ public class Launcher extends Application {
     private JSONObject handlers;
     private JSONObject global;
     private JSONObject env;
-    private JSONObject services;
+    public JSONObject services;
     private static Context currentContext;
 
     public void call(String serviceName, String methodName, JSONObject action) {
