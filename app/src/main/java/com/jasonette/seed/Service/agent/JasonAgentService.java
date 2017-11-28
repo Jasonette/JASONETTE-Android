@@ -1,16 +1,13 @@
 package com.jasonette.seed.Service.agent;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Build;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -29,7 +26,6 @@ public class JasonAgentService {
     // Initialize
     public JasonAgentService() {
     }
-
     private class JasonAgentInterface {
 
         private WebView agent;
@@ -402,8 +398,7 @@ public class JasonAgentService {
                     String url = options.getString("url");
                     // 1. file url
                     if (url.startsWith("file://")) {
-                        // TODO
-
+                        agent.loadUrl("file:///android_asset/file/" + url.substring(7));
                     // 2. remote url
                     } else {
                         agent.loadUrl(url);
