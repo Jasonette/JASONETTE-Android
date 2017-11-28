@@ -165,12 +165,10 @@ public class JasonKeyService {
                         JSONArray filtered_components = new JSONArray();
                         for (int j = 0; j < components.length(); j++) {
                             JSONObject component = components.getJSONObject(j);
-                            if (component.has("read")) {
-                                if (component.getString("read").equalsIgnoreCase("public")) {
-                                    // "read": "public" component
-                                    // Add to filtered_components
-                                    filtered_components.put(component);
-                                }
+                            if (component.has("read") && component.getString("read").equalsIgnoreCase("public")) {
+                                // "read": "public" component
+                                // Add to filtered_components
+                                filtered_components.put(component);
                             }
                         }
 
