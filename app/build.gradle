@@ -10,6 +10,7 @@ android {
         versionCode 3
         versionName "0.1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -47,4 +48,5 @@ dependencies {
     compile 'com.github.florent37:singledateandtimepicker:1.0.8'
     compile 'com.jakewharton.timber:timber:4.5.1'
     compile 'com.google.android.gms:play-services:+'
+    compile 'com.android.support:multidex:1.0.0'
 }
