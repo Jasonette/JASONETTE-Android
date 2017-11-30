@@ -228,6 +228,15 @@ public class JasonViewActivity extends AppCompatActivity {
             } catch (Exception e) {
                 preload = null;
             }
+        } else {
+            // first time launch
+            String preload_url = getString(R.string.preload);
+            if (preload_url != null && preload_url.length() > 0) {
+                // if preload is specified, use that url
+                preload = (JSONObject)JasonHelper.read_json(preload_url, JasonViewActivity.this);
+            } else {
+                preload = null;
+            }
         }
 
         // Create model
