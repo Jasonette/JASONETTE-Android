@@ -160,9 +160,11 @@ public class JasonViewActivity extends AppCompatActivity {
         // 3. Create body.header
         if(toolbar == null) {
             toolbar = new JasonToolbar(this);
-            toolbar.setTitle("");
+            setSupportActionBar(toolbar);
+            getSupportActionBar().setTitle("");
+        } else {
+            setSupportActionBar(toolbar);
         }
-        setSupportActionBar(toolbar);
 
         // 4. Create body.sections
 
