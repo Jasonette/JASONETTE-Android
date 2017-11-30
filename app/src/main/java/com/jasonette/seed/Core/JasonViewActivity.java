@@ -82,6 +82,7 @@ public class JasonViewActivity extends AppCompatActivity {
     private RecyclerView listView;
     public String url;
     public JasonModel model;
+    public JSONObject preload;
     private ProgressBar loading;
 
     private ArrayList<RecyclerView.OnItemTouchListener> listViewOnItemTouchListeners;
@@ -161,9 +162,11 @@ public class JasonViewActivity extends AppCompatActivity {
         // 3. Create body.header
         if(toolbar == null) {
             toolbar = new JasonToolbar(this);
-            toolbar.setTitle("");
+            setSupportActionBar(toolbar);
+            getSupportActionBar().setTitle("");
+        } else {
+            setSupportActionBar(toolbar);
         }
-        setSupportActionBar(toolbar);
 
         // 4. Create body.sections
 
@@ -219,6 +222,23 @@ public class JasonViewActivity extends AppCompatActivity {
             url = intent.getStringExtra("url");
         } else {
             url = getString(R.string.url);
+        }
+        preload = null;
+        if (intent.hasExtra("preload")) {
+            try {
+                preload = new JSONObject(intent.getStringExtra("preload"));
+            } catch (Exception e) {
+                preload = null;
+            }
+        } else {
+            // first time launch
+            String preload_url = getString(R.string.preload);
+            if (preload_url != null && preload_url.length() > 0) {
+                // if preload is specified, use that url
+                preload = (JSONObject)JasonHelper.read_json(preload_url, JasonViewActivity.this);
+            } else {
+                preload = null;
+            }
         }
 
         // Create model
@@ -279,9 +299,8 @@ public class JasonViewActivity extends AppCompatActivity {
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
-            if(!model.url.startsWith("file://")) {
-                // only load loading.json if loading from a remote JSON
-                model.fetch_local("file://loading.json");
+            if (preload != null) {
+                setup_body(preload);
             }
         }
 
@@ -1292,12 +1311,18 @@ public class JasonViewActivity extends AppCompatActivity {
                         intent.putExtra("params", params);
                     }
                     model = new JasonModel(url, intent, this);
+                    if (action.getJSONObject("options").has("preload")) {
+                        preload = action.getJSONObject("options").getJSONObject("preload");
+                    }
                     onRefresh();
                 } else {
                     Intent intent = new Intent(this, JasonViewActivity.class);
                     intent.putExtra("url", url);
                     if(params != null) {
                         intent.putExtra("params", params);
+                    }
+                    if (action.getJSONObject("options").has("preload")) {
+                        intent.putExtra("preload", action.getJSONObject("options").getJSONObject("preload").toString());
                     }
                     startActivity(intent);
                 }
@@ -1710,7 +1735,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
 
                     swipeLayout.setEnabled(false);
-                    if(model.jason.has("$jason") && model.jason.getJSONObject("$jason").has("head")){
+                    if(model.jason != null && model.jason.has("$jason") && model.jason.getJSONObject("$jason").has("head")){
                         final JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
                         if(head.has("actions") && head.getJSONObject("actions").has("$pull")) {
                             // Setup refresh listener which triggers new data loading
@@ -2138,6 +2163,9 @@ public class JasonViewActivity extends AppCompatActivity {
                             JSONObject options = new JSONObject();
                             options.put("url", url);
                             options.put("transition", "replace");
+                            if (item.has("preload")) {
+                                options.put("preload", item.getJSONObject("preload"));
+                            }
                             action.put("options", options);
                             href(action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
                         }
