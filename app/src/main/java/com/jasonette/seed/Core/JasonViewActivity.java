@@ -83,6 +83,7 @@ public class JasonViewActivity extends AppCompatActivity {
     public JasonModel model;
     public JSONObject preload;
     private ProgressBar loading;
+    public Integer depth;
 
     private ArrayList<RecyclerView.OnItemTouchListener> listViewOnItemTouchListeners;
 
@@ -221,6 +222,7 @@ public class JasonViewActivity extends AppCompatActivity {
         } else {
             url = getString(R.string.url);
         }
+        depth = intent.getIntExtra("depth", 0);
         preload = null;
         if (intent.hasExtra("preload")) {
             try {
@@ -307,7 +309,33 @@ public class JasonViewActivity extends AppCompatActivity {
 
     }
 
-    
+    private void onSwitchTab(String newUrl, String newParams, Intent intent) {
+        // if tab transition, restore from stored tab using this.build()
+        try {
+            // remove all touch listeners before replacing
+            // Use case : Tab bar
+            removeListViewOnItemTouchListeners();
+            // Store the current model
+            ((Launcher)getApplicationContext()).setTabModel(model.url+model.params, model);
+            // Retrieve the new view's model
+
+            JasonModel m = ((Launcher)getApplicationContext()).getTabModel(newUrl + newParams);
+
+            if (m == null) {
+                // refresh
+                removeListViewOnItemTouchListeners();
+                model = new JasonModel(newUrl, intent, this);
+                onRefresh();
+            } else {
+                // build
+                model = m;
+                setup_body(m.rendered);
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
     @Override
     protected void onPause() {
         // Unregister since the activity is paused.
@@ -330,6 +358,7 @@ public class JasonViewActivity extends AppCompatActivity {
             if (model.params != null) temp_model.put("params", model.params);
             if (model.session != null) temp_model.put("session", model.session);
             if (model.action != null) temp_model.put("action", model.action);
+            temp_model.put("depth", depth);
             if (model.url!= null){
                 editor.putString(model.url, temp_model.toString());
                 editor.commit();
@@ -363,7 +392,9 @@ public class JasonViewActivity extends AppCompatActivity {
                 if(temp_model.has("state")) model.state = temp_model.getJSONObject("state");
                 if(temp_model.has("var")) model.var = temp_model.getJSONObject("var");
                 if(temp_model.has("cache")) model.cache = temp_model.getJSONObject("cache");
-                if(temp_model.has("params")) model.params = temp_model.getJSONObject("params");
+                if (temp_model.getInt("depth") == depth) {
+                    if (temp_model.has("params")) model.params = temp_model.getJSONObject("params");
+                }
                 if(temp_model.has("session")) model.session = temp_model.getJSONObject("session");
                 if(temp_model.has("action")) model.action = temp_model.getJSONObject("action");
 
@@ -1299,7 +1330,20 @@ public class JasonViewActivity extends AppCompatActivity {
                 editor.remove(url);
                 editor.commit();
 
-                if(transition.equalsIgnoreCase("replace")){
+                if(transition.equalsIgnoreCase("switchtab")) {
+                    if (action.getJSONObject("options").has("preload")) {
+                        preload = action.getJSONObject("options").getJSONObject("preload");
+                    }
+                    Intent intent = new Intent(this, JasonViewActivity.class);
+                    intent.putExtra("depth", depth);
+                    if(params!=null) {
+                        intent.putExtra("params", params);
+                        onSwitchTab(url, params, intent);
+                    } else {
+                        params = "{}";
+                        onSwitchTab(url, params, intent);
+                    }
+                } else if(transition.equalsIgnoreCase("replace")){
                     // remove all touch listeners before replacing
                     // Use case : Tab bar
                     removeListViewOnItemTouchListeners();
@@ -1308,6 +1352,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     if(params!=null) {
                         intent.putExtra("params", params);
                     }
+                    intent.putExtra("depth", depth);
                     model = new JasonModel(url, intent, this);
                     if (action.getJSONObject("options").has("preload")) {
                         preload = action.getJSONObject("options").getJSONObject("preload");
@@ -1322,6 +1367,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     if (action.getJSONObject("options").has("preload")) {
                         intent.putExtra("preload", action.getJSONObject("options").getJSONObject("preload").toString());
                     }
+                    intent.putExtra("depth", depth+1);
                     startActivity(intent);
                 }
             }
@@ -2126,7 +2172,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             if (href.has("transition")) {
                                 // nothing
                             } else {
-                                href.put("transition", "replace");
+                                href.put("transition", "switchtab");
                             }
                             action.put("options", href);
                             href(action, new JSONObject(), new JSONObject(), JasonViewActivity.this);
@@ -2138,7 +2184,7 @@ public class JasonViewActivity extends AppCompatActivity {
                             JSONObject action = new JSONObject();
                             JSONObject options = new JSONObject();
                             options.put("url", url);
-                            options.put("transition", "replace");
+                            options.put("transition", "switchtab");
                             if (item.has("preload")) {
                                 options.put("preload", item.getJSONObject("preload"));
                             }
