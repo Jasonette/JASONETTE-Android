@@ -277,6 +277,57 @@ public class JasonViewActivity extends AppCompatActivity {
         }
 
     }
+    private void setup_agents() {
+        try {
+            JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+            if (head.has("agents")) {
+                final JSONObject agents = head.getJSONObject("agents");
+                Iterator<String> iterator = agents.keys();
+                while (iterator.hasNext()) {
+                    final String key = iterator.next();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                JasonAgentService agentService = (JasonAgentService) ((Launcher) getApplicationContext()).services.get("JasonAgentService");
+                                WebView agent = agentService.setup(JasonViewActivity.this, agents.getJSONObject(key), key);
+                            } catch (JSONException e) {
+                            }
+                        }
+                    });
+                }
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+    private void clear_agents() {
+        try {
+            JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+            final JSONObject agents = head.getJSONObject("agents");
+            Iterator<String> iterator = agents.keys();
+            while (iterator.hasNext()) {
+                final String key = iterator.next();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            JasonAgentService agentService = (JasonAgentService) ((Launcher) getApplicationContext()).services.get("JasonAgentService");
+                            JSONObject clearAction = new JSONObject();
+                            JSONObject options = new JSONObject();
+                            options.put("id", key);
+                            clearAction.put("options", options);
+                            agentService.clear(clearAction, JasonViewActivity.this);
+                        } catch (JSONException e) {
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+
+        }
+    }
 
     private void onRefresh() {
         // offline: true logic
@@ -319,8 +370,11 @@ public class JasonViewActivity extends AppCompatActivity {
             removeListViewOnItemTouchListeners();
             // Store the current model
             ((Launcher)getApplicationContext()).setTabModel(model.url+model.params, model);
-            // Retrieve the new view's model
 
+            // clear agents
+            clear_agents();;
+
+            // Retrieve the new view's model
             JasonModel m = ((Launcher)getApplicationContext()).getTabModel(newUrl + newParams);
 
             if (m == null) {
@@ -331,6 +385,7 @@ public class JasonViewActivity extends AppCompatActivity {
             } else {
                 // build
                 model = m;
+                setup_agents();
                 setup_body(m.rendered);
             }
         } catch (Exception e) {
@@ -345,6 +400,11 @@ public class JasonViewActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(onSuccess);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(onError);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(onCall);
+
+        // Clear agents
+        clear_agents();
+
+
 
         // Store model to shared preference
         SharedPreferences pref = getSharedPreferences("model", 0);

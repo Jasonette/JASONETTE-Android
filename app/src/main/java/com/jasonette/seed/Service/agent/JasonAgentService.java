@@ -334,9 +334,12 @@ public class JasonAgentService {
                                 }
                             });
 
-                            JSONObject payload = (JSONObject)view.getTag();
-                            payload.put("state", "rendered");
-                            view.setTag(payload);
+                            // only set state to rendered if it's not about:blank
+                            if (!url.equalsIgnoreCase("about:blank")) {
+                                JSONObject payload = (JSONObject)view.getTag();
+                                payload.put("state", "rendered");
+                                view.setTag(payload);
+                            }
                         } catch (Exception e) {
                             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
@@ -663,6 +666,13 @@ public class JasonAgentService {
                     ((JasonViewActivity) context).runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            try {
+                                JSONObject newTag = (JSONObject)agent.getTag();
+                                newTag.put("state", "empty");
+                                agent.setTag(newTag);
+                            } catch (Exception e) {
+
+                            }
                             agent.loadUrl("about:blank");
                         }
                     });
