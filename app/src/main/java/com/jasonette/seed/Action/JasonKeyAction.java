@@ -19,11 +19,11 @@ public class JasonKeyAction {
     public void remove(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         _forward("remove", action, data, event, context);
     }
-    public void set(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
-        _forward("set", action, data, event, context);
+    public void update(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        _forward("update", action, data, event, context);
     }
-    public void reset(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
-        _forward("reset", action, data, event, context);
+    public void clear(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        _forward("clear", action, data, event, context);
     }
     public void password(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         _forward("password", action, data, event, context);

@@ -33,10 +33,10 @@ public class JasonKeyService {
             add(action, data, event, context);
         } else if (caller.equalsIgnoreCase("remove")) {
             remove(action, data, event, context);
-        } else if (caller.equalsIgnoreCase("set")) {
-            set(action, data, event, context);
-        } else if (caller.equalsIgnoreCase("reset")) {
-            reset(action, data, event, context);
+        } else if (caller.equalsIgnoreCase("update")) {
+            update(action, data, event, context);
+        } else if (caller.equalsIgnoreCase("clear")) {
+            clear(action, data, event, context);
         } else if (caller.equalsIgnoreCase("password")) {
             password(action, data, event, context);
        }
@@ -425,7 +425,7 @@ public class JasonKeyService {
     /*********************************
 
      {
-         "type": "$key.set",
+         "type": "$key.update",
          "options": {
              "index": "{{$jason.index}}",
              "components": [{
@@ -439,14 +439,14 @@ public class JasonKeyService {
      }
 
      *********************************/
-    public void set(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+    public void update(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         JSONObject parsed = _parse(action, context);
         try {
             Boolean isRemote = parsed.getBoolean("remote");
             String url = parsed.getString("url");
             if (isRemote) {
                 JSONObject error = new JSONObject();
-                error.put("message", "You are not allowed to set keys remotely");
+                error.put("message", "You are not allowed to update keys remotely");
                 JasonHelper.next("error", action, error, event, context);
             } else {
                 // local
@@ -501,7 +501,7 @@ public class JasonKeyService {
                     authenticated = false;
 
                 } else {
-                    _auth("set", action, data, event, context);
+                    _auth("update", action, data, event, context);
                 }
             }
         } catch (Exception e) {
@@ -515,19 +515,19 @@ public class JasonKeyService {
     /*********************************
 
      {
-         "type": "$key.reset",
+         "type": "$key.clear",
      }
 
      *********************************/
 
-    public void reset(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+    public void clear(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         JSONObject parsed = _parse(action, context);
         try {
             Boolean isRemote = parsed.getBoolean("remote");
             String url = parsed.getString("url");
             if (isRemote) {
                 JSONObject error = new JSONObject();
-                error.put("message", "You are not allowed to reset keys remotely");
+                error.put("message", "You are not allowed to clear keys remotely");
                 JasonHelper.next("error", action, error, event, context);
             } else {
                 if (authenticated) {
@@ -536,7 +536,7 @@ public class JasonKeyService {
                     JasonHelper.next("success", action, res, event, context);
                     authenticated = false;
                 } else {
-                    _auth("reset", action, data, event, context);
+                    _auth("clear", action, data, event, context);
                 }
             }
         } catch (Exception e) {
