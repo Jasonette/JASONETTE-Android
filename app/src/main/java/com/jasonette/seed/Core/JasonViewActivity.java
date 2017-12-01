@@ -32,6 +32,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -1714,6 +1715,39 @@ public class JasonViewActivity extends AppCompatActivity {
                                     RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
                                             RelativeLayout.LayoutParams.MATCH_PARENT,
                                             RelativeLayout.LayoutParams.MATCH_PARENT);
+
+                                    // Update Layout after the rootLayout has finished rendering in order to change the background dimension
+                                    rootLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+                                        @Override
+                                        public void onGlobalLayout() {
+                                            if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                                                rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                                            }
+                                            else {
+                                                rootLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                                            }
+
+                                            // header
+                                            int toolbarHeight = 0;
+                                            if (toolbar != null) { toolbarHeight = toolbar.getHeight(); }
+
+                                            // footer.tabs
+                                            int tabsHeight = 0;
+                                            if (bottomNavigation != null) { tabsHeight = bottomNavigation.getHeight(); }
+
+                                            // footer.input
+                                            int inputHeight = 0;
+                                            if (footerInput != null) { inputHeight = footerInput.getHeight(); }
+
+                                            RelativeLayout.LayoutParams newrlp = new RelativeLayout.LayoutParams(
+                                                    RelativeLayout.LayoutParams.MATCH_PARENT,
+                                                    RelativeLayout.LayoutParams.MATCH_PARENT);
+                                            newrlp.setMargins(0, toolbarHeight, 0, tabsHeight + inputHeight);
+                                            backgroundCurrentView.setLayoutParams(newrlp);
+                                        }
+                                    });
+
                                     rootLayout.addView(backgroundCurrentView, 0, rlp);
                                 }
                             }
@@ -2610,7 +2644,6 @@ public class JasonViewActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
-
     }
 
     /******************
