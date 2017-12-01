@@ -1433,7 +1433,14 @@ public class JasonViewActivity extends AppCompatActivity {
                         intent.putExtra("preload", action.getJSONObject("options").getJSONObject("preload").toString());
                     }
                     intent.putExtra("depth", depth+1);
-                    startActivity(intent);
+
+                    // Start an Intent with a callback option:
+                    // 1. call dispatchIntent
+                    // 2. the intent will return with JasonCallback.href
+                    JSONObject callback = new JSONObject();
+                    callback.put("class", "JasonCallback");
+                    callback.put("method", "href");
+                    JasonHelper.dispatchIntent(action, data, event, context, intent, callback);
                 }
             }
 
@@ -1447,6 +1454,18 @@ public class JasonViewActivity extends AppCompatActivity {
     }
     public void close ( final JSONObject action, JSONObject data, JSONObject event, Context context){
        finish();
+    }
+    public void ok ( final JSONObject action, JSONObject data, JSONObject event, Context context){
+        try {
+            Intent intent = new Intent();
+            if (action.has("options")) {
+                intent.putExtra("return", action.get("options").toString());
+            }
+            setResult(RESULT_OK, intent);
+            finish();
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
     }
     public void unlock ( final JSONObject action, JSONObject data, JSONObject event, Context context){
         JasonViewActivity.this.runOnUiThread(new Runnable() {
