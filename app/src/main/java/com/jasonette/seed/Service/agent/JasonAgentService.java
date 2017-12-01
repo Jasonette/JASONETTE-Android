@@ -258,7 +258,7 @@ public class JasonAgentService {
 
     }
 
-    public WebView setup(final JasonViewActivity context, JSONObject options, final String id) {
+    public WebView setup(final JasonViewActivity context, final JSONObject options, final String id) {
 
         /**
 
@@ -322,20 +322,41 @@ public class JasonAgentService {
                                 @Override
                                 public void run() {
                                     try {
-                                        JSONObject options = new JSONObject();
-                                        options.put("id", id);
-                                        options.put("url", url);
+                                        JSONObject attrs = new JSONObject();
+                                        attrs.put("id", id);
+                                        attrs.put("url", url);
                                         JSONObject res = new JSONObject();
-                                        res.put("$jason", options);
+                                        res.put("$jason", attrs);
                                         context.simple_trigger("$agent.ready", res, context);
                                     } catch (Exception e) {
                                         Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                     }
                                 }
                             });
+
+                            JSONObject payload = (JSONObject)view.getTag();
+                            payload.put("state", "rendered");
+                            view.setTag(payload);
                         } catch (Exception e) {
                             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
+                    }
+                    @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                        try {
+                            JSONObject payload = (JSONObject)view.getTag();
+                            if (payload.has("state") && payload.getString("state").equalsIgnoreCase("rendered")) {
+                                if (options.has("action")) {
+                                    Intent intent = new Intent("call");
+                                    intent.putExtra("action", options.get("action").toString());
+                                    intent.putExtra("data", "{\"url\": \"" + url + "\"}");
+                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                    return true;
+                                }
+                            }
+                        } catch (Exception e) {
+
+                        }
+                        return false;
                     }
                 });
                 agent.setVerticalScrollBarEnabled(false);
@@ -497,6 +518,12 @@ public class JasonAgentService {
 
             if (jsonrpc.has("id")) {
                 String identifier = jsonrpc.getString("id");
+
+                // Special case handling for $webcontainers (For sandboxing per view)
+                if (identifier.equalsIgnoreCase("$webcontainer")) {
+                    identifier = "$webcontainer@" + ((JasonViewActivity)context).url;
+                }
+
                 if(((JasonViewActivity)context).agents.has(identifier)) {
                     // Find agent by ID
                    final WebView agent = (WebView)((JasonViewActivity)context).agents.get(identifier);

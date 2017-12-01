@@ -11,6 +11,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.bumptech.glide.request.target.ViewTarget;
+import com.jasonette.seed.Core.JasonModel;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.R;
@@ -37,6 +38,7 @@ public class Launcher extends Application {
     private JSONObject handlers;
     private JSONObject global;
     private JSONObject env;
+    private JSONObject models;
     public JSONObject services;
     private static Context currentContext;
 
@@ -56,6 +58,25 @@ public class Launcher extends Application {
     }
     public static void setCurrentContext(Context context) {
         currentContext = context;
+    }
+
+    public void setTabModel(String url, JasonModel model) {
+       try {
+            models.put(url, model);
+       } catch (Exception e) {
+
+       }
+    }
+    public JasonModel getTabModel(String url) {
+        try {
+            if (models.has(url)) {
+                return (JasonModel)models.get(url);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 
@@ -153,6 +174,7 @@ public class Launcher extends Application {
             }
 
             this.env = new JSONObject();
+            this.models = new JSONObject();
 
             // device info
             JSONObject device = new JSONObject();
