@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Jasonette</string>
     <string name="url">https://jasonette.github.io/Jasonpedia/hello.json</string>
+    <string name="launch">file://preload.json</string>
 </resources>

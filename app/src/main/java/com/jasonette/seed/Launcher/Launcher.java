@@ -11,6 +11,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.bumptech.glide.request.target.ViewTarget;
+import com.jasonette.seed.Core.JasonModel;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.R;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import com.jasonette.seed.BuildConfig;
 import com.jasonette.seed.Service.key.JasonKeyService;
+import com.jasonette.seed.Service.agent.JasonAgentService;
 import com.jasonette.seed.Service.websocket.JasonWebsocketService;
 
 
@@ -37,14 +39,15 @@ public class Launcher extends Application {
     private JSONObject handlers;
     private JSONObject global;
     private JSONObject env;
+    private JSONObject models;
     public JSONObject services;
     private static Context currentContext;
 
-    public void call(String serviceName, String methodName, JSONObject action) {
+    public void call(String serviceName, String methodName, JSONObject action, Context context) {
         try {
             Object service = services.get(serviceName);
-            Method method = service.getClass().getMethod(methodName, action.getClass());
-            method.invoke(service, action);
+            Method method = service.getClass().getMethod(methodName, action.getClass(), Context.class);
+            method.invoke(service, action, context);
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
@@ -65,6 +68,25 @@ public class Launcher extends Application {
     }
     public static void setCurrentContext(Context context) {
         currentContext = context;
+    }
+
+    public void setTabModel(String url, JasonModel model) {
+       try {
+            models.put(url, model);
+       } catch (Exception e) {
+
+       }
+    }
+    public JasonModel getTabModel(String url) {
+        try {
+            if (models.has(url)) {
+                return (JasonModel)models.get(url);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 
@@ -133,9 +155,11 @@ public class Launcher extends Application {
 
             services = new JSONObject();
             JasonWebsocketService websocketService = new JasonWebsocketService(this);
+            JasonAgentService agentService = new JasonAgentService();
             services.put("JasonWebsocketService", websocketService);
             JasonKeyService keyService = new JasonKeyService(this);
             services.put("JasonKeyService", keyService);
+            services.put("JasonAgentService", agentService);
 
 
 
@@ -163,6 +187,7 @@ public class Launcher extends Application {
             }
 
             this.env = new JSONObject();
+            this.models = new JSONObject();
 
             // device info
             JSONObject device = new JSONObject();

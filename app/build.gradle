@@ -10,6 +10,7 @@ android {
         versionCode 3
         versionName "0.1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -49,4 +50,5 @@ dependencies {
     compile 'com.google.android.gms:play-services:+'
     compile 'com.scottyab:secure-preferences-lib:0.1.4'
     compile 'com.github.gliechtenstein:PasscodeView:master'
+    compile 'com.android.support:multidex:1.0.1'
 }
