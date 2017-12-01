@@ -206,6 +206,13 @@ public class JasonAgentService {
                         }
 
                      ************************/
+
+                    // If the parent is not the same, don't trigger
+                    String current_url = ((JasonViewActivity) context).model.url;
+                    if (transaction.has("parent") && !transaction.getString("parent").equalsIgnoreCase(current_url)) {
+                        return;
+                    }
+
                     JSONObject trigger = message.getJSONObject("trigger");
                     JSONObject m = new JSONObject();
                     if(trigger.has("name")) {
@@ -394,6 +401,7 @@ public class JasonAgentService {
                 // 2.3.2. Add 'id' and 'state'
                 payload.put("to", id);
                 payload.put("state", "empty");
+                payload.put("parent", ((JasonViewActivity)context).model.url);
                 // 2.3.3. Set
                 agent.setTag(payload);
 
