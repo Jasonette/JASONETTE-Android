@@ -233,13 +233,15 @@ public class JasonViewActivity extends AppCompatActivity {
                 preload = null;
             }
         } else {
-            // first time launch
-            String preload_url = getString(R.string.preload);
-            if (preload_url != null && preload_url.length() > 0) {
-                // if preload is specified, use that url
-                preload = (JSONObject)JasonHelper.read_json(preload_url, JasonViewActivity.this);
-            } else {
-                preload = null;
+            if (intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+                // first time launch
+                String launch_url = getString(R.string.launch);
+                if (launch_url != null && launch_url.length() > 0) {
+                    // if preload is specified, use that url
+                    preload = (JSONObject)JasonHelper.read_json(launch_url, JasonViewActivity.this);
+                } else {
+                    preload = null;
+                }
             }
         }
 
