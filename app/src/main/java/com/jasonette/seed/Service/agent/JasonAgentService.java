@@ -521,7 +521,7 @@ public class JasonAgentService {
 
                 // Special case handling for $webcontainers (For sandboxing per view)
                 if (identifier.equalsIgnoreCase("$webcontainer")) {
-                    identifier = "$webcontainer@" + ((JasonViewActivity)context).url;
+                    identifier = "$webcontainer@" + ((JasonViewActivity)context).model.url;
                 }
 
                 if(((JasonViewActivity)context).agents.has(identifier)) {
@@ -598,5 +598,81 @@ public class JasonAgentService {
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
+    }
+    public void refresh(final JSONObject action, final Context context) {
+        // Get JSON RPC object
+        /**
+
+         action := {
+             "type": "$agent.refresh",
+             "options": {
+                "id": [AGENT ID]
+             },
+             "success": [Next Jasonette Action]
+         }
+
+         **/
+        try {
+            JSONObject jsonrpc = action.getJSONObject("options");
+            if (jsonrpc.has("id")) {
+                String identifier = jsonrpc.getString("id");
+                if (identifier.equalsIgnoreCase("$webcontainer")) {
+                    identifier = "$webcontainer@" + ((JasonViewActivity) context).model.url;
+                }
+                if (((JasonViewActivity) context).agents.has(identifier)) {
+                    final WebView agent = (WebView) ((JasonViewActivity) context).agents.get(identifier);
+                    // Find agent by ID
+                    ((JasonViewActivity) context).runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            agent.loadUrl(agent.getUrl());
+                        }
+                    });
+                    JasonHelper.next("success", action, new JSONObject(), new JSONObject(), context);
+                    return;
+                }
+            }
+        } catch (Exception e) {
+
+        }
+        JasonHelper.next("error", action, new JSONObject(), new JSONObject(), context);
+    }
+    public void clear(final JSONObject action, final Context context) {
+        // Get JSON RPC object
+        /**
+
+         action := {
+             "type": "$agent.clear",
+             "options": {
+                 "id": [AGENT ID]
+             },
+             "success": [Next Jasonette Action]
+         }
+
+         **/
+        try {
+            JSONObject jsonrpc = action.getJSONObject("options");
+            if (jsonrpc.has("id")) {
+                String identifier = jsonrpc.getString("id");
+                if (identifier.equalsIgnoreCase("$webcontainer")) {
+                    identifier = "$webcontainer@" + ((JasonViewActivity) context).model.url;
+                }
+                if (((JasonViewActivity) context).agents.has(identifier)) {
+                    // Find agent by ID
+                    final WebView agent = (WebView) ((JasonViewActivity) context).agents.get(identifier);
+                    ((JasonViewActivity) context).runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            agent.loadUrl("about:blank");
+                        }
+                    });
+                    JasonHelper.next("success", action, new JSONObject(), new JSONObject(), context);
+                    return;
+                }
+            }
+        } catch (Exception e) {
+
+        }
+        JasonHelper.next("error", action, new JSONObject(), new JSONObject(), context);
     }
 }
