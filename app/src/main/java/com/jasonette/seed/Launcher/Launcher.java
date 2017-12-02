@@ -43,6 +43,7 @@ public class Launcher extends Application {
     public JSONObject services;
     private static Context currentContext;
 
+
     public void call(String serviceName, String methodName, JSONObject action, Context context) {
         try {
             Object service = services.get(serviceName);
@@ -269,7 +270,11 @@ public class Launcher extends Application {
                 }
 
                 String classname = handler.getString("class");
-                classname = "com.jasonette.seed.Action." + classname;
+                if (classname.startsWith("com.jasonette")) {
+                   // absolute path. don't touch
+                } else {
+                    classname = "com.jasonette.seed.Action." + classname;
+                }
                 String methodname = handler.getString("method");
 
                 Object module;
