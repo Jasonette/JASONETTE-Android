@@ -12,6 +12,8 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
@@ -315,7 +317,42 @@ public class JasonAgentService {
                 CookieManager.getInstance().setAcceptCookie(true);
                 agent = new WebView(context);
                 agent.getSettings().setDefaultTextEncodingName("utf-8");
-                agent.setWebChromeClient(new WebChromeClient());
+
+                if (id.startsWith("$webcontainer")) {
+                    ProgressBar pBar;
+                    if (agent.findViewById(42) == null) {
+                        pBar = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
+                        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                        layoutParams.addRule(RelativeLayout.ALIGN_BOTTOM, agent.getId());
+                        layoutParams.height = 5;
+                        pBar.setLayoutParams(layoutParams);
+                        int color;
+                        if (options.has("style") && options.getJSONObject("style").has("progress")) {
+                            color = JasonHelper.parse_color(options.getJSONObject("style").getString("progress"));
+                        } else {
+                            color = JasonHelper.parse_color("#007AFF");
+                        }
+                        pBar.getProgressDrawable().setColorFilter( color, android.graphics.PorterDuff.Mode.SRC_IN);
+                        pBar.setId(42);
+                    } else {
+                        pBar = (ProgressBar) agent.findViewById(42);
+                    }
+                    final ProgressBar progressBar = pBar;
+                    agent.addView(progressBar);
+                    agent.setWebChromeClient(new WebChromeClient() {
+                        public void onProgressChanged(WebView view, int progress) {
+                            progressBar.setProgress(progress);
+                            if (progress == 100) {
+                                progressBar.setVisibility(View.GONE);
+
+                            } else {
+                                progressBar.setVisibility(View.VISIBLE);
+                            }
+                        }
+                    });
+                } else {
+                    agent.setWebChromeClient(new WebChromeClient());
+                }
                 agent.setWebViewClient(new WebViewClient() {
                     public void onPageFinished(WebView view, final String url) {
                         // Inject agent.js
@@ -371,7 +408,11 @@ public class JasonAgentService {
                 });
                 agent.setVerticalScrollBarEnabled(false);
                 agent.setHorizontalScrollBarEnabled(false);
-                agent.setBackgroundColor(Color.TRANSPARENT);
+                if (options.has("style") && options.getJSONObject("style").has("background")) {
+                    agent.setBackgroundColor(JasonHelper.parse_color(options.getJSONObject("style").getString("background")));
+                } else {
+                    agent.setBackgroundColor(Color.TRANSPARENT);
+                }
                 WebSettings settings = agent.getSettings();
                 settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
                 settings.setJavaScriptEnabled(true);
