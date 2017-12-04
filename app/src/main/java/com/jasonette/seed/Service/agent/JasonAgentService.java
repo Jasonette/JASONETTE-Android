@@ -62,35 +62,35 @@ public class JasonAgentService {
              1. Request
 
              {
-                 "request": {
-                     "data": [RPC Object],
-                     "nonce": [Auto-generated nonce to handle return values later]
-                 }
+             "request": {
+             "data": [RPC Object],
+             "nonce": [Auto-generated nonce to handle return values later]
+             }
              }
 
              2. Response
 
              {
-                 "response": {
-                     "data": [Return Value]
-                 }
+             "response": {
+             "data": [Return Value]
+             }
              }
 
              3. Trigger
 
              {
-                 "trigger": {
-                     "name": [Jasonette Event Name],
-                     "data": [The "$jason" value to pass along with the event]
-                 }
+             "trigger": {
+             "name": [Jasonette Event Name],
+             "data": [The "$jason" value to pass along with the event]
+             }
              }
 
              4. Href
 
              {
-                 "href": {
-                     "data": [Jasonette HREF object]
-                 }
+             "href": {
+             "data": [Jasonette HREF object]
+             }
              }
 
              ****************************************/
@@ -105,10 +105,10 @@ public class JasonAgentService {
                      1. Request: Agent making request to another agent
 
                      {
-                         "request": {
-                             "data": [RPC Object],
-                             "nonce": [Auto-generated nonce to handle return values later]
-                         }
+                     "request": {
+                     "data": [RPC Object],
+                     "nonce": [Auto-generated nonce to handle return values later]
+                     }
                      }
                      ***/
 
@@ -117,15 +117,15 @@ public class JasonAgentService {
                         JSONObject content = message.getJSONObject("request");
 
                         /**
-                            Compose an agent_request object
+                         Compose an agent_request object
 
-                            agent_request := {
-                                "from": [SOURCE AGENT ID],
-                                "request": [JSON-RPC Object],
-                                "nonce": [NONCE]
-                            }
+                         agent_request := {
+                         "from": [SOURCE AGENT ID],
+                         "request": [JSON-RPC Object],
+                         "nonce": [NONCE]
+                         }
 
-                        **/
+                         **/
                         JSONObject agent_request = new JSONObject();
                         agent_request.put("from", transaction.getString("to"));
                         agent_request.put("request", content.getJSONObject("data"));
@@ -138,13 +138,13 @@ public class JasonAgentService {
                 } else if (message.has("response")) {
                     /*****************
 
-                        2. Response
+                     2. Response
 
-                        {
-                            "response": {
-                                "data": [Return Value]
-                            }
-                        }
+                     {
+                     "response": {
+                     "data": [Return Value]
+                     }
+                     }
 
                      *****************/
                     if (transaction.has("to")) {
@@ -157,15 +157,15 @@ public class JasonAgentService {
                         // "from": exists => the caller request was from another agent
                         if (transaction.has("from")) {
                             /**
-                                Compose an agent_request object
+                             Compose an agent_request object
 
-                                agent_request := {
-                                    "from": [SOURCE AGENT ID],
-                                    "request": [JSON-RPC Object],
-                                    "nonce": [NONCE]
-                                }
+                             agent_request := {
+                             "from": [SOURCE AGENT ID],
+                             "request": [JSON-RPC Object],
+                             "nonce": [NONCE]
+                             }
 
-                            **/
+                             **/
                             JSONArray params = new JSONArray();
                             params.put(param);
 
@@ -198,7 +198,7 @@ public class JasonAgentService {
                                 request(null, agent_request, this.context);
                             }
 
-                        // "from" doesn't exist => call from Jasonette => return via success callback
+                            // "from" doesn't exist => call from Jasonette => return via success callback
                         } else {
                             if (transaction.has("jason")) {
                                 JSONObject original_action = transaction.getJSONObject("jason");
@@ -214,12 +214,12 @@ public class JasonAgentService {
 
                      3. Trigger
 
-                        {
-                            "trigger": {
-                                "name": [Jasonette Event Name],
-                                "data": [The "$jason" value to pass along with the event]
-                            }
-                        }
+                     {
+                     "trigger": {
+                     "name": [Jasonette Event Name],
+                     "data": [The "$jason" value to pass along with the event]
+                     }
+                     }
 
                      ************************/
 
@@ -250,13 +250,13 @@ public class JasonAgentService {
                 } else if (message.has("href")) {
                     /************************************
 
-                        4. Href
+                     4. Href
 
-                        {
-                            "href": {
-                                "data": [Jasonette HREF object]
-                            }
-                        }
+                     {
+                     "href": {
+                     "data": [Jasonette HREF object]
+                     }
+                     }
 
                      ************************************/
 
@@ -285,34 +285,34 @@ public class JasonAgentService {
 
         /**
 
-            1. Initialize WebView
-                - Does an agent with the ID exist already?
-                    YES => Use that one
-                    NO =>
-                        1. Create a new WebView
-                        2. Attach to the parent view's agents object
+         1. Initialize WebView
+         - Does an agent with the ID exist already?
+         YES => Use that one
+         NO =>
+         1. Create a new WebView
+         2. Attach to the parent view's agents object
 
-            2. Creating a WebView
-                - Hide it
-                - Set metadata payload on it so it can be referenced later
+         2. Creating a WebView
+         - Hide it
+         - Set metadata payload on it so it can be referenced later
 
-            3. Filling a WebView
-                - Is the state "empty"?
-                    YES => Load
-                    NO => Ignore
+         3. Filling a WebView
+         - Is the state "empty"?
+         YES => Load
+         NO => Ignore
 
          **/
         WebView agent;
 
 
         /*******************************************
-            1. Initialize WebView
+         1. Initialize WebView
 
-             - Does an agent with the ID exist already?
-                 YES => Use that one
-                 NO =>
-                     1. Create a new WebView
-                     2. Attach to the parent view's agents object
+         - Does an agent with the ID exist already?
+         YES => Use that one
+         NO =>
+         1. Create a new WebView
+         2. Attach to the parent view's agents object
 
          *******************************************/
         try {
@@ -320,11 +320,11 @@ public class JasonAgentService {
             if (context.agents.has(id)) {
                 agent = (WebView) context.agents.get(id);
 
-            // No such agent exists yet. Create one.
+                // No such agent exists yet. Create one.
             } else {
 
                 /*******************************************
-                    2. Creating a WebView
+                 2. Creating a WebView
                  *******************************************/
 
                 // 2.1. Initialize
@@ -373,7 +373,11 @@ public class JasonAgentService {
                         try {
                             String injection_script = JasonHelper.read_file("agent", context);
                             String interface_script = "$agent.interface.postMessage = function(r) { JASON.postMessage(JSON.stringify(r)); };";
-                            view.loadUrl("javascript:" + injection_script + " " + interface_script);
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                                view.evaluateJavascript(injection_script + " " + interface_script, null);
+                            } else {
+                                view.loadUrl("javascript:" + injection_script + " " + interface_script);
+                            }
 
                             // Trigger $agent.ready event
                             context.runOnUiThread(new Runnable() {
@@ -407,7 +411,7 @@ public class JasonAgentService {
 
                             // Only override behavior for web container
                             if (!id.startsWith("$webcontainer")) {
-                               return false;
+                                return false;
                             }
 
                             JSONObject payload = (JSONObject)view.getTag();
@@ -514,10 +518,10 @@ public class JasonAgentService {
 
             /*******************************************
 
-                 3. Filling the WebView with content
-                     - Is the state "empty"?
-                         YES => Load
-                         NO => Ignore
+             3. Filling the WebView with content
+             - Is the state "empty"?
+             YES => Load
+             NO => Ignore
 
              *******************************************/
 
@@ -533,7 +537,7 @@ public class JasonAgentService {
                     // 1. file url
                     if (url.startsWith("file://")) {
                         agent.loadUrl("file:///android_asset/file/" + url.substring(7));
-                    // 2. remote url
+                        // 2. remote url
                     } else {
                         agent.loadUrl(url);
                     }
@@ -550,78 +554,78 @@ public class JasonAgentService {
 
 
     public void jason_request(final JSONObject jason_request, Context context) {
-       request(jason_request, null, context);
+        request(jason_request, null, context);
     }
     public void request(final JSONObject jason_request, final JSONObject agent_request, Context context) {
         try {
 
             /*****************************
 
-                1. jason_request is an entire Jasonette action which contains a JSON-RPC object as its options
+             1. jason_request is an entire Jasonette action which contains a JSON-RPC object as its options
 
-                    jason_request := {
-                        "type": "$agent.request",
-                        "options": [JSON-RPC Object],
-                        "success": [Next Jasonette Action]
-                    }
+             jason_request := {
+             "type": "$agent.request",
+             "options": [JSON-RPC Object],
+             "success": [Next Jasonette Action]
+             }
 
-                2. agent_request is a JSON-RPC object
+             2. agent_request is a JSON-RPC object
 
-                    agent_request := {
-                        "from": [SOURCE AGENT ID],
-                        "request": [JSON-RPC Object],
-                        "nonce": [NONCE]
-                    }
+             agent_request := {
+             "from": [SOURCE AGENT ID],
+             "request": [JSON-RPC Object],
+             "nonce": [NONCE]
+             }
 
              *****************************/
 
 
             /***
 
-                0. Check if it's jason_request or agent_request
-                    - If jason_request => Use this to proceed
-                    - If agent_request => Use this to proceed
+             0. Check if it's jason_request or agent_request
+             - If jason_request => Use this to proceed
+             - If agent_request => Use this to proceed
 
-                1. Get JSON-RPC arguments
+             1. Get JSON-RPC arguments
 
-                    - id
-                    - method
-                    - params
+             - id
+             - method
+             - params
 
-                2. Find the agent by ID
-                    - iF agent exists, go on.
+             2. Find the agent by ID
+             - iF agent exists, go on.
 
-                3. Set the $source on the agent's payload (tag)
+             3. Set the $source on the agent's payload (tag)
 
-                4. Create a JavaScript call string
+             4. Create a JavaScript call string
 
-                5. Run the call script
+             5. Run the call script
 
-            ***/
+             ***/
 
             // Get JSON RPC object
             JSONObject jsonrpc;
             if (jason_request != null) {
                 /**
-                     1. jason_request is an entire Jasonette action which contains a JSON-RPC object as its options
+                 1. jason_request is an entire Jasonette action which contains a JSON-RPC object as its options
 
-                     jason_request := {
-                         "type": "$agent.request",
-                         "options": [JSON-RPC Object],
-                         "success": [Next Jasonette Action]
-                     }
+                 jason_request := {
+                 "type": "$agent.request",
+                 "options": [JSON-RPC Object],
+                 "success": [Next Jasonette Action]
+                 }
 
                  **/
                 jsonrpc = jason_request.getJSONObject("options");
             } else {
                 /**
-                    2. agent_request is a JSON-RPC object
+                 2. agent_request is a JSON-RPC object
 
-                    agent_request := {
-                        "from": [SOURCE AGENT ID],
-                        "request": [JSON-RPC Object],
-                        "nonce": [NONCE]
-                    }
+                 agent_request := {
+                 "from": [SOURCE AGENT ID],
+                 "request": [JSON-RPC Object],
+                 "nonce": [NONCE]
+                 }
 
                  **/
                 jsonrpc = agent_request.getJSONObject("request");
@@ -639,23 +643,23 @@ public class JasonAgentService {
 
                 if(((JasonViewActivity)context).agents.has(identifier)) {
                     // Find agent by ID
-                   final WebView agent = (WebView)((JasonViewActivity)context).agents.get(identifier);
+                    final WebView agent = (WebView)((JasonViewActivity)context).agents.get(identifier);
 
 
-                   /**
+                    /**
 
-                    A transaction looks like this:
+                     A transaction looks like this:
 
-                    {
-                        "state": "empty",
-                        "to": [Agent ID],
-                        "from": [Desitnation Agent ID],
-                        "nonce": [NONCE],
-                        "jason": [The original Jason action that triggered everything],
-                        "request": [JSON RPC object]
-                    }
+                     {
+                     "state": "empty",
+                     "to": [Agent ID],
+                     "from": [Desitnation Agent ID],
+                     "nonce": [NONCE],
+                     "jason": [The original Jason action that triggered everything],
+                     "request": [JSON RPC object]
+                     }
 
-                    **/
+                     **/
 
 
                     // Set Transaction payload
@@ -689,7 +693,7 @@ public class JasonAgentService {
 
                     agent.setTag(transaction);
 
-                   // Create a JS call string
+                    // Create a JS call string
                     String params = "null";
                     if (jsonrpc.has("method")) {
                         String method = jsonrpc.getString("method");
@@ -700,7 +704,11 @@ public class JasonAgentService {
                         ((JasonViewActivity) context).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                agent.loadUrl("javascript:" + callstring);
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                                    agent.evaluateJavascript(callstring, null);
+                                } else {
+                                    agent.loadUrl("javascript:" + callstring);
+                                }
                             }
                         });
                         return;
@@ -717,11 +725,11 @@ public class JasonAgentService {
         /**
 
          action := {
-             "type": "$agent.refresh",
-             "options": {
-                "id": [AGENT ID]
-             },
-             "success": [Next Jasonette Action]
+         "type": "$agent.refresh",
+         "options": {
+         "id": [AGENT ID]
+         },
+         "success": [Next Jasonette Action]
          }
 
          **/
@@ -755,11 +763,11 @@ public class JasonAgentService {
         /**
 
          action := {
-             "type": "$agent.clear",
-             "options": {
-                 "id": [AGENT ID]
-             },
-             "success": [Next Jasonette Action]
+         "type": "$agent.clear",
+         "options": {
+         "id": [AGENT ID]
+         },
+         "success": [Next Jasonette Action]
          }
 
          **/
@@ -796,29 +804,29 @@ public class JasonAgentService {
         JasonHelper.next("error", action, new JSONObject(), new JSONObject(), context);
     }
 
-     /*************************************
+    /*************************************
 
-         $agent.inject: Inject JavaScript into $agent context
+     $agent.inject: Inject JavaScript into $agent context
 
-        {
-            "type": "$agent.inject",
-            "options": {
-                "id": "app",
-                "items": [{
-                    "url": "file://authentication.js"
-                }]
-            },
-            "success": {
-                "type": "$agent.request",
-                "options": {
-                    "id": "app",
-                    "method": "login",
-                    "params": ["eth", "12341234"]
-                }
-            }
-        }
+     {
+     "type": "$agent.inject",
+     "options": {
+     "id": "app",
+     "items": [{
+     "url": "file://authentication.js"
+     }]
+     },
+     "success": {
+     "type": "$agent.request",
+     "options": {
+     "id": "app",
+     "method": "login",
+     "params": ["eth", "12341234"]
+     }
+     }
+     }
 
-    *************************************/
+     *************************************/
     public void inject(final JSONObject action, final Context context) {
         // id
         // items
@@ -862,10 +870,14 @@ public class JasonAgentService {
                         ((JasonViewActivity) context).runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                agent.loadUrl("javascript:" + codestr);
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                                    agent.evaluateJavascript(codestr, null);
+                                } else {
+                                    agent.loadUrl("javascript:" + codestr);
+                                }
+                                JasonHelper.next("success", action, new JSONObject(), new JSONObject(), context);
                             }
                         });
-                        JasonHelper.next("success", action, new JSONObject(), new JSONObject(), context);
                     } else {
                         JSONObject error = new JSONObject();
                         error.put("message", "need to specify items");
