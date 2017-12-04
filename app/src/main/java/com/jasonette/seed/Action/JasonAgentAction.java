@@ -31,4 +31,12 @@ public class JasonAgentAction {
 
         }
     }
+    public void inject(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        try {
+            JasonAgentService agentService = (JasonAgentService)((Launcher)context.getApplicationContext()).services.get("JasonAgentService");
+            agentService.inject(action, context);
+        } catch (Exception e) {
+
+        }
+    }
 }
