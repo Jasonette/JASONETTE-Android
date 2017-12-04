@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -33,9 +32,6 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.webkit.CookieManager;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -1758,6 +1754,19 @@ public class JasonViewActivity extends AppCompatActivity {
                                         backgroundWebview.setVisibility(View.VISIBLE);
                                         // not interactive by default;
                                         Boolean responds_to_webview = false;
+
+
+                                        /**
+
+                                             if has an 'action' attribute
+                                              - if the action is "type": "$default"
+                                                => Allow touch. The visit will be handled in the agent handler
+                                              - if the action is everything else
+                                                => Allow touch. The visit will be handled in the agent handler
+                                             if it doesn't have an 'action' attribute
+                                                => Don't allow touch.
+
+                                         **/
                                         if (background.has("action")) {
                                             responds_to_webview = true;
                                         }

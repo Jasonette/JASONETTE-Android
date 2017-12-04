@@ -18,12 +18,24 @@ import android.widget.RelativeLayout;
 import com.jasonette.seed.Core.JasonParser;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
+import com.jasonette.seed.Launcher.Launcher;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class JasonAgentService {
 
@@ -782,5 +794,186 @@ public class JasonAgentService {
 
         }
         JasonHelper.next("error", action, new JSONObject(), new JSONObject(), context);
+    }
+
+     /*************************************
+
+         $agent.inject: Inject JavaScript into $agent context
+
+        {
+            "type": "$agent.inject",
+            "options": {
+                "id": "app",
+                "items": [{
+                    "url": "file://authentication.js"
+                }]
+            },
+            "success": {
+                "type": "$agent.request",
+                "options": {
+                    "id": "app",
+                    "method": "login",
+                    "params": ["eth", "12341234"]
+                }
+            }
+        }
+
+    *************************************/
+    public void inject(final JSONObject action, final Context context) {
+        // id
+        // items
+
+        try {
+            JSONObject options = action.getJSONObject("options");
+            if (options.has("id")) {
+                String identifier = options.getString("id");
+                if (identifier.equalsIgnoreCase("$webcontainer")) {
+                    identifier = "$webcontainer@" + ((JasonViewActivity) context).model.url;
+                }
+                if (((JasonViewActivity) context).agents.has(identifier)) {
+                    final WebView agent = (WebView) ((JasonViewActivity) context).agents.get(identifier);
+                    if (options.has("items")) {
+                        JSONArray items = options.getJSONArray("items");
+                        CountDownLatch latch = new CountDownLatch(items.length());
+                        ExecutorService taskExecutor = Executors.newFixedThreadPool(items.length());
+                        ArrayList<String> codes = new ArrayList<String>();
+                        for (int i=0; i<items.length(); i++) {
+                            codes.add("");
+                        }
+                        ArrayList<String> errors = new ArrayList<String>();
+
+                        for (int i=0; i<items.length(); i++) {
+                            final JSONObject item = items.getJSONObject(i);
+                            taskExecutor.submit(new Fetcher(latch, item, i, codes, errors, context));
+                        }
+                        try {
+                            latch.await();
+                        } catch (Exception e) {
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                        }
+
+                        // All finished. Now can utilize codes
+
+                        String code_string = "";
+                        for(String s : codes) {
+                            code_string = code_string + s + "\n";
+                        }
+                        final String codestr = code_string;
+                        ((JasonViewActivity) context).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                agent.loadUrl("javascript:" + codestr);
+                            }
+                        });
+                        JasonHelper.next("success", action, new JSONObject(), new JSONObject(), context);
+                    } else {
+                        JSONObject error = new JSONObject();
+                        error.put("message", "need to specify items");
+                        JasonHelper.next("error", action, error, new JSONObject(), context);
+                    }
+                } else {
+                    JSONObject error = new JSONObject();
+                    error.put("message", "no such id exists");
+                    JasonHelper.next("error", action, error, new JSONObject(), context);
+                }
+            }
+        } catch (Exception e) {
+        }
+
+    }
+
+    class Fetcher implements Runnable {
+        CountDownLatch latch;
+        JSONObject item;
+        ArrayList<String> errors;
+        ArrayList<String> codes;
+        Context context;
+        int index;
+        public Fetcher(CountDownLatch latch, JSONObject item, int index, ArrayList<String> codes, ArrayList<String> errors, Context context) {
+            this.latch = latch;
+            this.item = item;
+            this.context = context;
+            this.index = index;
+            this.codes = codes;
+            this.errors = errors;
+        }
+        public void run() {
+            try {
+                if (item.has("url")) {
+                    String url = item.getString("url");
+                    if (url.startsWith("file://")) {
+                        fetch_local(url, context);
+                    } else if (url.startsWith("http")) {
+                        fetch_remote(url, context);
+                    } else {
+                        errors.add("url must be either file:// or http:// or https://");
+                        latch.countDown();
+                    }
+                } else if (item.has("text")) {
+                    String code = item.getString("text");
+                    codes.set(index, code);
+                    latch.countDown();
+                }
+            } catch (Exception e) {
+
+            }
+        }
+        public void fetch_local(final String url, final Context context){
+            try {
+                Runnable r = new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        try {
+                            String code = JasonHelper.read_file_scheme(url, context);
+                            codes.set(index, code);
+                            latch.countDown();
+                        } catch (Exception e) {
+                            errors.add("Couldn't read the file");
+                        }
+                    }
+                };
+                Thread t = new Thread(r);
+                t.start();
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            }
+        }
+
+        private void fetch_remote(String url, Context context){
+            try{
+                Request request;
+                Request.Builder builder = new Request.Builder();
+                request = builder.url(url).build();
+                OkHttpClient client = ((Launcher)((JasonViewActivity)context).getApplication()).getHttpClient(0);
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        errors.add("Failed to fetch from url");
+                        latch.countDown();
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onResponse(Call call, final Response response) throws IOException {
+                        try {
+                            if (!response.isSuccessful()) {
+                                errors.add("Response was not successful");
+                                latch.countDown();
+                            } else {
+                                String code = response.body().string();
+                                codes.set(index, code);
+                                latch.countDown();
+                            }
+                        } catch (Exception e) {
+
+                        }
+                    }
+                });
+            } catch (Exception e){
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            }
+        }
     }
 }
