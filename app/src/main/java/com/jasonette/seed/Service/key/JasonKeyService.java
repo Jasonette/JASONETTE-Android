@@ -177,14 +177,80 @@ public class JasonKeyService {
 
                         filtered_items.put(filtered_item);
                     }
-
                     items = filtered_items;
-
-
                 } else {
                     // Return the full object
                     // so don't do anything
                 }
+
+
+                // WHERE Key/Val Filtering
+                JSONObject options = action.getJSONObject("options");
+                if (options.has("where")) {
+                    JSONObject where = options.getJSONObject("where");
+                    if (where.has("key") && where.has("val")) {
+                        JSONArray filtered_items = new JSONArray();
+                        String filter_key = where.getString("key");
+                        String filter_val = where.getString("val");
+                        // 1. Go through each item
+                        for (int index=0; index<items.length(); index++) {
+                            JSONObject item = items.getJSONObject(index);
+                            if (item.has("components")) {
+                                JSONArray components = item.getJSONArray("components");
+                                for (int component_index=0; component_index<components.length(); component_index++) {
+                                    JSONObject component = components.getJSONObject(component_index);
+                                    String actual_key = component.getString("key");
+                                    String actual_val = component.getString("val");
+                                    if (actual_key.equalsIgnoreCase(filter_key) && actual_val.equalsIgnoreCase(filter_val)) {
+                                        // We have a winner!
+                                        filtered_items.put(item);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        // 2. See if any of its components match they key/val pair
+                        items = filtered_items;
+                    }
+                }
+
+                // SELECT key filtering
+                if (options.has("select") && options.getJSONObject("select").has("components")) {
+                    JSONArray select_query = options.getJSONObject("select").getJSONArray("components");
+                    JSONArray select_items = new JSONArray();
+                    for (int index=0; index<items.length(); index++) {
+                        JSONObject item = items.getJSONObject(index);
+                        if (item.has("components")) {
+                            JSONObject select_item = new JSONObject();
+                            JSONArray components = item.getJSONArray("components");
+                            JSONArray select_components = new JSONArray();
+                            for (int component_index=0; component_index<components.length(); component_index++) {
+                                // For each component, must run through query filter to find the match
+                                JSONObject component = components.getJSONObject(component_index);
+                                String actual_key = component.getString("key");
+                                String actual_val = component.getString("val");
+                                for (int select_query_index=0; select_query_index<select_query.length(); select_query_index++) {
+                                    // Go through each query object and see if the current component matches any of the query key/val pair.
+                                    // It's an AND operation => Must match key AND val simultaneously
+                                    JSONObject query_object = select_query.getJSONObject(select_query_index);
+                                    String query_key = query_object.getString("key");
+                                    String query_val = query_object.getString("val");
+                                    if (actual_key.equalsIgnoreCase(query_key) && actual_val.equalsIgnoreCase(query_val)) {
+                                        // It's a match!
+                                        // Add the component to selected components array and break;
+                                       select_components.put(component);
+                                       break;
+                                    }
+                                }
+                            }
+                            select_item.put("components", select_components);
+                            select_items.put(select_item);
+                        }
+                    }
+                    items = select_items;
+                }
+
+
             }
 
             JSONObject res = new JSONObject();
