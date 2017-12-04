@@ -1,7 +1,12 @@
 package com.jasonette.seed.Service.vision;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.os.Build;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Surface;
@@ -16,19 +21,21 @@ import com.jasonette.seed.Core.JasonViewActivity;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
 
 /**
  * Created by realitix on 06/07/17.
  */
 
-public class JasonVisionService {
+public class JasonVisionService implements ActivityCompat.OnRequestPermissionsResultCallback{
     public static int FRONT = Camera.CameraInfo.CAMERA_FACING_FRONT;
     public static int BACK = Camera.CameraInfo.CAMERA_FACING_BACK;
 
+    private Activity temp_context;
+    private SurfaceHolder temp_holder;
+    private int temp_side;
+
     private BarcodeDetector detector;
     private CameraSource cameraSource;
-    private Camera camera;
     private SurfaceView view;
     private int side;
     public boolean is_open;
@@ -121,9 +128,6 @@ public class JasonVisionService {
                 }
             }
         });
-        cameraSource = new CameraSource
-                .Builder(context, detector)
-                .build();
         holder.addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -141,45 +145,60 @@ public class JasonVisionService {
     }
 
     private void startCamera(final Activity context, SurfaceHolder holder, final int side) {
-        int cameraId = -1;
-        // Search for the front facing camera
-        int numberOfCameras = Camera.getNumberOfCameras();
-        for (int i = 0; i < numberOfCameras; i++) {
-            Camera.CameraInfo info = new Camera.CameraInfo();
-            Camera.getCameraInfo(i, info);
-            if (info.facing == side) {
-                cameraId = i;
-                break;
-            }
-        }
-
-        if (cameraId == -1) {
-            Log.w("Camera", "Camera not found");
-            return;
-        }
-
         try {
-            camera = Camera.open(cameraId);
-            camera.setDisplayOrientation(getVerticalCameraDisplayOrientation(context, cameraId));
-            try {
-                camera.setPreviewDisplay(holder);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            camera.startPreview();
-            cameraSource.start(holder);
 
-            ((JasonViewActivity)context).simple_trigger("$vision.ready", new JSONObject(), context);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    temp_context = context;
+                    temp_holder = holder;
+                    temp_side = side;
+                    ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.CAMERA}, 50);
+                } else {
+                    openCamera(context, holder, side);
+                }
+            } else {
+                openCamera(context, holder, side);
+            }
+
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    void openCamera(Activity context, SurfaceHolder holder, final int side) {
+        try {
+            if (cameraSource != null) {
+                cameraSource.stop();
+            }
+            cameraSource = new CameraSource
+                    .Builder(context, detector)
+                    .setFacing(side)
+                    .build();
+            cameraSource.start(holder);
+
+            ((JasonViewActivity)context).simple_trigger("$vision.ready", new JSONObject(), context);
+
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openCamera(temp_context, temp_holder, temp_side);
+            temp_context = null;
+            temp_holder = null;
+            temp_side = -1;
+            //Start your camera handling here
+        } else {
+        }
+    }
+
+
     public void stopCamera() {
-        camera.stopPreview();
         cameraSource.stop();
-        camera.release();
     }
 
     private int getVerticalCameraDisplayOrientation(Activity context, int cameraId) {
@@ -205,5 +224,3 @@ public class JasonVisionService {
         return result;
     }
 }
-
-
