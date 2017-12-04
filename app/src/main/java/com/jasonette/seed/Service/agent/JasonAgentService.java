@@ -15,6 +15,7 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import com.jasonette.seed.Core.JasonParser;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 
@@ -22,6 +23,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JasonAgentService {
 
@@ -390,14 +392,61 @@ public class JasonAgentService {
                     }
                     @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
                         try {
+
+                            // Only override behavior for web container
+                            if (!id.startsWith("$webcontainer")) {
+                               return false;
+                            }
+
                             JSONObject payload = (JSONObject)view.getTag();
                             if (payload.has("state") && payload.getString("state").equalsIgnoreCase("rendered")) {
                                 if (options.has("action")) {
-                                    Intent intent = new Intent("call");
-                                    intent.putExtra("action", options.get("action").toString());
-                                    intent.putExtra("data", "{\"url\": \"" + url + "\"}");
-                                    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-                                    return true;
+                                    // 1. Parse the action if it's a trigger
+
+                                    Object resolved_action;
+                                    if (options.getJSONObject("action").has("trigger")) {
+                                        String event_name = options.getJSONObject("action").getString("trigger");
+                                        JSONObject head = ((JasonViewActivity)context).model.jason.getJSONObject("$jason").getJSONObject("head");
+                                        JSONObject events = head.getJSONObject("actions");
+                                        // Look up an action by event_name
+                                        resolved_action = events.get(event_name);
+                                    } else {
+                                        resolved_action = options.get("action");
+                                    }
+
+
+                                    // resolve
+                                    final AtomicReference<JSONObject> notifier = new AtomicReference<>();
+
+                                    JasonParser.getInstance(context).setParserListener(new JasonParser.JasonParserListener() {
+                                        @Override
+                                        public void onFinished(JSONObject reduced_action) {
+                                            synchronized (notifier) {
+                                                notifier.set(reduced_action);
+                                                notifier.notify();
+                                            }
+                                        }
+                                    });
+                                    JasonParser.getInstance(context).parse("json", ((JasonViewActivity)context).model.state, resolved_action, context);
+
+                                    synchronized (notifier) {
+                                        while (notifier.get() == null) {
+                                            notifier.wait();
+                                        }
+                                    }
+
+                                    JSONObject parsed = notifier.get();
+
+                                    if (parsed.has("type") && parsed.getString("type").equalsIgnoreCase("$default")) {
+                                        return false;
+                                    } else {
+                                        Intent intent = new Intent("call");
+                                        intent.putExtra("action", options.get("action").toString());
+                                        intent.putExtra("data", "{\"url\": \"" + url + "\"}");
+                                        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                                        return true;
+                                    }
+
                                 }
                             }
                         } catch (Exception e) {
