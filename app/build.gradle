@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 27
     buildToolsVersion '25.0.0'
     defaultConfig {
         applicationId "com.jasonette"
         minSdkVersion 17
-        targetSdkVersion 22
+        targetSdkVersion 27
         versionCode 3
         versionName "0.1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -25,20 +25,20 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.google.firebase:firebase-messaging:10.0.1'
+    compile 'com.google.firebase:firebase-messaging:11.6.2'
     debugCompile 'com.facebook.stetho:stetho:1.5.0'
     debugCompile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
     debugCompile 'com.facebook.stetho:stetho-timber:1.5.0'
-    compile 'com.android.support:appcompat-v7:25.0.1'
-    compile 'com.google.android.gms:play-services-maps:10.0.1'
-    compile 'com.squareup.okhttp3:okhttp:3.4.2'
+    compile 'com.android.support:appcompat-v7:27.0.2'
+    compile 'com.google.android.gms:play-services-maps:11.6.2'
+    compile 'com.squareup.okhttp3:okhttp:3.7.0'
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'jp.wasabeef:glide-transformations:2.0.1'
     compile 'com.eclipsesource.j2v8:j2v8:4.5.0@aar'
-    compile 'com.android.support:recyclerview-v7:25.0.1'
-    compile 'com.android.support:design:25.0.1'
+    compile 'com.android.support:recyclerview-v7:27.0.2'
+    compile 'com.android.support:design:27.0.2'
     compile 'com.aurelhubert:ahbottomnavigation:2.0.2'
-    compile 'com.android.support:support-core-ui:25.0.1'
+    compile 'com.android.support:support-core-ui:27.0.2'
     compile 'commons-lang:commons-lang:2.6'
     compile 'com.github.scribejava:scribejava-apis:4.0.0'
     compile 'com.yqritc:recyclerview-flexibledivider:1.4.0'
