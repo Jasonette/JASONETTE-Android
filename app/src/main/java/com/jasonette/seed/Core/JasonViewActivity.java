@@ -275,9 +275,8 @@ public class JasonViewActivity extends AppCompatActivity {
         }
 
     }
-    private void setup_agents() {
+    private void setup_agents(JSONObject head) {
         try {
-            JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
             if (head.has("agents")) {
                 final JSONObject agents = head.getJSONObject("agents");
                 Iterator<String> iterator = agents.keys();
@@ -383,7 +382,8 @@ public class JasonViewActivity extends AppCompatActivity {
             } else {
                 // build
                 model = m;
-                setup_agents();
+                JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                setup_agents(head);
                 setup_body(m.rendered);
             }
         } catch (Exception e) {
@@ -470,6 +470,12 @@ public class JasonViewActivity extends AppCompatActivity {
         }
 
         if (!firstResume) {
+            try {
+                JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
+                setup_agents(head);
+            } catch (Exception e) {
+
+            }
             onShow();
         }
         firstResume = false;
@@ -1434,7 +1440,7 @@ public class JasonViewActivity extends AppCompatActivity {
                     // 1. call dispatchIntent
                     // 2. the intent will return with JasonCallback.href
                     JSONObject callback = new JSONObject();
-                    callback.put("class", "JasonCallback");
+                    callback.put("class", "com.jasonette.seed.Core.JasonCallback");
                     callback.put("method", "href");
                     JasonHelper.dispatchIntent(action, data, event, context, intent, callback);
                 }
@@ -1573,25 +1579,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 if (jason.getJSONObject("$jason").has("head")) {
                     final JSONObject head = jason.getJSONObject("$jason").getJSONObject("head");
 
-                    if (head.has("agents")) {
-                        final JSONObject agents = head.getJSONObject("agents");
-                        Iterator<String> iterator = agents.keys();
-                        while (iterator.hasNext()) {
-                            final String key = iterator.next();
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        JasonAgentService agentService = (JasonAgentService)((Launcher)getApplicationContext()).services.get("JasonAgentService");
-                                        WebView agent = agentService.setup(JasonViewActivity.this, agents.getJSONObject(key), key);
-                                        rootLayout.addView(agent);
-                                    } catch (JSONException e) {
-                                    }
-                                }
-                            });
-                        }
-
-                    }
+                    setup_agents(head);
 
                     if (head.has("data")) {
                         if (head.has("templates")) {

@@ -457,7 +457,7 @@ public class JasonAgentService {
                                         return false;
                                     } else {
                                         Intent intent = new Intent("call");
-                                        intent.putExtra("action", options.get("action").toString());
+                                        intent.putExtra("action", parsed.toString());
                                         intent.putExtra("data", "{\"url\": \"" + url + "\"}");
                                         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                                         return true;

@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import com.jasonette.seed.BuildConfig;
+import com.jasonette.seed.Service.key.JasonKeyService;
 import com.jasonette.seed.Service.agent.JasonAgentService;
 import com.jasonette.seed.Service.websocket.JasonWebsocketService;
 
@@ -42,11 +43,21 @@ public class Launcher extends Application {
     public JSONObject services;
     private static Context currentContext;
 
+
     public void call(String serviceName, String methodName, JSONObject action, Context context) {
         try {
             Object service = services.get(serviceName);
             Method method = service.getClass().getMethod(methodName, action.getClass(), Context.class);
             method.invoke(service, action, context);
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
+    public void forward(String serviceName, String methodName, final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        try {
+            Object service = services.get(serviceName);
+            Method method = service.getClass().getMethod(methodName, action.getClass(), data.getClass(), event.getClass(), Context.class);
+            method.invoke(service, action, data, event, context);
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
@@ -147,7 +158,10 @@ public class Launcher extends Application {
             JasonWebsocketService websocketService = new JasonWebsocketService(this);
             JasonAgentService agentService = new JasonAgentService();
             services.put("JasonWebsocketService", websocketService);
+            JasonKeyService keyService = new JasonKeyService(this);
+            services.put("JasonKeyService", keyService);
             services.put("JasonAgentService", agentService);
+
 
 
             // handler init
@@ -256,7 +270,11 @@ public class Launcher extends Application {
                 }
 
                 String classname = handler.getString("class");
-                classname = "com.jasonette.seed.Action." + classname;
+                if (classname.startsWith("com.jasonette")) {
+                   // absolute path. don't touch
+                } else {
+                    classname = "com.jasonette.seed.Action." + classname;
+                }
                 String methodname = handler.getString("method");
 
                 Object module;

@@ -48,5 +48,7 @@ dependencies {
     compile 'com.github.florent37:singledateandtimepicker:1.0.8'
     compile 'com.jakewharton.timber:timber:4.5.1'
     compile 'com.google.android.gms:play-services:+'
+    compile 'com.scottyab:secure-preferences-lib:0.1.4'
+    compile 'com.github.gliechtenstein:PasscodeView:master'
     compile 'com.android.support:multidex:1.0.1'
 }
