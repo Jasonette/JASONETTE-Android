@@ -131,6 +131,173 @@ public class JasonKeyService {
         }
         return res;
     }
+
+
+    private JSONArray _filter_public(JSONArray items) {
+        JSONArray filtered_items = new JSONArray();
+        try {
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject item = items.getJSONObject(i);
+                JSONObject filtered_item = new JSONObject();
+                JSONArray keys = item.names();
+                for (int j = 0; j < keys.length(); j++) {
+                    String key = keys.getString(j);
+                    JSONObject component = item.getJSONObject(key);
+                    if (component.has("read") && component.getString("read").equalsIgnoreCase("public")) {
+                        // "read": "public" component
+                        // Add to filtered_components
+                        filtered_item.put(key, component);
+                    }
+                }
+                filtered_items.put(filtered_item);
+            }
+        } catch (Exception e) {
+        }
+        return filtered_items;
+    }
+
+
+    private JSONArray _filter_query(JSONArray items, JSONArray filter) {
+        // items Key/Val Filtering
+        try {
+            /**
+
+             filter := [{
+                 "type": {
+                     "value": "BTC"
+                 },
+                 "name": {
+                     "value": "Bitcoin"
+                 }
+             }, {
+                 "type": {
+                     "value": "ETH"
+                 }
+             }]
+
+
+             items := [{
+                 "type": {
+                     "value": "BTC",
+                     "read": "public"
+                 },
+                 "name": {
+                     "value": "Bitcoin",
+                     "read": "public"
+                 },
+                 "publickey": {
+                     "value": "0xm4ng83ng8wengn3kngdn3ngknal32ng".
+                     "read": "public"
+                 },
+                 "privatekey": {
+                     "value": "0xngn4bgbebgbgbejbgjbjbjbebsdjbdskb328fg3bgjewh2112hfdhg"
+                 }
+             }, {
+                 ...
+             }, {
+                 ...
+             }]
+
+
+             Need to filter 'items' with 'filter'.
+
+             Each item in the filter array is a query. All items that match at least one of the filter item gets selected
+             for the final result.
+
+             */
+
+            JSONArray filtered_items = new JSONArray();
+            // Go through each item and decide whether to include in the final item
+            for (int item_index = 0; item_index < items.length(); item_index++) {
+
+                // Testing nth item to decide whether to include
+                JSONObject item = items.getJSONObject(item_index);
+
+                // Loop for each filter item
+                // and merge all the results
+                for (int filter_index = 0; filter_index < filter.length(); filter_index++) {
+                    JSONObject filter_item = filter.getJSONObject(filter_index);
+
+                    /*
+
+                        filter_item := {
+                            "type": {
+                                "value": "BTC"
+                            },
+                            "name": {
+                                "value": "Bitcoin"
+                            }
+                        }
+
+                        Must match ALL attributes for the filter_item
+                    */
+
+                    // filter_keys := ["type", "name"]
+                    JSONArray filter_keys = filter_item.names();
+
+                    // innocent by default and loop until proven guilty
+                    boolean its_a_match = true;
+
+                    for (int key_index = 0; key_index < filter_keys.length(); key_index++) {
+                        String filter_key = filter_keys.getString(key_index);
+                        JSONObject filter_value = filter_item.getJSONObject(filter_key);
+
+                        /*
+
+                            filter_key := "type"
+                            filter_value := {
+                                "value": "BTC"
+                            }
+                            item := {
+                                 "type": {
+                                     "value": "BTC",
+                                     "read": "public"
+                                 },
+                                 "name": {
+                                     "value": "Bitcoin",
+                                     "read": "public"
+                                 },
+                                 "publickey": {
+                                     "value": "0xm4ng83ng8wengn3kngdn3ngknal32ng".
+                                     "read": "public"
+                                 },
+                                 "privatekey": {
+                                     "value": "0xngn4bgbebgbgbejbgjbjbjbebsdjbdskb328fg3bgjewh2112hfdhg"
+                                 }
+                             }
+
+                             check:
+                             1. item[filter_key] exists
+                             2. item[filter_key]["value"] == filter_value["value"]
+
+                        */
+
+                        if (item.has(filter_key)
+                            && item.getJSONObject(filter_key).has("value")
+                            && filter_value.has("value")
+                            && item.getJSONObject(filter_key).get("value").equals(filter_value.get("value"))){
+                            // this condition must match, every time.
+                            // Otherwise it needs to fail out.
+                        } else {
+                            its_a_match = false;
+                            break;
+                        }
+                    }
+
+                    if (its_a_match) {
+                        // If this item is a match, no need to look further.
+                        filtered_items.put(item);
+                        // Go on to checking the next item by breaking
+                        break;
+                    }
+                }
+            }
+            return filtered_items;
+        } catch (Exception e) {
+            return new JSONArray();
+        }
+    }
+
     private void _fetch(JSONObject action, JSONObject event, JSONObject parsed, Context context) {
 
         try {
@@ -140,7 +307,21 @@ public class JasonKeyService {
 
                 deserialized := {
                     "items": [{
-                        ...
+                        "type": {
+                            "value": "BTC",
+                            "read": "public"
+                        },
+                        "name": {
+                            "value": "Bitcoin",
+                            "read": "public"
+                        },
+                        "publickey": {
+                            "value": "0xm4ng83ng8wengn3kngdn3ngknal32ng".
+                            "read": "public"
+                        },
+                        "privatekey": {
+                            "value": "0xngn4bgbebgbgbejbgjbjbjbebsdjbdskb328fg3bgjewh2112hfdhg"
+                        }
                     }, {
                         ...
                     }, {
@@ -158,98 +339,20 @@ public class JasonKeyService {
                 items = deserialized.getJSONArray("items");
                 if (isRemote) {
                     // Need to filter only the public attributes
-                    JSONArray filtered_items = new JSONArray();
-                    for (int i = 0; i < items.length(); i++) {
-                        JSONObject item = items.getJSONObject(i);
-                        JSONArray components = item.getJSONArray("components");
-                        JSONArray filtered_components = new JSONArray();
-                        for (int j = 0; j < components.length(); j++) {
-                            JSONObject component = components.getJSONObject(j);
-                            if (component.has("read") && component.getString("read").equalsIgnoreCase("public")) {
-                                // "read": "public" component
-                                // Add to filtered_components
-                                filtered_components.put(component);
-                            }
-                        }
-
-                        JSONObject filtered_item = new JSONObject();
-                        filtered_item.put("components", filtered_components);
-
-                        filtered_items.put(filtered_item);
-                    }
-                    items = filtered_items;
+                    items = _filter_public(items);
                 } else {
                     // Return the full object
                     // so don't do anything
                 }
 
-
-                // WHERE Key/Val Filtering
-                JSONObject options = action.getJSONObject("options");
-                if (options.has("where")) {
-                    JSONObject where = options.getJSONObject("where");
-                    if (where.has("key") && where.has("val")) {
-                        JSONArray filtered_items = new JSONArray();
-                        String filter_key = where.getString("key");
-                        String filter_val = where.getString("val");
-                        // 1. Go through each item
-                        for (int index=0; index<items.length(); index++) {
-                            JSONObject item = items.getJSONObject(index);
-                            if (item.has("components")) {
-                                JSONArray components = item.getJSONArray("components");
-                                for (int component_index=0; component_index<components.length(); component_index++) {
-                                    JSONObject component = components.getJSONObject(component_index);
-                                    String actual_key = component.getString("key");
-                                    String actual_val = component.getString("val");
-                                    if (actual_key.equalsIgnoreCase(filter_key) && actual_val.equalsIgnoreCase(filter_val)) {
-                                        // We have a winner!
-                                        filtered_items.put(item);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        // 2. See if any of its components match they key/val pair
-                        items = filtered_items;
+                // items Key/Val Filtering
+                if (action.has("options")) {
+                    JSONObject options = action.getJSONObject("options");
+                    if (options.has("items")) {
+                        JSONArray filter = options.getJSONArray("items");
+                        items = _filter_query(items, filter);
                     }
                 }
-
-                // SELECT key filtering
-                if (options.has("select") && options.getJSONObject("select").has("components")) {
-                    JSONArray select_query = options.getJSONObject("select").getJSONArray("components");
-                    JSONArray select_items = new JSONArray();
-                    for (int index=0; index<items.length(); index++) {
-                        JSONObject item = items.getJSONObject(index);
-                        if (item.has("components")) {
-                            JSONObject select_item = new JSONObject();
-                            JSONArray components = item.getJSONArray("components");
-                            JSONArray select_components = new JSONArray();
-                            for (int component_index=0; component_index<components.length(); component_index++) {
-                                // For each component, must run through query filter to find the match
-                                JSONObject component = components.getJSONObject(component_index);
-                                String actual_key = component.getString("key");
-                                String actual_val = component.getString("val");
-                                for (int select_query_index=0; select_query_index<select_query.length(); select_query_index++) {
-                                    // Go through each query object and see if the current component matches any of the query key/val pair.
-                                    // It's an AND operation => Must match key AND val simultaneously
-                                    JSONObject query_object = select_query.getJSONObject(select_query_index);
-                                    String query_key = query_object.getString("key");
-                                    String query_val = query_object.getString("val");
-                                    if (actual_key.equalsIgnoreCase(query_key) && actual_val.equalsIgnoreCase(query_val)) {
-                                        // It's a match!
-                                        // Add the component to selected components array and break;
-                                       select_components.put(component);
-                                       break;
-                                    }
-                                }
-                            }
-                            select_item.put("components", select_components);
-                            select_items.put(select_item);
-                        }
-                    }
-                    items = select_items;
-                }
-
 
             }
 
@@ -283,6 +386,20 @@ public class JasonKeyService {
          }
      }
 
+     3. Request with query
+
+     {
+         "type": "$key.request",
+         "options": {
+             "url": "file://wallet.json",
+             "items": [{
+                "type": "BTC"
+             }, {
+                "type": "BCH"
+             }]
+         }
+     }
+
      **/
     public void request(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         JSONObject parsed = _parse(action, context);
@@ -310,24 +427,51 @@ public class JasonKeyService {
     }
 
     /*******************
+
+     1. Appending to end
+
      {
          "type": "$key.add",
          "options": {
-             "components": [{
-                 "key": "type",
-                 "val": "ETH"
-             }, {
-                 "key": "publickey",
-                 "val": "0xjdnfenfkdewfhk384b4"
-             }, {
-                 "key": "name",
-                 "val": "Ethereum"
-             }, {
-                 "key": "privatekey",
-                 "val": "0x8dbgjenb8fngjwev742gfh47gh8ds87fh3bv"
-             }]
+            "item": {
+                "type": {
+                    "value": "ETH"
+                },
+                "publickey": {
+                    "value": "0xjdnfenfkdewfhk384b4"
+                },
+                "name": {
+                    "value": "Ethereum"
+                },
+                "privatekey": {
+                    "value": "0x8dbgjenb8fngjwev742gfh47gh8ds87fh3bv"
+                }
+             }
          }
      }
+
+     2. Adding into index
+
+     {
+         "type": "$key.add",
+         "options": {
+            "index": 1,
+            "item": {
+                "type": {
+                    "value": "ETH"
+                },
+                "publickey": {
+                    "value": "0xjdnfenfkdewfhk384b4"
+                },
+                "name": {
+                    "value": "Ethereum"
+                },
+                "privatekey": {
+                    "value": "0x8dbgjenb8fngjwev742gfh47gh8ds87fh3bv"
+                }
+            }
+        }
+    }
      *******************/
     public void add(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
         JSONObject parsed = _parse(action, context);
@@ -338,13 +482,6 @@ public class JasonKeyService {
             if (!action.has("options")) {
                 JSONObject error = new JSONObject();
                 error.put("message", "Must specify an item to add");
-                JasonHelper.next("error", action, error, event, context);
-                return;
-            }
-
-            if (!action.getJSONObject("options").has("components")) {
-                JSONObject error = new JSONObject();
-                error.put("message", "A key item must have at least one component");
                 JasonHelper.next("error", action, error, event, context);
                 return;
             }
@@ -365,7 +502,33 @@ public class JasonKeyService {
 
                     // Add options object to the "items" array
                     JSONObject options = action.getJSONObject("options");
-                    items.put(options);
+                    JSONObject item = options.getJSONObject("item");
+
+                    boolean isvalid = _validate(item);
+                    if (!isvalid) {
+                        JSONObject error = new JSONObject();
+                        error.put("message", "Invalid key format. Please follow the $key item schema");
+                        JasonHelper.next("error", action, error, event, context);
+                        return;
+                    }
+
+                    if (options.has("index")) {
+                        JSONArray new_items = new JSONArray();
+                        int index = options.getInt("index");
+                        if (index == items.length()) {
+                            new_items.put(item);
+                        } else {
+                            for (int i=0; i<items.length(); i++) {
+                                if (i==options.getInt("index")) {
+                                    new_items.put(item);
+                                }
+                                new_items.put(items.getJSONObject(i));
+                            }
+                        }
+                        items = new_items;
+                    } else {
+                        items.put(item);
+                    }
 
                     JSONObject res = _serialize(url, items);
 
@@ -382,6 +545,64 @@ public class JasonKeyService {
         }
 
     }
+
+
+    private boolean _validate(JSONObject item) {
+        /**
+
+         item needs to be in the following format
+
+         for each key,
+            it has an attribute called 'value' or 'read'. Nothing else.
+
+        {
+            "type": {
+                "value": [VAL]
+            },
+            "publickey": {
+                "value": "0xjdnfenfkdewfhk384b4"
+            },
+            "name": {
+                "value": "Ethereum"
+            },
+            "privatekey": {
+                "value": "0x8dbgjenb8fngjwev742gfh47gh8ds87fh3bv"
+            }
+        }
+
+         **/
+
+        try {
+            JSONObject allowed = new JSONObject();
+            allowed.put("value", true);
+            allowed.put("read", true);
+            /**
+
+             allowed := {
+                "value": true,
+                "read": true
+             }
+
+             */
+
+            JSONArray keys = item.names();
+            for(int i=0; i<keys.length(); i++) {
+                JSONObject attrs = item.getJSONObject(keys.getString(i));
+                JSONArray attr_keys = attrs.names();
+                for(int j=0; j<attr_keys.length(); j++) {
+                    if (!allowed.has(attr_keys.getString(j))) {
+                        // if any of the attribute keys are not "value" or "read", it's invalid
+                        return false;
+                    }
+                }
+
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
 
 
     private JSONObject _serialize(String url, JSONArray items) {
@@ -490,19 +711,23 @@ public class JasonKeyService {
 
     /*********************************
 
-     {
-         "type": "$key.update",
-         "options": {
-             "index": "{{$jason.index}}",
-             "components": [{
-                 "key": "name",
-                 "val": "{{$jason.new_value}}"
-             }]
-         },
-         "success": {
-             "type": "$render"
-         }
-     }
+        {
+            "type": "$key.update",
+            "options": {
+                "index": "{{$jason.index}}",
+                "item": {
+                    "name": {
+                        "value": "{{$jason.new_value}}"
+                    },
+                    "type": {
+                        "value": "BTC"
+                    }
+                }
+            },
+            "success": {
+                "type": "$render"
+            }
+        }
 
      *********************************/
     public void update(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
@@ -524,29 +749,54 @@ public class JasonKeyService {
                         int index = action.getJSONObject("options").getInt("index");
                         JSONArray new_items = new JSONArray();
                         if (items.length() > index) {
-                            if (action.getJSONObject("options").has("components")) {
-                                JSONArray components_to_update = action.getJSONObject("options").getJSONArray("components");
 
-                                JSONObject old_item = items.getJSONObject(index);
-                                JSONArray old_components = old_item.getJSONArray("components");
+                            JSONObject selected_item = items.getJSONObject(index);
 
-                                for(int i=0; i<components_to_update.length(); i++) {
-                                    JSONObject component_to_update = components_to_update.getJSONObject(i);
-                                    for(int j=0; j<old_components.length(); j++) {
-                                        JSONObject old_component = old_components.getJSONObject(j);
-                                        if (old_component.getString("key").equalsIgnoreCase(component_to_update.getString("key"))) {
-                                            // Match found!
-                                            // 1. Update the temp component's val
-                                            old_component.put("val", component_to_update.get("val"));
-                                            old_components.put(j, old_component);
-                                            break;
+                            if (action.getJSONObject("options").has("item")) {
+                                // Iterate through all keys and update the value
+                                JSONObject subtree_to_update = action.getJSONObject("options").getJSONObject("item");
+                                JSONArray keys_to_update = subtree_to_update.names();
+
+                                /**
+
+                                 subtree_to_update := {
+                                     "name": {
+                                         "value": "{{$jason.new_value}}",
+                                         "read": "public"
+                                     },
+                                     "type": {
+                                         "value": "BTC"
+                                     }
+                                 }
+
+                                 keys_to_update := ["name", "type"]
+
+                                 **/
+
+
+                                for(int i=0; i<keys_to_update.length(); i++) {
+                                    String key = keys_to_update.getString(i);
+                                    JSONObject attrs = subtree_to_update.getJSONObject(key);
+                                    /**
+
+                                        key := "name"
+
+                                        attrs := {
+                                            "value": "{{$jason.new_value}}",
+                                            "read": "public"
                                         }
+
+                                     */
+                                    JSONArray attr_keys = attrs.names();
+                                    for (int j=0; j<attr_keys.length(); j++) {
+                                        String attr_key = attr_keys.getString(j);
+                                        selected_item.getJSONObject(key).put(attr_key, attrs.get(attr_key));
                                     }
                                 }
-
                                 JSONObject res = _serialize(url, items);
                                 // Return the updated {"items": [...]} as a return value
                                 JasonHelper.next("success", action, res, event, context);
+
                             } else {
                                 JSONObject error = new JSONObject();
                                 error.put("message", "Please specify at least one component to update");
