@@ -10,6 +10,7 @@ android {
         versionCode 3
         versionName "0.1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -29,6 +30,7 @@ dependencies {
     debugCompile 'com.facebook.stetho:stetho:1.5.0'
     debugCompile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
     debugCompile 'com.facebook.stetho:stetho-timber:1.5.0'
+    //noinspection GradleCompatible
     compile 'com.android.support:appcompat-v7:27.0.2'
     compile 'com.google.android.gms:play-services-maps:11.6.2'
     compile 'com.squareup.okhttp3:okhttp:3.7.0'
@@ -46,4 +48,7 @@ dependencies {
     compile 'com.github.maks:AndroidAudioRecorder:0.3.0-jasonette'
     compile 'com.github.florent37:singledateandtimepicker:1.0.8'
     compile 'com.jakewharton.timber:timber:4.5.1'
+    //noinspection UseOfBundledGooglePlayServices
+    compile 'com.google.android.gms:play-services:11.6.2'
+    compile 'com.android.support:multidex:1.0.2'
 }
