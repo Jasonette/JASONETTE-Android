@@ -336,6 +336,9 @@ public class JasonViewActivity extends AppCompatActivity {
         // reset "offline mode"
         model.offline = false;
 
+        // Reset local variables when reloading
+        model.var = new JSONObject();
+
         SharedPreferences pref = getSharedPreferences("offline", 0);
         String signature = model.url + model.params.toString();
         if(pref.contains(signature)){
