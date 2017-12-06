@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -72,6 +73,12 @@ public class JasonTextareaComponent {
                             ((TextView) view).setTypeface(Typeface.DEFAULT);
                         }
                     }
+                }
+
+                if (!style.has("height")) {
+                    ViewGroup.LayoutParams layoutParams = (ViewGroup.LayoutParams)view.getLayoutParams();
+                    layoutParams.height = 300;
+                    view.setLayoutParams(layoutParams);
                 }
 
                 int g = 0;
