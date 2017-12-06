@@ -161,7 +161,7 @@ public class JasonUtilAction {
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
-                                    //
+                                    JasonHelper.next("error", action, new JSONObject(), event, context);
                                 }
                             });
                     builder.show();
