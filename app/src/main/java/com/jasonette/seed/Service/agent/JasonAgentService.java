@@ -369,7 +369,7 @@ public class JasonAgentService {
                     agent.setWebChromeClient(new WebChromeClient());
                 }
                 agent.setWebViewClient(new WebViewClient() {
-                    public void onPageFinished(WebView view, final String url) {
+                    @Override public void onPageFinished(WebView view, final String url) {
                         // Inject agent.js
                         try {
                             String injection_script = JasonHelper.read_file("agent", context);
@@ -413,13 +413,21 @@ public class JasonAgentService {
 
                         try {
 
+
+                            JSONObject payload = (JSONObject)view.getTag();
+
                             // Only override behavior for web container
                             if (!id.startsWith("$webcontainer")) {
                                 return false;
                             }
 
-                            JSONObject payload = (JSONObject)view.getTag();
-                            if (payload.has("state") && payload.getString("state").equalsIgnoreCase("rendered")) {
+                            if (!payload.has("url")) {
+                                return false;
+                            }
+
+
+
+                            if(view.getHitTestResult().getType() > 0){
                                 if (options.has("action")) {
                                     // 1. Parse the action if it's a trigger
 
@@ -475,6 +483,8 @@ public class JasonAgentService {
 
                                 }
                             }
+                            payload.put("state", "loading");
+                            view.setTag(payload);
                         } catch (Exception e) {
                             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             notifier.notify();
@@ -512,7 +522,7 @@ public class JasonAgentService {
                 // 2.3.1. copy options
                 for (Iterator<String> iterator = options.keys(); iterator.hasNext(); ) {
                     String      key     = iterator.next();
-                    JSONObject  value   = options.optJSONObject(key);
+                    Object  value   = options.get(key);
                     payload.put(key, value);
                 }
                 // 2.3.2. Add 'id' and 'state'
