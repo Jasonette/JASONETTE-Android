@@ -459,6 +459,14 @@ public class JasonAgentService {
                                     } else {
                                         Intent intent = new Intent("call");
                                         intent.putExtra("action", options.get("action").toString());
+
+                                        // file url handling
+                                        if (url.startsWith("file://")) {
+                                            if (url.startsWith("file:///android_asset/file")) {
+                                                url = url.replace("/android_asset/file/", "");
+                                            }
+                                        }
+
                                         intent.putExtra("data", "{\"url\": \"" + url + "\"}");
                                         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                                         return true;
