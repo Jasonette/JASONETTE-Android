@@ -65,7 +65,7 @@ public class JasonImageComponent {
             return builder;
 
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             return null;
         }
     }

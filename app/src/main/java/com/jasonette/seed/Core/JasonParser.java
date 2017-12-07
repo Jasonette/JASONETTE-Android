@@ -89,6 +89,7 @@ public class JasonParser {
             v8Console.release();
 
             res = new JSONObject(val);
+
             listener.onFinished(res);
 
         } catch (Exception e){
@@ -139,7 +140,6 @@ public class JasonParser {
 
     private Thread thread;
     public void parse(final String data_type, final JSONObject data, final Object template, final Context context){
-
         try{
             taskQueue.put(new Task(data_type, data, template));
             if(thread == null) {
@@ -148,9 +148,10 @@ public class JasonParser {
                     public void run() {
                         while (true) {
                             try {
-                                processTask(taskQueue.take());
+                                if (taskQueue.size() > 0) {
+                                    processTask(taskQueue.take());
+                                }
                                 if (taskQueue.size() == 0) {
-                                    thread.stop();
                                     thread = null;
                                     break;
                                 }

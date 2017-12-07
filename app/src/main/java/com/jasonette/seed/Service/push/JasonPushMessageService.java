@@ -1,5 +1,7 @@
 package com.jasonette.seed.Service.push;
 
+import android.util.Log;
+
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.jasonette.seed.Core.JasonViewActivity;
@@ -37,7 +39,7 @@ public class JasonPushMessageService extends FirebaseMessagingService {
                 response.put("$jason", payload);
                 ((JasonViewActivity)Launcher.getCurrentContext()).simple_trigger("$push.onmessage", response, Launcher.getCurrentContext());
             } catch (Exception e) {
-
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         }
     }

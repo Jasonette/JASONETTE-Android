@@ -2,6 +2,7 @@ package com.jasonette.seed.Core;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import com.jasonette.seed.Helper.JasonHelper;
 
@@ -19,7 +20,7 @@ public class JasonCallback {
             JasonHelper.next("success", action, return_value, event, context);
 
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 }

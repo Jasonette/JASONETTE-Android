@@ -120,7 +120,7 @@ public class JasonVisionService implements ActivityCompat.OnRequestPermissionsRe
 
                                 ((JasonViewActivity)context).simple_trigger("$vision.onscan", response, context);
                             } catch (Exception e) {
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                             return;
                         }
@@ -162,7 +162,7 @@ public class JasonVisionService implements ActivityCompat.OnRequestPermissionsRe
 
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 

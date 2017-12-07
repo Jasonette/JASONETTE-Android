@@ -78,7 +78,7 @@ public class JasonWebsocketService {
                         response.put("$jason", message);
                         context.simple_trigger("$websocket.onmessage", response, context);
                     } catch (Exception e) {
-
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });
@@ -97,7 +97,7 @@ public class JasonWebsocketService {
                         response.put("$jason", message);
                         context.simple_trigger("$websocket.onmessage", response, context);
                     } catch (Exception e) {
-
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });
@@ -127,7 +127,7 @@ public class JasonWebsocketService {
                         res.put("$jason", message);
                         context.simple_trigger("$websocket.onerror", res, context);
                     } catch (Exception e) {
-
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
             });

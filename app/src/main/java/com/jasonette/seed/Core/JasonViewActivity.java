@@ -226,6 +226,7 @@ public class JasonViewActivity extends AppCompatActivity {
             try {
                 preload = new JSONObject(intent.getStringExtra("preload"));
             } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 preload = null;
             }
         } else {
@@ -296,7 +297,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 }
             }
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -390,7 +391,7 @@ public class JasonViewActivity extends AppCompatActivity {
                 setup_body(m.rendered);
             }
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -1898,6 +1899,7 @@ public class JasonViewActivity extends AppCompatActivity {
                                         JSONObject action = head.getJSONObject("actions").getJSONObject("$pull");
                                         call(action.toString(), new JSONObject().toString(), "{}", JasonViewActivity.this);
                                     } catch (Exception e) {
+                                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                     }
                                 }
                             });

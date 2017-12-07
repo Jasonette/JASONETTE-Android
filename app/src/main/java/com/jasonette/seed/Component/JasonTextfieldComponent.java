@@ -148,7 +148,7 @@ public class JasonTextfieldComponent {
                                     }
                                 }
                             } catch (Exception e){
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
                     });
@@ -162,7 +162,7 @@ public class JasonTextfieldComponent {
                                     ((JasonViewActivity) context).model.var.put(component.getString("name"), v.getText().toString());
                                 }
                             } catch (Exception e){
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
 
@@ -192,6 +192,7 @@ public class JasonTextfieldComponent {
                             Typeface font_type = Typeface.createFromAsset(context.getAssets(), "fonts/" + style.getString("font:android") + ".ttf");
                             ((TextView) view).setTypeface(font_type);
                         } catch (Exception e) {
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                     }
                 } else if (style.has("font")){

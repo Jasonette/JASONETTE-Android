@@ -106,7 +106,7 @@ public class JasonNetworkAction {
                                 b.appendQueryParameter(key, val);
                             }
                         } catch (Exception e) {
-
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                     }
 
@@ -149,7 +149,7 @@ public class JasonNetworkAction {
                                     bodyBuilder.add(key, val);
                                 }
                             } catch (Exception e) {
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
                         // Attach Params from Session

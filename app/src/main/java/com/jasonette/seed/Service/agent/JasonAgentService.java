@@ -407,6 +407,9 @@ public class JasonAgentService {
                         }
                     }
                     @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                        // resolve
+                        final AtomicReference<JSONObject> notifier = new AtomicReference<>();
+
                         try {
 
                             // Only override behavior for web container
@@ -431,18 +434,16 @@ public class JasonAgentService {
                                     }
 
 
-                                    // resolve
-                                    final AtomicReference<JSONObject> notifier = new AtomicReference<>();
 
                                     JasonParser.getInstance(context).setParserListener(new JasonParser.JasonParserListener() {
-                                        @Override
-                                        public void onFinished(JSONObject reduced_action) {
-                                            synchronized (notifier) {
-                                                notifier.set(reduced_action);
-                                                notifier.notify();
-                                            }
-                                        }
-                                    });
+                                       @Override
+                                       public void onFinished(JSONObject reduced_action) {
+                                           synchronized (notifier) {
+                                               notifier.set(reduced_action);
+                                               notifier.notify();
+                                           }
+                                       }
+                                   });
                                     JasonParser.getInstance(context).parse("json", ((JasonViewActivity)context).model.state, resolved_action, context);
 
                                     synchronized (notifier) {
@@ -466,7 +467,8 @@ public class JasonAgentService {
                                 }
                             }
                         } catch (Exception e) {
-
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                            notifier.notify();
                         }
                         return false;
                     }
@@ -754,7 +756,7 @@ public class JasonAgentService {
                 }
             }
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         JasonHelper.next("error", action, new JSONObject(), new JSONObject(), context);
     }
@@ -789,7 +791,7 @@ public class JasonAgentService {
                                 newTag.put("state", "empty");
                                 agent.setTag(newTag);
                             } catch (Exception e) {
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                             agent.loadUrl("about:blank");
                         }
@@ -799,7 +801,7 @@ public class JasonAgentService {
                 }
             }
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         JasonHelper.next("error", action, new JSONObject(), new JSONObject(), context);
     }
@@ -890,6 +892,7 @@ public class JasonAgentService {
                 }
             }
         } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
 
     }
@@ -927,7 +930,8 @@ public class JasonAgentService {
                     latch.countDown();
                 }
             } catch (Exception e) {
-
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                latch.countDown();
             }
         }
         public void fetch_local(final String url, final Context context){
@@ -942,6 +946,7 @@ public class JasonAgentService {
                             codes.set(index, code);
                             latch.countDown();
                         } catch (Exception e) {
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             errors.add("Couldn't read the file");
                         }
                     }
@@ -950,6 +955,7 @@ public class JasonAgentService {
                 t.start();
             } catch (Exception e) {
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                latch.countDown();
             }
         }
 
@@ -979,12 +985,14 @@ public class JasonAgentService {
                                 latch.countDown();
                             }
                         } catch (Exception e) {
-
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                            latch.countDown();
                         }
                     }
                 });
             } catch (Exception e){
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                latch.countDown();
             }
         }
     }

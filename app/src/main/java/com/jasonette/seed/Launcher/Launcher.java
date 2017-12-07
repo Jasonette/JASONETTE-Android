@@ -64,7 +64,7 @@ public class Launcher extends Application {
        try {
             models.put(url, model);
        } catch (Exception e) {
-
+           Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
        }
     }
     public JasonModel getTabModel(String url) {
@@ -140,6 +140,7 @@ public class Launcher extends Application {
                         classMethod.invoke(classObject, getApplicationContext());
                     }
                 } catch (Exception e) {
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
 
@@ -311,7 +312,7 @@ public class Launcher extends Application {
             method.invoke(module, handler, result);
 
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 

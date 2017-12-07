@@ -57,6 +57,7 @@ public class JasonTextareaComponent {
                             Typeface font_type = Typeface.createFromAsset(context.getAssets(), "fonts/" + style.getString("font:android") + ".ttf");
                             ((TextView) view).setTypeface(font_type);
                         } catch (Exception e) {
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                     }
                 } else if (style.has("font")){
@@ -167,7 +168,7 @@ public class JasonTextareaComponent {
                                     }
                                 }
                             } catch (Exception e){
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
                     });
@@ -181,7 +182,7 @@ public class JasonTextareaComponent {
                                     ((JasonViewActivity) context).model.var.put(component.getString("name"), v.getText().toString());
                                 }
                             } catch (Exception e){
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
 
