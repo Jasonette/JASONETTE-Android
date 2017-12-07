@@ -339,6 +339,7 @@ public class JasonAgentService {
                         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
                         layoutParams.addRule(RelativeLayout.ALIGN_BOTTOM, agent.getId());
                         layoutParams.height = 5;
+                        pBar.setScaleY(4f);
                         pBar.setLayoutParams(layoutParams);
                         int color;
                         if (options.has("style") && options.getJSONObject("style").has("progress")) {
