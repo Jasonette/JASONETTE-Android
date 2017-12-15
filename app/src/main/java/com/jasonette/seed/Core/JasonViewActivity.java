@@ -32,6 +32,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -109,6 +111,8 @@ public class JasonViewActivity extends AppCompatActivity {
     private HorizontalDividerItemDecoration divider;
     private String previous_background;
     ArrayList<View> layer_items;
+
+    public View focusView = null;
 
     Parcelable listState;
     JSONObject intent_to_resolve;
@@ -1848,7 +1852,21 @@ public class JasonViewActivity extends AppCompatActivity {
                         }
                     }
 
-
+                    rootLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                       @Override
+                       public void onGlobalLayout() {
+                           if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                               rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                           } else {
+                               rootLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                           }
+                           if (focusView != null) {
+                               focusView.requestFocus();
+                               InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                               imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+                           }
+                       }
+                   });
 
                     // Set header
                     if (body.has("header")) {
