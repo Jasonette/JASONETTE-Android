@@ -5,6 +5,9 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
+
+import com.jasonette.seed.Core.JasonViewActivity;
+
 import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +48,12 @@ public class JasonComponentFactory {
                 view = JasonLabelComponent.build(prototype, error_component, parent, context);
                 ((TextView)view).setGravity(Gravity.CENTER);
             }
+
+            // Focus textfield/textarea
+            if (component.has("focus")) {
+                ((JasonViewActivity)context).focusView = view;
+            }
+
             return view;
 
         }
