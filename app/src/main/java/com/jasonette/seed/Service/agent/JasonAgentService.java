@@ -39,6 +39,8 @@ import okhttp3.Response;
 
 public class JasonAgentService {
 
+    private JSONObject pending = new JSONObject();
+
     // Initialize
     public JasonAgentService() {
     }
@@ -380,22 +382,23 @@ public class JasonAgentService {
                                 view.loadUrl("javascript:" + injection_script + " " + interface_script);
                             }
 
-                            // Trigger $agent.ready event
-                            context.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        JSONObject attrs = new JSONObject();
-                                        attrs.put("id", id);
-                                        attrs.put("url", url);
-                                        JSONObject res = new JSONObject();
-                                        res.put("$jason", attrs);
-                                        context.simple_trigger("$agent.ready", res, context);
-                                    } catch (Exception e) {
-                                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                                    }
+                            if (pending.has(id)) {
+                                JSONObject q = pending.getJSONObject(id);
+                                JSONObject jason_request;
+                                if (q.has("jason_request")) {
+                                    jason_request = q.getJSONObject("jason_request");
+                                } else {
+                                    jason_request = null;
                                 }
-                            });
+                                JSONObject agent_request;
+                                if (q.has("agent_request")) {
+                                    agent_request = q.getJSONObject("agent_request");
+                                } else {
+                                    agent_request = null;
+                                }
+                                request(jason_request, agent_request, context);
+                                pending.remove(id);
+                            }
 
                             // only set state to rendered if it's not about:blank
                             if (!url.equalsIgnoreCase("about:blank")) {
@@ -662,6 +665,7 @@ public class JasonAgentService {
                     identifier = "$webcontainer@" + ((JasonViewActivity)context).model.url;
                 }
 
+
                 if(((JasonViewActivity)context).agents.has(identifier)) {
                     // Find agent by ID
                     final WebView agent = (WebView)((JasonViewActivity)context).agents.get(identifier);
@@ -734,6 +738,13 @@ public class JasonAgentService {
                         });
                         return;
                     }
+                } else {
+                    // If the agent is not yet ready, put it in a pending queue,
+                    // this will be triggered later when the webview becomes ready
+                    JSONObject q = new JSONObject();
+                    q.put("jason_request", jason_request);
+                    q.put("agent_request", agent_request);
+                    pending.put(identifier, q);
                 }
             }
 
