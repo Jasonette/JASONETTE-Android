@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -56,6 +57,7 @@ public class JasonTextareaComponent {
                             Typeface font_type = Typeface.createFromAsset(context.getAssets(), "fonts/" + style.getString("font:android") + ".ttf");
                             ((TextView) view).setTypeface(font_type);
                         } catch (Exception e) {
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                     }
                 } else if (style.has("font")){
@@ -72,6 +74,12 @@ public class JasonTextareaComponent {
                             ((TextView) view).setTypeface(Typeface.DEFAULT);
                         }
                     }
+                }
+
+                if (!style.has("height")) {
+                    ViewGroup.LayoutParams layoutParams = (ViewGroup.LayoutParams)view.getLayoutParams();
+                    layoutParams.height = 300;
+                    view.setLayoutParams(layoutParams);
                 }
 
                 int g = 0;
@@ -123,6 +131,8 @@ public class JasonTextareaComponent {
                         ((EditText) view).setInputType(InputType.TYPE_CLASS_TEXT);
                     } else if(keyboard.equalsIgnoreCase("number")) {
                         ((EditText) view).setInputType(InputType.TYPE_CLASS_NUMBER);
+                    } else if(keyboard.equalsIgnoreCase("decimal")) {
+                        ((EditText) view).setInputType(InputType.TYPE_CLASS_NUMBER);
                     } else if(keyboard.equalsIgnoreCase("phone")) {
                         ((EditText) view).setInputType(InputType.TYPE_CLASS_PHONE);
                     } else if(keyboard.equalsIgnoreCase("url")) {
@@ -158,7 +168,7 @@ public class JasonTextareaComponent {
                                     }
                                 }
                             } catch (Exception e){
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
                     });
@@ -172,7 +182,7 @@ public class JasonTextareaComponent {
                                     ((JasonViewActivity) context).model.var.put(component.getString("name"), v.getText().toString());
                                 }
                             } catch (Exception e){
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
 

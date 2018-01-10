@@ -31,6 +31,7 @@ public class JasonModel{
     public JSONObject jason;
     public JSONObject rendered;
     public JSONObject state;
+    public boolean offline;
 
     public JSONObject refs;
 
@@ -48,7 +49,8 @@ public class JasonModel{
     public JasonModel(String url, Intent intent, JasonViewActivity view){
         this.url = url;
         this.view = view;
-        this.client = ((Launcher)view.getApplication()).getHttpClient();
+        this.client = ((Launcher)view.getApplication()).getHttpClient(0);
+        this.offline = false;
 
         // $params
         this.params = new JSONObject();
@@ -168,14 +170,14 @@ public class JasonModel{
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    fetch_local("file://error.json");
+                    if(!offline) fetch_local("file://error.json");
                     e.printStackTrace();
                 }
 
                 @Override
                 public void onResponse(Call call, final Response response) throws IOException {
                     if (!response.isSuccessful()) {
-                        fetch_local("file://error.json");
+                        if(!offline) fetch_local("file://error.json");
                     } else {
                         String res = response.body().string();
                         refs = new JSONObject();

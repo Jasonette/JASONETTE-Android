@@ -1,6 +1,7 @@
 package com.jasonette.seed.Action;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.jasonette.seed.Core.JasonViewActivity;
@@ -26,7 +27,7 @@ public class JasonPushAction {
                 response.put("$jason", payload);
                 ((JasonViewActivity)Launcher.getCurrentContext()).simple_trigger("$push.onregister", response, Launcher.getCurrentContext());
             } catch (Exception e) {
-
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
             // Token doesn't exist => ignore => JasonPushRegisterService will take care of $push.onregister

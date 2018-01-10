@@ -11,6 +11,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.bumptech.glide.request.target.ViewTarget;
+import com.jasonette.seed.Core.JasonModel;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.R;
@@ -22,18 +23,34 @@ import org.json.JSONTokener;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import com.jasonette.seed.BuildConfig;
+import com.jasonette.seed.Service.agent.JasonAgentService;
+import com.jasonette.seed.Service.websocket.JasonWebsocketService;
 
 
 public class Launcher extends Application {
     private JSONObject handlers;
     private JSONObject global;
     private JSONObject env;
+    private JSONObject models;
+    public JSONObject services;
     private static Context currentContext;
+
+    public void call(String serviceName, String methodName, JSONObject action, Context context) {
+        try {
+            Object service = services.get(serviceName);
+            Method method = service.getClass().getMethod(methodName, action.getClass(), Context.class);
+            method.invoke(service, action, context);
+        } catch (Exception e) {
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
 
     // get current context from anywhere
     public static Context getCurrentContext() {
@@ -41,6 +58,25 @@ public class Launcher extends Application {
     }
     public static void setCurrentContext(Context context) {
         currentContext = context;
+    }
+
+    public void setTabModel(String url, JasonModel model) {
+       try {
+            models.put(url, model);
+       } catch (Exception e) {
+           Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+       }
+    }
+    public JasonModel getTabModel(String url) {
+        try {
+            if (models.has(url)) {
+                return (JasonModel)models.get(url);
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 
@@ -104,8 +140,16 @@ public class Launcher extends Application {
                         classMethod.invoke(classObject, getApplicationContext());
                     }
                 } catch (Exception e) {
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                 }
             }
+
+            services = new JSONObject();
+            JasonWebsocketService websocketService = new JasonWebsocketService(this);
+            JasonAgentService agentService = new JasonAgentService();
+            services.put("JasonWebsocketService", websocketService);
+            services.put("JasonAgentService", agentService);
+
 
             // handler init
             handlers = new JSONObject();
@@ -131,6 +175,7 @@ public class Launcher extends Application {
             }
 
             this.env = new JSONObject();
+            this.models = new JSONObject();
 
             // device info
             JSONObject device = new JSONObject();
@@ -267,7 +312,7 @@ public class Launcher extends Application {
             method.invoke(module, handler, result);
 
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
 
@@ -293,7 +338,14 @@ public class Launcher extends Application {
         }
     }
 
-    public OkHttpClient getHttpClient() {
-        return new OkHttpClient.Builder().build();
+    public OkHttpClient getHttpClient(long timeout) {
+        if(timeout > 0) {
+            return new OkHttpClient.Builder()
+                    .writeTimeout(timeout, TimeUnit.SECONDS)
+                    .readTimeout(timeout, TimeUnit.SECONDS)
+                    .build();
+        } else {
+            return new OkHttpClient.Builder().build();
+        }
     }
 }

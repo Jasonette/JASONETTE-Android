@@ -46,6 +46,7 @@ public class JasonComponent {
                             width = height * ratio;
                         }
                     } catch (Exception e) {
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
                 if (style.has("width")) {
@@ -56,6 +57,7 @@ public class JasonComponent {
                             height = width / ratio;
                         }
                     } catch (Exception e) {
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
                 }
 

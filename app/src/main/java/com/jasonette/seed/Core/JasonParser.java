@@ -10,6 +10,8 @@ import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 import timber.log.Timber;
 
 public class JasonParser {
@@ -29,6 +31,74 @@ public class JasonParser {
     private V8 juice;
     public void setParserListener(JasonParserListener listener){
         this.listener = listener;
+    }
+
+
+    private class Task {
+        public String data_type;
+        public JSONObject data;
+        public Object template;
+        public Task(String data_type, JSONObject data, Object template) {
+            this.data_type = data_type;
+            this.data = data;
+            this.template = template;
+        }
+    }
+    private LinkedBlockingQueue<Task> taskQueue = new LinkedBlockingQueue<Task>();
+    private void processTask(Task task) {
+        try {
+            Object template = task.template;
+            JSONObject data = task.data;
+            String data_type = task.data_type;
+
+            // thread handling - acquire handle
+            juice.getLocker().acquire();
+            Console console = new Console();
+            V8Object v8Console = new V8Object(juice);
+            juice.add("console", v8Console);
+            v8Console.registerJavaMethod(console, "log", "log", new Class<?>[] { String.class });
+            v8Console.registerJavaMethod(console, "error", "error", new Class<?>[] { String.class });
+            v8Console.registerJavaMethod(console, "trace", "trace", new Class<?>[] {});
+
+            String templateJson = template.toString();
+            String dataJson = data.toString();
+            String val = "{}";
+
+            V8Object parser = juice.getObject("ST");
+            // Get global variables (excluding natively injected variables which will never be used in the template)
+            String globals = juice.executeStringScript("JSON.stringify(Object.keys(this).filter(function(key){return ['ST', 'to_json', 'setImmediate', 'clearImmediate', 'console'].indexOf(key) === -1;}));");
+            if(data_type.equalsIgnoreCase("json")) {
+                V8Array parameters = new V8Array(juice);
+                parameters.push(templateJson);
+                parameters.push(dataJson);
+                parameters.push(globals);
+                parameters.push(true);
+                val = parser.executeStringFunction("transform", parameters);
+                parameters.release();
+            } else {
+                String raw_data = data.getString("$jason");
+                V8Array parameters = new V8Array(juice).push("html");
+                parameters.push(templateJson);
+                parameters.push(raw_data);
+                parameters.push(globals);
+                parameters.push(true);
+                val = juice.executeStringFunction("to_json", parameters);
+                parameters.release();
+            }
+            parser.release();
+            v8Console.release();
+
+            res = new JSONObject(val);
+
+            listener.onFinished(res);
+
+        } catch (Exception e){
+            Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+
+        // thread handling - release handle
+        juice.getLocker().release();
+
     }
 
 
@@ -68,61 +138,32 @@ public class JasonParser {
     }
 
 
+    private Thread thread;
     public void parse(final String data_type, final JSONObject data, final Object template, final Context context){
-
         try{
-            new Thread(new Runnable(){
-                @Override public void run() {
-
-                    try {
-                        // thread handling - acquire handle
-                        juice.getLocker().acquire();
-                        Console console = new Console();
-                        V8Object v8Console = new V8Object(juice);
-                        juice.add("console", v8Console);
-                        v8Console.registerJavaMethod(console, "log", "log", new Class<?>[] { String.class });
-                        v8Console.registerJavaMethod(console, "error", "error", new Class<?>[] { String.class });
-                        v8Console.registerJavaMethod(console, "trace", "trace", new Class<?>[] {});
-
-                        String templateJson = template.toString();
-                        String dataJson = data.toString();
-                        String val = "{}";
-
-                        V8Object parser = juice.getObject("JSON");
-                        // Get global variables (excluding natively injected variables which will never be used in the template)
-                        String globals = juice.executeStringScript("JSON.stringify(Object.keys(this).filter(function(key){return ['ST', 'to_json', 'setImmediate', 'clearImmediate', 'console'].indexOf(key) === -1;}));");
-                        if(data_type.equalsIgnoreCase("json")) {
-                            V8Array parameters = new V8Array(juice);
-                            parameters.push(templateJson);
-                            parameters.push(dataJson);
-                            parameters.push(globals);
-                            parameters.push(true);
-                            val = parser.executeStringFunction("transform", parameters);
-                            parameters.release();
-                        } else {
-                            String raw_data = data.getString("$jason");
-                            V8Array parameters = new V8Array(juice).push("html");
-                            parameters.push(templateJson);
-                            parameters.push(raw_data);
-                            parameters.push(globals);
-                            parameters.push(true);
-                            val = juice.executeStringFunction("to_json", parameters);
-                            parameters.release();
+            taskQueue.put(new Task(data_type, data, template));
+            if(thread == null) {
+                thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (true) {
+                            try {
+                                if (taskQueue.size() > 0) {
+                                    processTask(taskQueue.take());
+                                }
+                                if (taskQueue.size() == 0) {
+                                    thread = null;
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                            }
                         }
-                        parser.release();
-                        v8Console.release();
-
-                        res = new JSONObject(val);
-                        listener.onFinished(res);
-
-                    } catch (Exception e){
-                        Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                     }
-
-                    // thread handling - release handle
-                    juice.getLocker().release();
-               }
-            }).start();
+                });
+                thread.start();
+            } else {
+            }
         } catch (Exception e){
             Timber.w(e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }

@@ -106,7 +106,7 @@ public class JasonNetworkAction {
                                 b.appendQueryParameter(key, val);
                             }
                         } catch (Exception e) {
-
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                         }
                     }
 
@@ -149,7 +149,7 @@ public class JasonNetworkAction {
                                     bodyBuilder.add(key, val);
                                 }
                             } catch (Exception e) {
-
+                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                             }
                         }
                         // Attach Params from Session
@@ -171,7 +171,20 @@ public class JasonNetworkAction {
                 }
 
 
-                OkHttpClient client = ((Launcher)context.getApplicationContext()).getHttpClient();
+                OkHttpClient client;
+                if(options.has("timeout")) {
+                    Object timeout = options.get("timeout");
+                    if(timeout instanceof Long) {
+                        client = ((Launcher)context.getApplicationContext()).getHttpClient((long)timeout);
+                    } else if (timeout instanceof String){
+                        Long timeout_int = Long.parseLong((String)timeout);
+                        client = ((Launcher)context.getApplicationContext()).getHttpClient(timeout_int);
+                    } else {
+                        client = ((Launcher)context.getApplicationContext()).getHttpClient(0);
+                    }
+                } else{
+                    client = ((Launcher)context.getApplicationContext()).getHttpClient(0);
+                }
 
                 client.newCall(request).enqueue(new Callback() {
                     @Override

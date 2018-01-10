@@ -246,6 +246,10 @@ public class JasonHelper {
         return font_type;
     }
 
+    public static String read_file_scheme(String filename, Context context) throws IOException {
+        filename = filename.replace("file://", "file/");
+        return read_file(filename, context);
+    }
     public static String read_file(String filename, Context context) throws IOException {
         AssetManager assets = context.getAssets();
         final InputStream inputStream = assets.open(filename);

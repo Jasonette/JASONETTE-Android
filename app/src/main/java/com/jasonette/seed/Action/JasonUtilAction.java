@@ -161,7 +161,7 @@ public class JasonUtilAction {
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
-                                    //
+                                    JasonHelper.next("error", action, new JSONObject(), event, context);
                                 }
                             });
                     builder.show();
@@ -208,8 +208,8 @@ public class JasonUtilAction {
                                         Intent intent = new Intent("call");
                                         JSONObject href = new JSONObject();
                                         href.put("type", "$href");
-                                        href.put("options", item.get("href").toString());
-                                        intent.putExtra("action", item.get("action").toString());
+                                        href.put("options", item.get("href"));
+                                        intent.putExtra("action", href.toString());
                                         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
                                     }
                                 } catch (Exception e){

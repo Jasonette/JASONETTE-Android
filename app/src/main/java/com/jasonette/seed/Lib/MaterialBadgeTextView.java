@@ -18,6 +18,7 @@ import android.graphics.drawable.shapes.OvalShape;
 import android.os.Build;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -158,7 +159,7 @@ public class MaterialBadgeTextView extends TextView {
         try {
             temp = Integer.parseInt(count);
         } catch (Exception e) {
-
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
         if (temp != -1) {
             setBadgeCount(temp, goneWhenZero);
