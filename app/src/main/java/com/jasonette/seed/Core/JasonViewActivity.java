@@ -1663,191 +1663,196 @@ public class JasonViewActivity extends AppCompatActivity {
                     sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
                     getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color("rgb(255,255,255)"));
 
-                    if (body.has("style")) {
-                        JSONObject style = body.getJSONObject("style");
-                        if (style.has("background")) {
-                            // sectionLayout must be transparent to see the background
-                            sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
+                    Object bg = null;
+                    if (body.has("style") && body.getJSONObject("style").has("background")) {
+                        bg = body.getJSONObject("style").get("background");
+                    } else if (body.has("background")) {
+                        bg = body.get("background");
+                    }
 
-                            // we remove the current view from the root layout
-                            Boolean needs_redraw = false;
-                            if (backgroundCurrentView != null) {
-                                String current_background = style.toString();
-                                if(previous_background == null) {
-                                    needs_redraw = true;
-                                    rootLayout.removeView(backgroundCurrentView);
-                                    backgroundCurrentView = null;
-                                } else if(current_background.equalsIgnoreCase(previous_background)) {
-                                    needs_redraw = false;
-                                } else {
-                                    needs_redraw = true;
-                                    rootLayout.removeView(backgroundCurrentView);
-                                    backgroundCurrentView = null;
-                                }
-                                previous_background = current_background;
+                    // Background Logic
+                    if (bg != null) {
+                        // sectionLayout must be transparent to see the background
+                        sectionLayout.setBackgroundColor(JasonHelper.parse_color("rgba(0,0,0,0)"));
+
+                        // we remove the current view from the root layout
+                        Boolean needs_redraw = false;
+                        if (backgroundCurrentView != null) {
+                            String current_background = bg.toString();
+                            if(previous_background == null) {
+                                needs_redraw = true;
+                                rootLayout.removeView(backgroundCurrentView);
+                                backgroundCurrentView = null;
+                            } else if(current_background.equalsIgnoreCase(previous_background)) {
+                                needs_redraw = false;
                             } else {
                                 needs_redraw = true;
                                 rootLayout.removeView(backgroundCurrentView);
                                 backgroundCurrentView = null;
                             }
+                            previous_background = current_background;
+                        } else {
+                            needs_redraw = true;
+                            rootLayout.removeView(backgroundCurrentView);
+                            backgroundCurrentView = null;
+                        }
 
-                            if(needs_redraw) {
-                                if (style.get("background") instanceof String) {
-                                    String background = style.getString("background");
-                                    JSONObject c = new JSONObject();
-                                    c.put("url", background);
-                                    if (background.matches("(file|http[s]?):\\/\\/.*")) {
-                                        if (backgroundImageView == null) {
-                                            backgroundImageView = new ImageView(JasonViewActivity.this);
-                                        }
-
-                                        backgroundCurrentView = backgroundImageView;
-
-                                        DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
-                                        // gif doesn't work with RESULT cache strategy
-                                        // TODO: Check with Glide V4
-                                        if (background.matches(".*\\.gif")) {
-                                            cacheStrategy = DiskCacheStrategy.SOURCE;
-                                        }
-
-                                        with(JasonViewActivity.this)
-                                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
-                                                .diskCacheStrategy(cacheStrategy)
-                                                .centerCrop()
-                                                .into(backgroundImageView);
-                                    } else if (background.matches("data:image.*")) {
-                                        String base64;
-                                        if (background.startsWith("data:image/jpeg")) {
-                                            base64 = background.substring("data:image/jpeg;base64,".length());
-                                        } else if (background.startsWith("data:image/png")) {
-                                            base64 = background.substring("data:image/png;base64,".length());
-                                        } else if (background.startsWith("data:image/gif")) {
-                                            base64 = background.substring("data:image/gif;base64,".length());
-                                        } else {
-                                            base64 = "";    // exception
-                                        }
-                                        byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
-
-                                        with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
-                                            @Override
-                                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
-                                                sectionLayout.setBackground(resource);
-                                            }
-                                        });
-                                    } else {
-                                        if (background.equalsIgnoreCase("camera")) {
-                                            int side = JasonVisionService.FRONT;
-                                            if (cameraManager == null) {
-                                                cameraManager = new JasonVisionService(JasonViewActivity.this);
-                                                backgroundCameraView = cameraManager.getView();
-                                            }
-                                            cameraManager.setSide(side);
-                                            backgroundCurrentView = backgroundCameraView;
-                                        } else {
-                                            sectionLayout.setBackgroundColor(JasonHelper.parse_color(background));
-                                            getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
-                                        }
+                        if(needs_redraw) {
+                            if (bg instanceof String) {
+                                String background = (String)bg;
+                                JSONObject c = new JSONObject();
+                                c.put("url", background);
+                                if (background.matches("(file|http[s]?):\\/\\/.*")) {
+                                    if (backgroundImageView == null) {
+                                        backgroundImageView = new ImageView(JasonViewActivity.this);
                                     }
+
+                                    backgroundCurrentView = backgroundImageView;
+
+                                    DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
+                                    // gif doesn't work with RESULT cache strategy
+                                    // TODO: Check with Glide V4
+                                    if (background.matches(".*\\.gif")) {
+                                        cacheStrategy = DiskCacheStrategy.SOURCE;
+                                    }
+
+                                    with(JasonViewActivity.this)
+                                            .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                                            .diskCacheStrategy(cacheStrategy)
+                                            .centerCrop()
+                                            .into(backgroundImageView);
+                                } else if (background.matches("data:image.*")) {
+                                    String base64;
+                                    if (background.startsWith("data:image/jpeg")) {
+                                        base64 = background.substring("data:image/jpeg;base64,".length());
+                                    } else if (background.startsWith("data:image/png")) {
+                                        base64 = background.substring("data:image/png;base64,".length());
+                                    } else if (background.startsWith("data:image/gif")) {
+                                        base64 = background.substring("data:image/gif;base64,".length());
+                                    } else {
+                                        base64 = "";    // exception
+                                    }
+                                    byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
+
+                                    with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
+                                                                            @Override
+                                                                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                            sectionLayout.setBackground(resource);
+                                    }
+                                });
                                 } else {
-                                    JSONObject background = style.getJSONObject("background");
-                                    String type = background.getString("type");
-                                    if (type.equalsIgnoreCase("html")) {
-                                        // on Android the tabs work differently from iOS
-                                        // => All tabs share a single activity.
-                                        // therefore, unlike ios where each viewcontroller owns a web container through "$webcontainer" id,
-                                        // on android we need to distinguish between multiple web containers through URL
-                                        background.put("id", "$webcontainer@" + model.url);
-                                        JasonAgentService agentService = (JasonAgentService)((Launcher)getApplicationContext()).services.get("JasonAgentService");
-                                        backgroundWebview = agentService.setup(JasonViewActivity.this, background, "$webcontainer@" + model.url);
-                                        backgroundWebview.setVisibility(View.VISIBLE);
-                                        // not interactive by default;
-                                        Boolean responds_to_webview = false;
-
-
-                                        /**
-
-                                             if has an 'action' attribute
-                                              - if the action is "type": "$default"
-                                                => Allow touch. The visit will be handled in the agent handler
-                                              - if the action is everything else
-                                                => Allow touch. The visit will be handled in the agent handler
-                                             if it doesn't have an 'action' attribute
-                                                => Don't allow touch.
-
-                                         **/
-                                        if (background.has("action")) {
-                                            responds_to_webview = true;
-                                        }
-                                        if (responds_to_webview) {
-                                            // webview receives click
-                                            backgroundWebview.setOnTouchListener(null);
-                                        } else {
-                                            // webview shouldn't receive click
-                                            backgroundWebview.setOnTouchListener(new View.OnTouchListener() {
-                                                @Override
-                                                public boolean onTouch(View v, MotionEvent event) {
-                                                    return true;
-                                                }
-                                            });
-                                        }
-                                        backgroundCurrentView = backgroundWebview;
-                                    } else if (type.equalsIgnoreCase("camera")) {
+                                    if (background.equalsIgnoreCase("camera")) {
                                         int side = JasonVisionService.FRONT;
-                                        if (background.has("options")) {
-                                            JSONObject options = background.getJSONObject("options");
-                                            if (options.has("device") && options.getString("device").equals("back")) {
-                                                side = JasonVisionService.BACK;
-                                            }
-                                        }
-
                                         if (cameraManager == null) {
                                             cameraManager = new JasonVisionService(JasonViewActivity.this);
                                             backgroundCameraView = cameraManager.getView();
                                         }
                                         cameraManager.setSide(side);
                                         backgroundCurrentView = backgroundCameraView;
+                                    } else {
+                                        sectionLayout.setBackgroundColor(JasonHelper.parse_color(background));
+                                        getWindow().getDecorView().setBackgroundColor(JasonHelper.parse_color(background));
                                     }
                                 }
+                            } else {
+                                JSONObject background = (JSONObject)bg;
+                                String type = background.getString("type");
+                                if (type.equalsIgnoreCase("html")) {
+                                    // on Android the tabs work differently from iOS
+                                    // => All tabs share a single activity.
+                                    // therefore, unlike ios where each viewcontroller owns a web container through "$webcontainer" id,
+                                    // on android we need to distinguish between multiple web containers through URL
+                                    background.put("id", "$webcontainer@" + model.url);
+                                    JasonAgentService agentService = (JasonAgentService)((Launcher)getApplicationContext()).services.get("JasonAgentService");
+                                    backgroundWebview = agentService.setup(JasonViewActivity.this, background, "$webcontainer@" + model.url);
+                                    backgroundWebview.setVisibility(View.VISIBLE);
+                                    // not interactive by default;
+                                    Boolean responds_to_webview = false;
 
-                                if (backgroundCurrentView != null) {
-                                    RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
-                                            RelativeLayout.LayoutParams.MATCH_PARENT,
-                                            RelativeLayout.LayoutParams.MATCH_PARENT);
 
-                                    // Update Layout after the rootLayout has finished rendering in order to change the background dimension
-                                    rootLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                                    /**
 
-                                        @Override
-                                        public void onGlobalLayout() {
-                                            if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                                                rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                                            }
-                                            else {
-                                                rootLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                                            }
+                                         if has an 'action' attribute
+                                          - if the action is "type": "$default"
+                                            => Allow touch. The visit will be handled in the agent handler
+                                          - if the action is everything else
+                                            => Allow touch. The visit will be handled in the agent handler
+                                         if it doesn't have an 'action' attribute
+                                            => Don't allow touch.
 
-                                            // header
-                                            int toolbarHeight = 0;
-                                            if (toolbar != null) { toolbarHeight = toolbar.getHeight(); }
-
-                                            // footer.tabs
-                                            int tabsHeight = 0;
-                                            if (bottomNavigation != null) { tabsHeight = bottomNavigation.getHeight(); }
-
-                                            // footer.input
-                                            int inputHeight = 0;
-                                            if (footerInput != null) { inputHeight = footerInput.getHeight(); }
-
-                                            RelativeLayout.LayoutParams newrlp = new RelativeLayout.LayoutParams(
-                                                    RelativeLayout.LayoutParams.MATCH_PARENT,
-                                                    RelativeLayout.LayoutParams.MATCH_PARENT);
-                                            newrlp.setMargins(0, toolbarHeight, 0, tabsHeight + inputHeight);
-                                            backgroundCurrentView.setLayoutParams(newrlp);
+                                     **/
+                                    if (background.has("action")) {
+                                        responds_to_webview = true;
+                                    }
+                                    if (responds_to_webview) {
+                                        // webview receives click
+                                        backgroundWebview.setOnTouchListener(null);
+                                    } else {
+                                        // webview shouldn't receive click
+                                        backgroundWebview.setOnTouchListener(new View.OnTouchListener() {
+                                                                         @Override
+                                                                         public boolean onTouch(View v, MotionEvent event) {
+                                                return true;
                                         }
                                     });
+                                    }
+                                    backgroundCurrentView = backgroundWebview;
+                                } else if (type.equalsIgnoreCase("camera")) {
+                                    int side = JasonVisionService.FRONT;
+                                    if (background.has("options")) {
+                                        JSONObject options = background.getJSONObject("options");
+                                        if (options.has("device") && options.getString("device").equals("back")) {
+                                            side = JasonVisionService.BACK;
+                                        }
+                                    }
 
-                                    rootLayout.addView(backgroundCurrentView, 0, rlp);
+                                    if (cameraManager == null) {
+                                        cameraManager = new JasonVisionService(JasonViewActivity.this);
+                                        backgroundCameraView = cameraManager.getView();
+                                    }
+                                    cameraManager.setSide(side);
+                                    backgroundCurrentView = backgroundCameraView;
                                 }
+                            }
+
+                            if (backgroundCurrentView != null) {
+                                RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(
+                                        RelativeLayout.LayoutParams.MATCH_PARENT,
+                                        RelativeLayout.LayoutParams.MATCH_PARENT);
+
+                                // Update Layout after the rootLayout has finished rendering in order to change the background dimension
+                                rootLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+                                    @Override
+                                    public void onGlobalLayout() {
+                                        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                                            rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                                        }
+                                        else {
+                                            rootLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                                        }
+
+                                        // header
+                                        int toolbarHeight = 0;
+                                        if (toolbar != null) { toolbarHeight = toolbar.getHeight(); }
+
+                                        // footer.tabs
+                                        int tabsHeight = 0;
+                                        if (bottomNavigation != null) { tabsHeight = bottomNavigation.getHeight(); }
+
+                                        // footer.input
+                                        int inputHeight = 0;
+                                        if (footerInput != null) { inputHeight = footerInput.getHeight(); }
+
+                                        RelativeLayout.LayoutParams newrlp = new RelativeLayout.LayoutParams(
+                                                RelativeLayout.LayoutParams.MATCH_PARENT,
+                                                RelativeLayout.LayoutParams.MATCH_PARENT);
+                                        newrlp.setMargins(0, toolbarHeight, 0, tabsHeight + inputHeight);
+                                        backgroundCurrentView.setLayoutParams(newrlp);
+                                    }
+                                });
+
+                                rootLayout.addView(backgroundCurrentView, 0, rlp);
                             }
                         }
                     }
