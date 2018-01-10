@@ -40,6 +40,7 @@ import okhttp3.Response;
 public class JasonAgentService {
 
     private JSONObject pending = new JSONObject();
+    private JSONObject pending_injections = new JSONObject();
 
     // Initialize
     public JasonAgentService() {
@@ -398,6 +399,11 @@ public class JasonAgentService {
                                 }
                                 request(jason_request, agent_request, context);
                                 pending.remove(id);
+                            }
+
+                            if (pending_injections.has(id)) {
+                                inject(pending_injections.getJSONObject(id), context);
+                                pending_injections.remove(id);
                             }
 
                             // only set state to rendered if it's not about:blank
@@ -916,9 +922,7 @@ public class JasonAgentService {
                         JasonHelper.next("error", action, error, new JSONObject(), context);
                     }
                 } else {
-                    JSONObject error = new JSONObject();
-                    error.put("message", "no such id exists");
-                    JasonHelper.next("error", action, error, new JSONObject(), context);
+                    pending_injections.put(identifier, action);
                 }
             }
         } catch (Exception e) {
