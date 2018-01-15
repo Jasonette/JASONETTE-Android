@@ -1834,7 +1834,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
                                         // header
                                         int toolbarHeight = 0;
-                                        if (toolbar != null) { toolbarHeight = toolbar.getHeight(); }
+                                        if (body.has("header")) { toolbarHeight = toolbar.getHeight(); }
 
                                         // footer.tabs
                                         int tabsHeight = 0;
