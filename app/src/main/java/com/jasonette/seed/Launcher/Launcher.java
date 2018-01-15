@@ -257,17 +257,20 @@ public class Launcher extends Application {
                 }
 
                 String classname = handler.getString("class");
-                classname = "com.jasonette.seed.Action." + classname;
+                String primaryClassname = "com.jasonette.seed.Action." + classname;
+                String secondaryClassname = "com.jasonette.seed.Core." + classname;
                 String methodname = handler.getString("method");
 
                 Object module;
-                if (context.modules.containsKey(classname)) {
-                    module = context.modules.get(classname);
+                if (context.modules.containsKey(primaryClassname)) {
+                    module = context.modules.get(primaryClassname);
+                } else if (context.modules.containsKey(secondaryClassname)) {
+                    module = context.modules.get(secondaryClassname);
                 } else {
-                    Class<?> classObject = Class.forName(classname);
+                    Class<?> classObject = Class.forName(secondaryClassname);
                     Constructor<?> constructor = classObject.getConstructor();
                     module = constructor.newInstance();
-                    context.modules.put(classname, module);
+                    context.modules.put(secondaryClassname, module);
                 }
 
                 Method method = module.getClass().getMethod(methodname, Intent.class, JSONObject.class);
