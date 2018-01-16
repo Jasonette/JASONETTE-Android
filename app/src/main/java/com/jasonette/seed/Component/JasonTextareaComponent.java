@@ -132,7 +132,7 @@ public class JasonTextareaComponent {
                     } else if(keyboard.equalsIgnoreCase("number")) {
                         ((EditText) view).setInputType(InputType.TYPE_CLASS_NUMBER);
                     } else if(keyboard.equalsIgnoreCase("decimal")) {
-                        ((EditText) view).setInputType(InputType.TYPE_CLASS_NUMBER);
+                        ((EditText) view).setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);
                     } else if(keyboard.equalsIgnoreCase("phone")) {
                         ((EditText) view).setInputType(InputType.TYPE_CLASS_PHONE);
                     } else if(keyboard.equalsIgnoreCase("url")) {
