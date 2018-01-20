@@ -69,9 +69,13 @@ public class JasonComponent {
                 view.setLayoutParams(layoutParams);
             }
 
+            int bgcolor;
             if (style.has("background")) {
                 int color = JasonHelper.parse_color(style.getString("background"));
+                bgcolor = color;
                 view.setBackgroundColor(color);
+            } else {
+                bgcolor = JasonHelper.parse_color("rgba(0,0,0,0)");
             }
             if(style.has("opacity"))
             {
@@ -149,6 +153,7 @@ public class JasonComponent {
                         }
                         GradientDrawable cornerShape = new GradientDrawable();
                         cornerShape.setStroke(border_width, border_color);
+                        cornerShape.setColor(bgcolor);
                         cornerShape.invalidateSelf();
                         view.setBackground(cornerShape);
                     }
