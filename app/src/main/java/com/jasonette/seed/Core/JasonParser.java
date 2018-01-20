@@ -88,7 +88,11 @@ public class JasonParser {
             parser.release();
             v8Console.release();
 
-            res = new JSONObject(val);
+            if (val.equalsIgnoreCase("null")) {
+                res = new JSONObject();
+            } else {
+                res = new JSONObject(val);
+            }
 
             listener.onFinished(res);
 
