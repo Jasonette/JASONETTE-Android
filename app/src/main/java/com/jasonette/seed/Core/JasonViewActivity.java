@@ -1449,8 +1449,8 @@ public class JasonViewActivity extends AppCompatActivity {
                             Intent intent = new Intent(url);
                             startActivity(intent);
                         }
+                        return;
                     }
-                    return;
                 }
 
 
