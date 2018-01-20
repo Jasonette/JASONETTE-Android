@@ -16,7 +16,9 @@ public class JasonPushRegisterService extends FirebaseInstanceIdService{
             try {
                 JSONObject payload = new JSONObject();
                 payload.put("token", refreshedToken);
-                ((JasonViewActivity) Launcher.getCurrentContext()).simple_trigger("$push.onregister", payload, Launcher.getCurrentContext());
+                JSONObject response = new JSONObject();
+                response.put("$jason", payload);
+                ((JasonViewActivity) Launcher.getCurrentContext()).simple_trigger("$push.onregister", response, Launcher.getCurrentContext());
             } catch (Exception e) {
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
