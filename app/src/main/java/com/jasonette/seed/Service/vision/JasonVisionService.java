@@ -56,7 +56,6 @@ public class JasonVisionService implements ActivityCompat.OnRequestPermissionsRe
         if (view != null) {
             return;
         }
-        is_open = false;
         view = new SurfaceView(context);
         final SurfaceHolder holder = view.getHolder();
 
@@ -174,6 +173,7 @@ public class JasonVisionService implements ActivityCompat.OnRequestPermissionsRe
             cameraSource = new CameraSource
                     .Builder(context, detector)
                     .setFacing(side)
+                    .setAutoFocusEnabled(true)
                     .build();
             cameraSource.start(holder);
 

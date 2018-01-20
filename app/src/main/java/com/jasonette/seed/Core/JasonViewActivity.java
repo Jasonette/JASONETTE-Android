@@ -90,6 +90,7 @@ public class JasonViewActivity extends AppCompatActivity {
     private boolean firstResume = true;
     public boolean loaded;
     private boolean fetched;
+    private boolean resumed;
 
     private int header_height;
     private ImageView logoView;
@@ -110,6 +111,8 @@ public class JasonViewActivity extends AppCompatActivity {
     private SearchView searchView;
     private HorizontalDividerItemDecoration divider;
     private String previous_background;
+    private JSONObject launch_action;
+    private ArrayList<JSONObject> event_queue;
     ArrayList<View> layer_items;
 
     public View focusView = null;
@@ -117,6 +120,7 @@ public class JasonViewActivity extends AppCompatActivity {
     Parcelable listState;
     JSONObject intent_to_resolve;
     public JSONObject agents = new JSONObject();
+    private boolean isexecuting = false;
 
     /*************************************************************
      *
@@ -132,6 +136,7 @@ public class JasonViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         loaded = false;
+        event_queue = new ArrayList<>();
 
         // Initialize Parser instance
         JasonParser.getInstance(this);
@@ -219,6 +224,27 @@ public class JasonViewActivity extends AppCompatActivity {
 
         // Parsing Intent
         Intent intent = getIntent();
+
+        // Launch Action Payload Handling.
+        // We will store this and queue it up at onLoad() after the first action call chain has finished
+        // And then execute it on "unlock" of that call chain
+        launch_action = null;
+        if (intent.hasExtra("href")) {
+            try {
+                JSONObject href = new JSONObject(intent.getStringExtra("href"));
+                launch_action = new JSONObject();
+                launch_action.put("type", "$href");
+                launch_action.put("options", href);
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            }
+        } else if (intent.hasExtra("action")) {
+            try {
+                launch_action = new JSONObject(intent.getStringExtra("action"));
+            } catch (Exception e) {
+            }
+        }
+
         if(intent.hasExtra("url")){
             url = intent.getStringExtra("url");
         } else {
@@ -399,7 +425,7 @@ public class JasonViewActivity extends AppCompatActivity {
         }
     }
 
-    
+
     @Override
     protected void onPause() {
         // Unregister since the activity is paused.
@@ -449,6 +475,8 @@ public class JasonViewActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(onSuccess, new IntentFilter("success"));
         LocalBroadcastManager.getInstance(this).registerReceiver(onError, new IntentFilter("error"));
         LocalBroadcastManager.getInstance(this).registerReceiver(onCall, new IntentFilter("call"));
+
+        resumed = true;
 
         SharedPreferences pref = getSharedPreferences("model", 0);
         if(model.url!=null && pref.contains(model.url)) {
@@ -571,23 +599,23 @@ public class JasonViewActivity extends AppCompatActivity {
      ## Event Handlers Rule ver2.
 
      1. When there's only $show handler
-         - $show: Handles both initial load and subsequent show events
+     - $show: Handles both initial load and subsequent show events
 
      2. When there's only $load handler
-         - $load: Handles Only the initial load event
+     - $load: Handles Only the initial load event
 
      3. When there are both $show and $load handlers
-         - $load : handle initial load only
-         - $show : handle subsequent show events only
+     - $load : handle initial load only
+     - $show : handle subsequent show events only
 
 
      ## Summary
 
      $load:
-         - triggered when view loads for the first time.
+     - triggered when view loads for the first time.
      $show:
-         - triggered at load time + subsequent show events (IF $load handler doesn't exist)
-         - NOT triggered at load time BUT ONLY at subsequent show events (IF $load handler exists)
+     - triggered at load time + subsequent show events (IF $load handler doesn't exist)
+     - NOT triggered at load time BUT ONLY at subsequent show events (IF $load handler exists)
 
 
      *************************************************************/
@@ -611,6 +639,19 @@ public class JasonViewActivity extends AppCompatActivity {
                 // nothing
             } else {
                 onShow();
+            }
+
+            if (launch_action != null) {
+                JSONObject copy = new JSONObject(launch_action.toString());
+                launch_action = null;
+                if (head.has("actions")) {
+                    model.jason.getJSONObject("$jason").getJSONObject("head").getJSONObject("actions").put("$launch", copy);
+                } else {
+                    JSONObject actions = new JSONObject();
+                    actions.put("$launch", copy);
+                    model.jason.getJSONObject("$jason").getJSONObject("head").put("actinons", actions);
+                }
+                simple_trigger("$launch", new JSONObject(), JasonViewActivity.this);
             }
         } catch (Exception e){
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
@@ -674,6 +715,12 @@ public class JasonViewActivity extends AppCompatActivity {
     private void final_call(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
 
         try {
+            if (action.toString().equalsIgnoreCase("{}")) {
+                // no action to execute
+                unlock(new JSONObject(), new JSONObject(), new JSONObject(), context);
+                return;
+            }
+
             // Handle trigger first
             if (action.has("trigger")) {
                 trigger(action, data, event, context);
@@ -712,60 +759,60 @@ public class JasonViewActivity extends AppCompatActivity {
 
         /****************************************************************************************
 
-        This method is a syntactic sugar for calling a $lambda action.
-        The syntax is as follows:
+         This method is a syntactic sugar for calling a $lambda action.
+         The syntax is as follows:
 
-        {
-            "trigger": "twitter.get",
-            "options": {
-                "endpoint": "timeline"
-            },
-            "success": {
-                "type": "$render"
-            },
-            "error": {
-                "type": "$util.toast",
-                "options": {
-                    "text": "Uh oh. Something went wrong"
-                 }
-            }
-        }
+         {
+         "trigger": "twitter.get",
+         "options": {
+         "endpoint": "timeline"
+         },
+         "success": {
+         "type": "$render"
+         },
+         "error": {
+         "type": "$util.toast",
+         "options": {
+         "text": "Uh oh. Something went wrong"
+         }
+         }
+         }
 
-        Above is a syntactic sugar for the below "$lambda" type action call:
+         Above is a syntactic sugar for the below "$lambda" type action call:
 
-        $lambda action is a special purpose action that triggers another action by name and waits until it returns.
-        This way we can define a huge size action somewhere and simply call them as a subroutine and wait for its return value.
-        When the subroutine (the action that was triggered by name) returns via `"type": "$return.success"` action,
-        the $lambda action picks off where it left off and starts executing its "success" action with the value returned from the subroutine.
+         $lambda action is a special purpose action that triggers another action by name and waits until it returns.
+         This way we can define a huge size action somewhere and simply call them as a subroutine and wait for its return value.
+         When the subroutine (the action that was triggered by name) returns via `"type": "$return.success"` action,
+         the $lambda action picks off where it left off and starts executing its "success" action with the value returned from the subroutine.
 
-        Notice that:
-        1. we get rid of the "trigger" field and turn it into a regular action of `"type": "$lambda"`.
-        2. the "trigger" value (`"twitter.get"`) gets mapped to "options.name"
-        3. the "options" value (`{"endpoint": "timeline"}`) gets mapped to "options.options"
+         Notice that:
+         1. we get rid of the "trigger" field and turn it into a regular action of `"type": "$lambda"`.
+         2. the "trigger" value (`"twitter.get"`) gets mapped to "options.name"
+         3. the "options" value (`{"endpoint": "timeline"}`) gets mapped to "options.options"
 
 
-        {
-            "type": "$lambda",
-            "options": {
-                "name": "twitter.get",
-                "options": {
-                    "endpoint": "timeline"
-                }
-            },
-            "success": {
-                "type": "$render"
-            },
-            "error": {
-                "type": "$util.toast",
-                "options": {
-                    "text": "Uh oh. Something went wrong"
-                 }
-            }
-        }
+         {
+         "type": "$lambda",
+         "options": {
+         "name": "twitter.get",
+         "options": {
+         "endpoint": "timeline"
+         }
+         },
+         "success": {
+         "type": "$render"
+         },
+         "error": {
+         "type": "$util.toast",
+         "options": {
+         "text": "Uh oh. Something went wrong"
+         }
+         }
+         }
 
-        The success / error actions get executed AFTER the triggered action has finished and returns with a return value.
+         The success / error actions get executed AFTER the triggered action has finished and returns with a return value.
 
-        ****************************************************************************************/
+         ****************************************************************************************/
 
 
         try {
@@ -828,11 +875,26 @@ public class JasonViewActivity extends AppCompatActivity {
 
     public void simple_trigger(final String event_name, JSONObject data, Context context){
         try{
+
+            if (isexecuting || !resumed) {
+                JSONObject event_store = new JSONObject();
+                event_store.put("event_name", event_name);
+                event_store.put("data", data);
+                event_queue.add(event_store);
+                return;
+            } else {
+                isexecuting = true;
+            }
+
             JSONObject head = model.jason.getJSONObject("$jason").getJSONObject("head");
             JSONObject events = head.getJSONObject("actions");
             // Look up an action by event_name
-            Object action = events.get(event_name);
-            call(action.toString(), data.toString(), "{}", context);
+            if (events.has(event_name)) {
+                Object action = events.get(event_name);
+                call(action.toString(), data.toString(), "{}", context);
+            } else {
+                unlock(new JSONObject(), new JSONObject(), new JSONObject(), JasonViewActivity.this);
+            }
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
@@ -934,7 +996,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
     // Our handler for received Intents. This will be called whenever an Intent
     // with an action named "custom-event-name" is broadcasted.
-    private BroadcastReceiver onSuccess = new BroadcastReceiver() {
+    public BroadcastReceiver onSuccess = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
@@ -953,7 +1015,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
         }
     };
-    private BroadcastReceiver onError = new BroadcastReceiver() {
+    public BroadcastReceiver onError = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             try {
@@ -972,7 +1034,7 @@ public class JasonViewActivity extends AppCompatActivity {
         }
     };
 
-    private BroadcastReceiver onCall = new BroadcastReceiver() {
+    public BroadcastReceiver onCall = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             try {
@@ -1367,6 +1429,8 @@ public class JasonViewActivity extends AppCompatActivity {
     public void href(final JSONObject action, JSONObject data, JSONObject event, Context context){
         try {
             if (action.has("options")) {
+                isexecuting = false;
+                resumed = false;
                 String url = action.getJSONObject("options").getString("url");
                 String transition = "push";
                 if(action.getJSONObject("options").has("transition")){
@@ -1377,12 +1441,18 @@ public class JasonViewActivity extends AppCompatActivity {
                 if (action.getJSONObject("options").has("view")) {
                     String view_type = action.getJSONObject("options").getString("view");
                     if(view_type.equalsIgnoreCase("web") || view_type.equalsIgnoreCase("app")){
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setData(Uri.parse(url));
-                        startActivity(intent);
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setData(Uri.parse(url));
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            Intent intent = new Intent(url);
+                            startActivity(intent);
+                        }
                     }
                     return;
                 }
+
 
                 // "view": "jason" (default)
                 // Set params for the next view (use either 'options' or 'params')
@@ -1457,7 +1527,7 @@ public class JasonViewActivity extends AppCompatActivity {
         finish();
     }
     public void close ( final JSONObject action, JSONObject data, JSONObject event, Context context){
-       finish();
+        finish();
     }
     public void ok ( final JSONObject action, JSONObject data, JSONObject event, Context context){
         try {
@@ -1472,19 +1542,32 @@ public class JasonViewActivity extends AppCompatActivity {
         }
     }
     public void unlock ( final JSONObject action, JSONObject data, JSONObject event, Context context){
-        JasonViewActivity.this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    loading.setVisibility(View.GONE);
-                    if (swipeLayout != null) {
-                        swipeLayout.setRefreshing(false);
-                    }
-                } catch (Exception e) {
-                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                }
+        if (event_queue.size() > 0) {
+            JSONObject next_action = event_queue.get(0);
+            event_queue.remove(0);
+            try {
+                isexecuting = false;
+                simple_trigger(next_action.getString("event_name"), next_action.getJSONObject("data"), context);
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
-        });
+        } else {
+            isexecuting = false;
+            JasonViewActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        loading.setVisibility(View.GONE);
+                        if (swipeLayout != null) {
+                            swipeLayout.setRefreshing(false);
+                        }
+
+                    } catch (Exception e) {
+                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                    }
+                }
+            });
+        }
     }
 
 
@@ -1735,11 +1818,11 @@ public class JasonViewActivity extends AppCompatActivity {
                                     byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
 
                                     with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
-                                                                            @Override
-                                                                            public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                        @Override
+                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
                                             sectionLayout.setBackground(resource);
-                                    }
-                                });
+                                        }
+                                    });
                                 } else {
                                     if (background.equalsIgnoreCase("camera")) {
                                         int side = JasonVisionService.FRONT;
@@ -1772,13 +1855,13 @@ public class JasonViewActivity extends AppCompatActivity {
 
                                     /**
 
-                                         if has an 'action' attribute
-                                          - if the action is "type": "$default"
-                                            => Allow touch. The visit will be handled in the agent handler
-                                          - if the action is everything else
-                                            => Allow touch. The visit will be handled in the agent handler
-                                         if it doesn't have an 'action' attribute
-                                            => Don't allow touch.
+                                     if has an 'action' attribute
+                                     - if the action is "type": "$default"
+                                     => Allow touch. The visit will be handled in the agent handler
+                                     - if the action is everything else
+                                     => Allow touch. The visit will be handled in the agent handler
+                                     if it doesn't have an 'action' attribute
+                                     => Don't allow touch.
 
                                      **/
                                     if (background.has("action")) {
@@ -1790,11 +1873,11 @@ public class JasonViewActivity extends AppCompatActivity {
                                     } else {
                                         // webview shouldn't receive click
                                         backgroundWebview.setOnTouchListener(new View.OnTouchListener() {
-                                                                         @Override
-                                                                         public boolean onTouch(View v, MotionEvent event) {
+                                            @Override
+                                            public boolean onTouch(View v, MotionEvent event) {
                                                 return true;
-                                        }
-                                    });
+                                            }
+                                        });
                                     }
                                     backgroundCurrentView = backgroundWebview;
                                 } else if (type.equalsIgnoreCase("camera")) {
@@ -1858,20 +1941,20 @@ public class JasonViewActivity extends AppCompatActivity {
                     }
 
                     rootLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                       @Override
-                       public void onGlobalLayout() {
-                           if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                               rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                           } else {
-                               rootLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                           }
-                           if (focusView != null) {
-                               focusView.requestFocus();
-                               InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                               imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
-                           }
-                       }
-                   });
+                        @Override
+                        public void onGlobalLayout() {
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                                rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            } else {
+                                rootLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                            }
+                            if (focusView != null) {
+                                focusView.requestFocus();
+                                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+                            }
+                        }
+                    });
 
                     // Set header
                     if (body.has("header")) {
@@ -1898,10 +1981,10 @@ public class JasonViewActivity extends AppCompatActivity {
                             int color = JasonHelper.parse_color(border);
                             listView.removeItemDecoration(divider);
                             divider = new HorizontalDividerItemDecoration.Builder(JasonViewActivity.this)
-                                        .color(color)
-                                        .showLastDivider()
-                                        .positionInsideItem(true)
-                                        .build();
+                                    .color(color)
+                                    .showLastDivider()
+                                    .positionInsideItem(true)
+                                    .build();
                             listView.addItemDecoration(divider);
                         }
                     } else {
@@ -2072,7 +2155,7 @@ public class JasonViewActivity extends AppCompatActivity {
     }
 
     private void setup_input(JSONObject input){
-       // Set up a horizontal linearlayout
+        // Set up a horizontal linearlayout
         // which sticks to the bottom
         rootLayout.removeView(footerInput);
         int height = (int) JasonHelper.pixels(JasonViewActivity.this, "60", "vertical");
@@ -2266,30 +2349,30 @@ public class JasonViewActivity extends AppCompatActivity {
                         JSONObject c = new JSONObject();
                         c.put("url", item.getString("image"));
                         with(this)
-                            .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
-                            .asBitmap()
-                            .into(new SimpleTarget<Bitmap>(100, 100) {
-                                @Override
-                                public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
-                                    String text = "";
-                                    try {
-                                        if (item.has("text")) {
-                                            text = item.getString("text");
-                                            bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
+                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                                .asBitmap()
+                                .into(new SimpleTarget<Bitmap>(100, 100) {
+                                    @Override
+                                    public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
+                                        String text = "";
+                                        try {
+                                            if (item.has("text")) {
+                                                text = item.getString("text");
+                                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
+                                            }
+                                        } catch (Exception e) {
+                                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
                                         }
-                                    } catch (Exception e) {
-                                        Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                                    }
-                                    Drawable drawable = new BitmapDrawable(getResources(), resource);
-                                    AHBottomNavigationItem item = new AHBottomNavigationItem(text, drawable);
-                                    bottomNavigationItems.put(Integer.valueOf(index), item);
-                                    if(bottomNavigationItems.size() >= items.length()){
-                                        for(int j = 0; j < bottomNavigationItems.size(); j++){
-                                            bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
+                                        Drawable drawable = new BitmapDrawable(getResources(), resource);
+                                        AHBottomNavigationItem item = new AHBottomNavigationItem(text, drawable);
+                                        bottomNavigationItems.put(Integer.valueOf(index), item);
+                                        if(bottomNavigationItems.size() >= items.length()){
+                                            for(int j = 0; j < bottomNavigationItems.size(); j++){
+                                                bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
+                                            }
                                         }
                                     }
-                                }
-                            });
+                                });
 
                     } else if(item.has("text")){
                         String text = "";
@@ -2440,7 +2523,7 @@ public class JasonViewActivity extends AppCompatActivity {
 
                         // put the search icon on the right hand side of the toolbar
                         searchView.setLayoutParams(new Toolbar.LayoutParams(Gravity.RIGHT));
-                        
+
                         toolbar.addView(searchView);
                     } else {
                         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
