@@ -221,7 +221,7 @@ public class JasonExternalAction {
 
             if (value instanceof Integer || value instanceof String || value instanceof Double) {
                 // We are good.
-            } if (value instanceof JSONArray) {
+            } else if (value instanceof JSONArray) {
                 JSONArray jsonArr = (JSONArray) value;
                 List<Object> res = new ArrayList<>(jsonArr.length());
                 for (int j = 0; j < jsonArr.length(); j++) {
