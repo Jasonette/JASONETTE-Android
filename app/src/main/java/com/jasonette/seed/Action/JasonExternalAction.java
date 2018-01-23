@@ -224,7 +224,7 @@ public class JasonExternalAction {
             } if (value instanceof JSONArray) {
                 JSONArray jsonArr = (JSONArray) value;
                 List<Object> res = new ArrayList<>(jsonArr.length());
-                for (int j = 0; j < jsonArr.length(); i++) {
+                for (int j = 0; j < jsonArr.length(); j++) {
                     res.add(jsonArr.get(j));
                 }
                 value = res;
