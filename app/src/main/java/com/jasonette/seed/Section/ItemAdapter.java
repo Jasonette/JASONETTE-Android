@@ -100,6 +100,15 @@ public class ItemAdapter extends RecyclerView.Adapter <ItemAdapter.ViewHolder>{
         this.root_context = root_context;
     }
 
+    public void updateItems(ArrayList<JSONObject> items) {
+        this.items = items;
+        this.cloned_items = new ArrayList<JSONObject>();
+        this.cloned_items.addAll(items);
+    }
+    public ArrayList<JSONObject> getItems() {
+        return this.items;
+    }
+
     public void filter(String text) {
         this.items.clear();
         if(text.isEmpty()){

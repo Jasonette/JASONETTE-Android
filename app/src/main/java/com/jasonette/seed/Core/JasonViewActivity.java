@@ -100,6 +100,7 @@ public class JasonViewActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeLayout;
     public LinearLayout sectionLayout;
     public RelativeLayout rootLayout;
+    private ItemAdapter adapter;
     public View backgroundCurrentView;
     public WebView backgroundWebview;
     public ImageView backgroundImageView;
@@ -183,7 +184,7 @@ public class JasonViewActivity extends AppCompatActivity {
         listView.setHasFixedSize(true);
 
         // Create adapter passing in the sample user data
-        ItemAdapter adapter = new ItemAdapter(this, this, new ArrayList<JSONObject>());
+        adapter = new ItemAdapter(this, this, new ArrayList<JSONObject>());
         // Attach the adapter to the recyclerview to populate items
         listView.setAdapter(adapter);
         // Set layout manager to position the items
@@ -2132,12 +2133,18 @@ public class JasonViewActivity extends AppCompatActivity {
             }
         }
 
-        // Create adapter passing in the sample user data
-        ItemAdapter adapter = new ItemAdapter(this, this, section_items);
-        // Attach the adapter to the recyclerview to populate items
-        listView.setAdapter(adapter);
-        // Set layout manager to position the items
-        listView.setLayoutManager(new LinearLayoutManager(this));
+        if (adapter == null) {
+            // Create adapter passing in the sample user data
+            adapter = new ItemAdapter(this, this, section_items);
+            // Attach the adapter to the recyclerview to populate items
+            listView.setAdapter(adapter);
+            // Set layout manager to position the items
+            listView.setLayoutManager(new LinearLayoutManager(this));
+        } else {
+            //ArrayList<JSONObject> old_section_items = adapter.getItems();
+            adapter.updateItems(section_items);
+            adapter.notifyItemRangeChanged(0, section_items.size());
+        }
 
 
     }
