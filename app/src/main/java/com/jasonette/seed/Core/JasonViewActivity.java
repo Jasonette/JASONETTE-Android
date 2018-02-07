@@ -2133,7 +2133,7 @@ public class JasonViewActivity extends AppCompatActivity {
             }
         }
 
-        if (adapter == null) {
+        if (adapter == null || adapter.getItems().size() == 0) {
             // Create adapter passing in the sample user data
             adapter = new ItemAdapter(this, this, section_items);
             // Attach the adapter to the recyclerview to populate items
