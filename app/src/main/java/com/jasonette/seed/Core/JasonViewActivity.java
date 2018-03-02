@@ -2026,7 +2026,9 @@ public class JasonViewActivity extends AppCompatActivity {
                                             listView.postDelayed(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    listView.smoothScrollToPosition( listView.getAdapter().getItemCount() - 1);
+                                                    if (listView.getAdapter().getItemCount() > 0) {
+                                                        listView.smoothScrollToPosition( listView.getAdapter().getItemCount() - 1);
+                                                    }
                                                 }
                                             }, 100);
                                         }
