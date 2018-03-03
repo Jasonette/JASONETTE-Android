@@ -26,7 +26,7 @@ import org.json.JSONObject;
  * Created by realitix on 06/07/17.
  */
 
-public class JasonVisionService implements ActivityCompat.OnRequestPermissionsResultCallback{
+public class JasonVisionService {
     public static int FRONT = Camera.CameraInfo.CAMERA_FACING_FRONT;
     public static int BACK = Camera.CameraInfo.CAMERA_FACING_BACK;
 
@@ -165,6 +165,13 @@ public class JasonVisionService implements ActivityCompat.OnRequestPermissionsRe
         }
     }
 
+    public void startVision(Activity context) {
+        openCamera(context, temp_holder, temp_side);
+        temp_context = null;
+        temp_holder = null;
+        temp_side = -1;
+    }
+
     void openCamera(Activity context, SurfaceHolder holder, final int side) {
         try {
             if (cameraSource != null) {
@@ -181,18 +188,6 @@ public class JasonVisionService implements ActivityCompat.OnRequestPermissionsRe
 
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            openCamera(temp_context, temp_holder, temp_side);
-            temp_context = null;
-            temp_holder = null;
-            temp_side = -1;
-            //Start your camera handling here
-        } else {
         }
     }
 

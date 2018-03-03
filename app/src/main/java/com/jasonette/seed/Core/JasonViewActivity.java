@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -16,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -76,7 +78,7 @@ import java.util.concurrent.Executors;
 
 import static com.bumptech.glide.Glide.with;
 
-public class JasonViewActivity extends AppCompatActivity {
+public class JasonViewActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback{
     private JasonToolbar toolbar;
     private RecyclerView listView;
     public String url;
@@ -2883,4 +2885,14 @@ public class JasonViewActivity extends AppCompatActivity {
             listViewOnItemTouchListeners.remove(listener);
         }
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            cameraManager.startVision(JasonViewActivity.this);
+        } else {
+            Log.d("Warning", "Waiting for permission approval");
+        }
+    }
+
 }
