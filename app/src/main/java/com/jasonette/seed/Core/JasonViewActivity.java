@@ -2308,6 +2308,18 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                 for (int i = 0; i < items.length(); i++) {
                     final JSONObject item = items.getJSONObject(i);
                     if(item.has("image")) {
+
+                        String temptext = "";
+                        try {
+                            if (item.has("text")) {
+                                temptext = item.getString("text");
+                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
+                            }
+                        } catch (Exception e) {
+                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                        }
+                        final String text = temptext;
+
                         final int index = i;
                         JSONObject c = new JSONObject();
                         c.put("url", item.getString("image"));
@@ -2318,15 +2330,6 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                 .into(new SimpleTarget<Bitmap>(100, 100) {
                                     @Override
                                     public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
-                                        String text = "";
-                                        try {
-                                            if (item.has("text")) {
-                                                text = item.getString("text");
-                                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
-                                            }
-                                        } catch (Exception e) {
-                                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                                        }
                                         AHBottomNavigationItem tab_item = bottomNavigation.getItem(index);
                                         bottomNavigationItems.put(Integer.valueOf(index), tab_item);
                                         Drawable drawable = new BitmapDrawable(getResources(), resource);
