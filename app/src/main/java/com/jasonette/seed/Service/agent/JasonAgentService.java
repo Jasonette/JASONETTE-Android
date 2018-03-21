@@ -453,6 +453,13 @@ public class JasonAgentService {
 
 
 
+                                    /* set $jason */
+                                    JSONObject u = new JSONObject();
+                                    u.put("url", url);
+                                    JSONObject ev = new JSONObject();
+                                    ev.put("$jason", u);
+                                    context.model.set("state", ev);
+
                                     JasonParser.getInstance(context).setParserListener(new JasonParser.JasonParserListener() {
                                        @Override
                                        public void onFinished(JSONObject reduced_action) {

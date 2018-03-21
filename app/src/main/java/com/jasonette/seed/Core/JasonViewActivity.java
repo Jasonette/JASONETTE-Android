@@ -1661,6 +1661,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                 if (jason.getJSONObject("$jason").has("body")) {
                     final JSONObject body;
                     body = (JSONObject) jason.getJSONObject("$jason").getJSONObject("body");
+                    model.set("state", new JSONObject());
                     setup_body(body);
                 }
 
