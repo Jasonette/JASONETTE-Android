@@ -2889,7 +2889,6 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
             listViewOnItemTouchListeners.remove(listener);
         }
     }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -2898,5 +2897,4 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
             Log.d("Warning", "Waiting for permission approval");
         }
     }
-
 }
