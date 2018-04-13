@@ -2417,6 +2417,12 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                 }
 
             }
+            for (int i = 0; i < items.length(); i++) {
+                final JSONObject item = items.getJSONObject(i);
+                if (item.has("badge")) {
+                    bottomNavigation.setNotification(item.get("badge").toString(), i);
+                }
+            }
             bottomNavigation.setOnTabSelectedListener(new AHBottomNavigation.OnTabSelectedListener() {
                 @Override
                 public boolean onTabSelected(int position, boolean wasSelected) {
@@ -2673,7 +2679,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                         String badge_text = "";
                         JSONObject badge = json.getJSONObject("badge");
                         if(badge.has("text")) {
-                            badge_text = badge.getString("text");
+                            badge_text = badge.get("text").toString();
                         }
                         JSONObject badge_style;
                         if (badge.has("style")) {
