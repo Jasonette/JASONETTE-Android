@@ -2158,7 +2158,12 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
         try {
             if(footer.has("tabs")){
                 setup_tabs(footer.getJSONObject("tabs"));
-            } else if(footer.has("input")){
+            } else {
+                if (bottomNavigation != null) {
+                    rootLayout.removeView(bottomNavigation);
+                }
+            }
+            if(footer.has("input")){
                 setup_input(footer.getJSONObject("input"));
             }
         } catch (Exception e) {
