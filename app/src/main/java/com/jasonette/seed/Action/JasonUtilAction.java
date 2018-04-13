@@ -49,7 +49,17 @@ public class JasonUtilAction {
             public void run() {
                 try {
                     JSONObject options = action.getJSONObject("options");
-                    Snackbar snackbar = Snackbar.make(((JasonViewActivity)context).rootLayout, options.getString("title") + "\n" + options.getString("description"), Snackbar.LENGTH_LONG);
+                    String title = "Notice";
+                    String result = "";
+                    if (options.has("title")) {
+                        title = options.get("title").toString();
+                    }
+                    if (options.has("description")) {
+                        result = title + "\n" + options.get("description").toString();
+                    } else {
+                        result = title;
+                    }
+                    Snackbar snackbar = Snackbar.make(((JasonViewActivity)context).rootLayout, result, Snackbar.LENGTH_LONG);
                     snackbar.show();
                 } catch (Exception e){
                     Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
@@ -69,7 +79,7 @@ public class JasonUtilAction {
                 try {
                     JSONObject options = action.getJSONObject("options");
                     int duration = Toast.LENGTH_SHORT;
-                    Toast toast = Toast.makeText(context, (CharSequence)options.getString("text"), duration);
+                    Toast toast = Toast.makeText(context, (CharSequence)options.get("text").toString(), duration);
                     toast.show();
                 } catch (Exception e){
                     Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
@@ -93,8 +103,8 @@ public class JasonUtilAction {
                     final ArrayList<EditText> textFields = new ArrayList<EditText>();
                     if (action.has("options")) {
                         options = action.getJSONObject("options");
-                        String title = options.getString("title");
-                        String description = options.getString("description");
+                        String title = options.get("title").toString();
+                        String description = options.get("description").toString();
                         builder.setTitle(title);
                         builder.setMessage(description);
 
@@ -181,7 +191,7 @@ public class JasonUtilAction {
                         final JSONArray items = options.getJSONArray("items");
                         AlertDialog.Builder builder = new AlertDialog.Builder(context);
                         if(options.has("title")){
-                            String title = options.getString("title");
+                            String title = options.get("title").toString();
                             builder.setTitle(title);
                         }
 
@@ -368,7 +378,7 @@ public class JasonUtilAction {
                             if (item.has("type")) {
                                 String type = item.getString("type");
                                 if (type.equalsIgnoreCase("text")) {
-                                    callback_intent.putExtra(Intent.EXTRA_TEXT, item.getString("text"));
+                                    callback_intent.putExtra(Intent.EXTRA_TEXT, item.get("text").toString());
                                     if (callback_intent.getType() == null) {
                                         callback_intent.setType("text/plain");
                                     }
