@@ -2675,7 +2675,12 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                         if(badge.has("text")) {
                             badge_text = badge.getString("text");
                         }
-                        JSONObject badge_style = badge.getJSONObject("style");
+                        JSONObject badge_style;
+                        if (badge.has("style")) {
+                            badge_style = badge.getJSONObject("style");
+                        } else {
+                            badge_style = new JSONObject();
+                        }
 
                         int color = JasonHelper.parse_color("#ffffff");
                         int background = JasonHelper.parse_color("#ff0000");
@@ -2690,8 +2695,8 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
 
                         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
                         //layoutParams.gravity = Gravity.RIGHT | Gravity.TOP;
-                        int left = (int)JasonHelper.pixels(this, String.valueOf(20), "horizontal");
-                        int top = (int)JasonHelper.pixels(this, String.valueOf(-10), "vertical");
+                        int left = (int)JasonHelper.pixels(this, String.valueOf(30), "horizontal");
+                        int top = (int)JasonHelper.pixels(this, String.valueOf(-3), "vertical");
                         if(badge_style.has("left")){
                             left = (int)JasonHelper.pixels(this, badge_style.getString("left"), "horizontal");
                         }
@@ -2752,13 +2757,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                 // set align:center by default
                 toolbar.setAlignment(Gravity.CENTER);
 
-                if (title instanceof String) {
-                    toolbar.setTitle(header.getString("title"));
-                    if(logoView != null){
-                        toolbar.removeView(logoView);
-                        logoView = null;
-                    }
-                } else if (title instanceof JSONObject) {
+                if (title instanceof JSONObject) {
                     JSONObject t = ((JSONObject) title);
                     String type = t.getString("type");
                     JSONObject style = null;
@@ -2854,6 +2853,13 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                             toolbar.removeView(logoView);
                             logoView = null;
                         }
+                    }
+                } else {
+                    String simple_title = header.get("title").toString();
+                    toolbar.setTitle(simple_title);
+                    if(logoView != null){
+                        toolbar.removeView(logoView);
+                        logoView = null;
                     }
                 }
             } else {
