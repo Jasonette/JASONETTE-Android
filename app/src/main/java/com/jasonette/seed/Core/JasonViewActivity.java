@@ -652,7 +652,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                 } else {
                     JSONObject actions = new JSONObject();
                     actions.put("$launch", copy);
-                    model.jason.getJSONObject("$jason").getJSONObject("head").put("actinons", actions);
+                    model.jason.getJSONObject("$jason").getJSONObject("head").put("actions", actions);
                 }
                 simple_trigger("$launch", new JSONObject(), JasonViewActivity.this);
             }
@@ -879,7 +879,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
     public void simple_trigger(final String event_name, JSONObject data, Context context){
         try{
 
-            if (isexecuting || !resumed) {
+            if ((isexecuting || !resumed) && event_queue.size() > 0) {
                 JSONObject event_store = new JSONObject();
                 event_store.put("event_name", event_name);
                 event_store.put("data", data);
