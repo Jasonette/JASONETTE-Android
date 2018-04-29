@@ -2148,7 +2148,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
         } else {
             //ArrayList<JSONObject> old_section_items = adapter.getItems();
             adapter.updateItems(section_items);
-            adapter.notifyItemRangeChanged(0, section_items.size());
+            adapter.notifyDataSetChanged();
         }
 
 
@@ -2342,6 +2342,12 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                         tab_item.setDrawable(drawable);
                                         tab_item.setTitle(text);
                                     }
+                                    @Override
+                                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                                        AHBottomNavigationItem tab_item = bottomNavigation.getItem(index);
+                                        bottomNavigationItems.put(Integer.valueOf(index), tab_item);
+                                        tab_item.setTitle(text);
+                                    }
                                 });
 
                     } else if(item.has("text")){
@@ -2386,6 +2392,27 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                         Drawable drawable = new BitmapDrawable(getResources(), resource);
                                         AHBottomNavigationItem item = new AHBottomNavigationItem(text, drawable);
                                         bottomNavigationItems.put(Integer.valueOf(index), item);
+                                        if(bottomNavigationItems.size() >= items.length()){
+                                            for(int j = 0; j < bottomNavigationItems.size(); j++){
+                                                bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
+                                            }
+                                        }
+                                    }
+                                    @Override
+                                    public void onLoadFailed(Exception exception, Drawable errorDrawable) {
+                                        String text = "";
+                                        try {
+                                            if (item.has("text")) {
+                                                text = item.getString("text");
+                                                bottomNavigation.setTitleState(AHBottomNavigation.TitleState.ALWAYS_SHOW);
+                                            }
+                                        } catch (Exception e) {
+                                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                                        }
+
+                                        ColorDrawable d = new ColorDrawable(Color.TRANSPARENT);
+                                        AHBottomNavigationItem tab_item = new AHBottomNavigationItem(text,d);
+                                        bottomNavigationItems.put(Integer.valueOf(index), tab_item);
                                         if(bottomNavigationItems.size() >= items.length()){
                                             for(int j = 0; j < bottomNavigationItems.size(); j++){
                                                 bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
