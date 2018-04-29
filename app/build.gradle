@@ -25,33 +25,33 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.google.firebase:firebase-messaging:11.6.2'
-    debugCompile 'com.facebook.stetho:stetho:1.5.0'
-    debugCompile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
-    debugCompile 'com.facebook.stetho:stetho-timber:1.5.0'
+    implementation 'com.google.firebase:firebase-messaging:11.6.2'
+    debugImplementation 'com.facebook.stetho:stetho:1.5.0'
+    debugImplementation 'com.facebook.stetho:stetho-okhttp3:1.5.0'
+    debugImplementation 'com.facebook.stetho:stetho-timber:1.5.0'
     //noinspection GradleCompatible
-    compile 'com.android.support:appcompat-v7:27.0.2'
-    compile 'com.google.android.gms:play-services-maps:11.6.2'
-    compile 'com.squareup.okhttp3:okhttp:3.7.0'
-    compile 'com.github.bumptech.glide:glide:3.7.0'
-    compile 'jp.wasabeef:glide-transformations:2.0.1'
-    compile 'com.eclipsesource.j2v8:j2v8:4.8.0@aar'
-    compile 'com.android.support:recyclerview-v7:27.0.2'
-    compile 'com.android.support:design:27.0.2'
-    compile 'com.aurelhubert:ahbottomnavigation:2.0.2'
-    compile 'com.android.support:support-core-ui:27.0.2'
-    compile 'commons-lang:commons-lang:2.6'
-    compile 'com.github.scribejava:scribejava-apis:4.0.0'
-    compile 'com.yqritc:recyclerview-flexibledivider:1.4.0'
-    compile 'com.commonsware.cwac:cam2:0.7.4'
-    compile 'com.github.maks:AndroidAudioRecorder:0.3.0-jasonette'
-    compile 'com.github.florent37:singledateandtimepicker:1.0.8'
-    compile 'com.jakewharton.timber:timber:4.5.1'
+    implementation 'com.android.support:appcompat-v7:27.0.2'
+    implementation 'com.google.android.gms:play-services-maps:11.6.2'
+    implementation 'com.squareup.okhttp3:okhttp:3.7.0'
+    implementation 'com.github.bumptech.glide:glide:3.7.0'
+    implementation 'jp.wasabeef:glide-transformations:2.0.1'
+    implementation 'com.eclipsesource.j2v8:j2v8:4.8.0@aar'
+    implementation 'com.android.support:recyclerview-v7:27.0.2'
+    implementation 'com.android.support:design:27.0.2'
+    implementation 'com.aurelhubert:ahbottomnavigation:2.0.2'
+    implementation 'com.android.support:support-core-ui:27.0.2'
+    implementation 'commons-lang:commons-lang:2.6'
+    implementation 'com.github.scribejava:scribejava-apis:4.0.0'
+    implementation 'com.yqritc:recyclerview-flexibledivider:1.4.0'
+    implementation 'com.commonsware.cwac:cam2:0.7.4'
+    implementation 'com.github.maks:AndroidAudioRecorder:0.3.0-jasonette'
+    implementation 'com.github.florent37:singledateandtimepicker:1.0.8'
+    implementation 'com.jakewharton.timber:timber:4.5.1'
     //noinspection UseOfBundledGooglePlayServices
-    compile 'com.google.android.gms:play-services:11.6.2'
-    compile 'com.android.support:multidex:1.0.2'
+    implementation 'com.google.android.gms:play-services:11.6.2'
+    implementation 'com.android.support:multidex:1.0.2'
 }
