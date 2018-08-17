@@ -83,6 +83,11 @@
         <uses-permission android:name="android.permission.WAKE_LOCK" />
     -->
 
+    <!-- Uncomment below line to enable $sms.send -->
+    <!--
+        <uses-permission android:name="android.permission.SEND_SMS"/>
+    -->
+
     <meta-data android:name="com.google.android.gms.vision.DEPENDENCIES" android:value="barcode"/>
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
