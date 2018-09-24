@@ -184,7 +184,7 @@ public class JasonUtilAction {
 
 
                     }
-                    builder.setPositiveButton("OK",
+                    builder.setPositiveButton(android.R.string.ok,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
@@ -205,7 +205,7 @@ public class JasonUtilAction {
                                     }
                                 }
                             });
-                    builder.setNeutralButton("CANCEL",
+                    builder.setNeutralButton(android.R.string.cancel,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
@@ -265,7 +265,7 @@ public class JasonUtilAction {
                                 }
                             }
                         });
-                        builder.setNeutralButton("CANCEL",
+                        builder.setNeutralButton(android.R.string.cancel,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int val) {
                                 }
