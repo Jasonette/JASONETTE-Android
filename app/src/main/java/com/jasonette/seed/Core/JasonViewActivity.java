@@ -16,6 +16,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -66,6 +67,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -1588,6 +1590,9 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
     public void flush ( final JSONObject action, JSONObject data, JSONObject event, Context context){
         // there's no default caching on Android. So don't do anything for now
         try {
+            for(File tempFile : context.getExternalFilesDir(Environment.DIRECTORY_PICTURES).listFiles()) {
+                tempFile.delete();
+            }
             JasonHelper.next("success", action, new JSONObject(), event, context);
         } catch (Exception e) {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
@@ -1912,7 +1917,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
 
                                     @Override
                                     public void onGlobalLayout() {
-                                        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                                             rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                                         }
                                         else {
@@ -1947,7 +1952,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                     rootLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                                 rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                             } else {
                                 rootLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
@@ -2936,7 +2941,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            cameraManager.startVision(JasonViewActivity.this);
+            //cameraManager.startVision(JasonViewActivity.this);
         } else {
             Log.d("Warning", "Waiting for permission approval");
         }

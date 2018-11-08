@@ -1,19 +1,24 @@
 package com.jasonette.seed.Action;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.ContactsContract;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
@@ -35,6 +40,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -92,6 +98,38 @@ public class JasonUtilAction {
             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
         }
     }
+    public void getPermissions(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int doPerm = 0;
+            String allPerm[] = new String[0];
+            try {
+                JSONObject options = action.getJSONObject("options");
+                if (options.has("permissions")) {
+                    String[] commaSeparatedArr = options.getString("permissions").split("\\s*,\\s*");
+                    ArrayList<String> listItems = new ArrayList<>(Arrays.asList(commaSeparatedArr));
+                    allPerm = new String[listItems.size()];
+                    for (int i = 0; i < listItems.size(); i++) {
+                        String newPer = new String("android.permission.") + listItems.get(i).toUpperCase();
+                        if (ContextCompat.checkSelfPermission(context, newPer) != PackageManager.PERMISSION_GRANTED) {
+                            allPerm[doPerm] = newPer;
+                            doPerm++;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+            }
+            if (doPerm >= 1) {
+                JasonHelper.next("success", action, new JSONObject(), event, context);
+                ActivityCompat.requestPermissions((JasonViewActivity) context, allPerm, 0);
+            } else {
+                JasonHelper.next("error", action, new JSONObject(), event, context);
+            }
+        } else {
+            JasonHelper.next("error", action, new JSONObject(), event, context);
+        }
+
+    }
     public void alert(final JSONObject action, final JSONObject data, final JSONObject event, final Context context){
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
@@ -146,7 +184,7 @@ public class JasonUtilAction {
 
 
                     }
-                    builder.setPositiveButton("OK",
+                    builder.setPositiveButton(android.R.string.ok,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
@@ -167,7 +205,7 @@ public class JasonUtilAction {
                                     }
                                 }
                             });
-                    builder.setNeutralButton("CANCEL",
+                    builder.setNeutralButton(android.R.string.cancel,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
@@ -227,7 +265,7 @@ public class JasonUtilAction {
                                 }
                             }
                         });
-                        builder.setNeutralButton("CANCEL",
+                        builder.setNeutralButton(android.R.string.cancel,
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int val) {
                                 }
