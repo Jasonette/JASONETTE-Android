@@ -82,7 +82,7 @@ public class JasonVisionService {
          */
 
         detector = new BarcodeDetector.Builder(context)
-                .setBarcodeFormats(Barcode.QR_CODE)
+                .setBarcodeFormats(Barcode.ALL_FORMATS)
                 .build();
         detector.setProcessor(new Detector.Processor<Barcode>() {
             @Override
