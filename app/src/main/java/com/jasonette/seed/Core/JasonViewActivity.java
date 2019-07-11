@@ -1853,6 +1853,9 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                     JasonAgentService agentService = (JasonAgentService)((Launcher)getApplicationContext()).services.get("JasonAgentService");
                                     backgroundWebview = agentService.setup(JasonViewActivity.this, background, "$webcontainer@" + model.url);
                                     backgroundWebview.setVisibility(View.VISIBLE);
+                                    
+                                    //  do not apply any zoom on the text.
+                                    backgroundWebview.getSettings().setTextZoom(100);
                                     // not interactive by default;
                                     Boolean responds_to_webview = false;
 
