@@ -4,7 +4,7 @@
 
 [https://www.jasonelle.com](https://www.jasonelle.com)
 
-Create your own native iOS app with *JSON*. Then send it over `http(s)://` or `file://`.
+Create your own native *Android* app with *JSON*. Then send it over `http(s)://` or `file://`.
 
 ## Releases
 
