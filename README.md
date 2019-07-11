@@ -1,146 +1,56 @@
-[![logo](https://raw.githubusercontent.com/gliechtenstein/images/master/jasonette.png)](http://www.jasonette.com)
-[![Code Climate](https://codeclimate.com/github/Jasonette/JASONETTE-Android/badges/gpa.svg)](https://codeclimate.com/github/Jasonette/JASONETTE-Android)
-[![Issue Count](https://codeclimate.com/github/Jasonette/JASONETTE-Android/badges/issue_count.svg)](https://codeclimate.com/github/Jasonette/JASONETTE-Android)
-[![codebeat badge](https://codebeat.co/badges/14fec9aa-70dc-4459-8d62-e64c2c5e750f)](https://codebeat.co/projects/github-com-jasonette-jasonette-android)
-[![roadmap badge](https://img.shields.io/badge/visit%20the-roadmap-blue.svg)](https://github.com/Jasonette/JASONETTE-android/projects/1)
-# [Jasonette](https://www.jasonette.com)
+[![logo](https://user-images.githubusercontent.com/292738/59071387-61da3480-888c-11e9-9d77-d495852231e7.png)](http://www.jasonelle.com)
 
-[https://www.jasonette.com](https://www.jasonette.com)
+# [Jasonette Android](https://www.jasonelle.com)
 
-Create your own native Android app with nothing but JSON. Then send it over the Internet.
+[https://www.jasonelle.com](https://www.jasonelle.com)
 
-Looking for an iOS version? [See here](https://www.github.com/Jasonette/JASONETTE-iOS)
+Create your own native iOS app with *JSON*. Then send it over `http(s)://` or `file://`.
 
-<br>
+## Releases
 
-## ★ Jasonette fetches this JSON markup from a server:
+Releases are made in the [Jasonelle Repo](https://github.com/jasonelle/jasonelle/releases).
 
-![json](https://raw.githubusercontent.com/gliechtenstein/images/master/json.png)
+- [Jasonette v1.0.0](https://github.com/jasonelle/jasonelle/releases/tag/v1.0).
 
-## ★ And self-constructs into the following native app, in realtime:
+- Jasonette v2.0.0 (In Progress).
 
-![instagram](https://github.com/Jasonette/Instagram-UI-example/blob/master/images/instagram-android.gif)
+## [Contribution](CONTRIBUTING.md)
 
-<br>
+This repository uses `master` branch to store the bleeding
+edge code. More details in the [CONTRIBUTING](CONTRIBUTING.md) file.
 
-# How it works
+## [Changelog](CHANGELOG.md)
 
-![diagram](https://raw.githubusercontent.com/gliechtenstein/images/master/diagram.gif)
+The [CHANGELOG](CHANGELOG.md) contains the release notes
+of each version.
 
-<br>
+## [Documentation](https://jasonelle.com/docs)
 
-# Cool things about Jasonette
+Documentation and examples in the [documentation repository](https://github.com/jasonelle/docs).
 
-- **100% NATIVE**: Jasonette maps JSON into native components and native function calls. There is no gimmick. There is no magic.
-- **App loads over HTTP**: Your app exists 100% as JSON, and loads from the cloud. No more hard-coding.
-- **An app in 30 minutes**: No kidding, build an app in 30 minutes.
-- **Lowest possible learning curve**: No programming experience required. There's only one thing you need to know: JSON. Which means you can build an app without "becoming a programmer".
 
-<br>
+## Questions and Support
 
-# [Quickstart](https://jasonette.github.io/documentation/#quickstart)
-Visit [the website](http://www.jasonette.com) to get started, or visit [the docs](https://jasonette.github.io/documentation) to learn more about how to use Jasonette.
-
-# Download
-Download latest release [here](https://github.com/Jasonette/JASONETTE-Android/archive/master.zip).
-
-<br>
-
-# More Examples
-Try playing these on Jasonette and watch them turn into native apps in front of your eyes!
-
-* [Jasonpedia](https://github.com/Jasonette/Jasonpedia) Tutorial demo app that includes all Jasonette feature implementations.
-* [Instagram](https://github.com/Jasonette/Instagram-UI-example) An Instagram UI, 100% powered by JSON.
-* [Twitter](https://github.com/Jasonette/Twitter-UI-example) A Twitter UI, 100% powered by JSON.
-
-<br>
-
-# Technical Highlights
-
-## 1. One JSON to rule them all
-
-Jasonette simplifies the entire app building process down to nothing more than:
-
-1. Write a JSON markup
-2. Add the JSON url to Jasonette
-3. Press `play`
-
-This is possible because Jasonette came up with a way to **fit an entire app worth of logic into a single declarative JSON that just works™.** This JSON grammar is used to express **every aspect of your app**, such as:
-
-1. Draw sophisticated [**views**](https://jasonette.github.io/documentation/document)
-2. Call [**device API methods**](https://jasonette.github.io/documentation/actions/#api)
-3. Chain method calls to [**perform complex logic**](https://jasonette.github.io/documentation/actions/#b-handling-another-actions-result)
-4. Respond to [**system events**](https://jasonette.github.io/documentation/actions/#system-events) and [**user interaction**](https://jasonette.github.io/documentation/actions/#a-handling-user-interaction)
-5. Even change the JSON itself dynamically using [**templates**](https://jasonette.github.io/documentation/templates).
-
-<br>
-
-## 2. App-over-HTTP
-Until now, the only thing JSON could send over the Internet was raw data. Normally apps would fetch remote data from the server for a connected experience, but the actual app logic would be hard-coded on the client side. This makes it hard to update and extend apps.
-
-But what happens when you can express an entire app logic as JSON?
-
-** Then apps can be stored, processed, shared, and sent over the Internet just like any other JSON.** Watch below where we update the JSON on a [JSON pastebin server](https://www.jasonbase.com), and the app changes immediately to reflect the new markup:
-
-![remote control](http://i.giphy.com/3o7TKrdmlX5uD7RszK.gif)
-
-<br>
-
-## 3. Designed to be extended or integrated
-Currently Jasonette covers all the essential native APIs and components, which means you can build pretty much any app you can imagine. But Jasonette is very flexible.
-
-### A. Extensible
-If you don't see a feature you want, you can simply extend Jasonette. Just follow the convention. Want to learn more? [Ask here](https://github.com/gliechtenstein/jasonette-android#questions-and-support)
-
-### B. Integrate existing code
-Since Jasonette is simply a Java project, You can even integrate Jasonette with your existing Android project if you want. This way you can use Jasonette for just a small part of your app without having to completely switch to a new way of programming. Want to learn more? [Ask here](https://github.com/gliechtenstein/jasonette-android#questions-and-support)
-
-<br>
-
-# Bugs and feature requests
-
-Have a bug or a feature request regarding the Jasonette code itself? [Please open a new issue](https://github.com/Jasonette/JASONETTE-Android/issues/new).
-
-<br>
-
-# Questions and Support
 Follow or join these channels for questions and support, and to keep updated on latest releases and announcements.
 
-<table class='equalwidth follow'>
-  <tr>
-		<td>
-			<a href='https://jasonette.now.sh'>
-        <b>Slack</b><br><br>
-        <img src='https://raw.githubusercontent.com/gliechtenstein/images/master/slack_smaller.png'>
-        <br>
-        <img src="https://jasonette.now.sh/badge.svg">
-      </a>
-		</td>
-		<td>
-			<a href='https://forum.jasonette.com'>
-        <b>Forum</b><br><br>
-				<img src='https://raw.githubusercontent.com/gliechtenstein/images/master/discourse_smaller.png'>
-        <br>
-        Visit >
-			</a>
-		</td>
-		<td>
-			<a href='https://www.twitter.com/jasonclient'>
-        <b>Twitter</b><br><br>
-				<img src='https://raw.githubusercontent.com/gliechtenstein/images/master/twitter_smaller.png'>
-        <br>
-        Follow >
-			</a>
-		</td>
-	</tr>
+<table class="equalwidth follow">
+<tr>
+<td>
+
+<a href="https://jasonette.now.sh">
+
+<img src="https://user-images.githubusercontent.com/292738/59078494-65ca7e80-88ad-11e9-8c87-4f3fa002bbb9.png" alt="Slack Logo">
+
+<br>
+
+<img src="https://jasonette.now.sh/badge.svg" alt="Slack User Count">
+
+</a>
+</td>
+</tr>
 </table>
 
-<br>
 
-# Contribute
-There are many ways to contribute. But first, please [read the contributing guideline](CONTRIBUTING.md)
+## [License](LICENSE)
 
-<br>
-
-# License
-Jasonette is released under the [MIT License](http://www.opensource.org/licenses/MIT).
+*Jasonette* is released under the [MPL 2.0 License](https://opensource.org/licenses/MPL-2.0).
