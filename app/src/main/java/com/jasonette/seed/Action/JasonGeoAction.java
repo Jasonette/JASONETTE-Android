@@ -29,33 +29,7 @@ public class JasonGeoAction {
                 && ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 51);
                 } else {
-                    final LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-                    LocationListener locationListener = new LocationListener() {
-                        public void onLocationChanged(Location location) {
-                            try {
-
-                                locationManager.removeUpdates(this);
-
-                                JSONObject ret = new JSONObject();
-                                String val = String.format(COORDS_STRING_FORMAT, location.getLatitude(), location.getLongitude());
-                                ret.put("coord", val);
-                                ret.put("value", val);
-                                JasonHelper.next("success", action, ret, event, context);
-                            } catch (Exception e) {
-                                Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                            }
-                        }
-
-                        public void onStatusChanged(String provider, int status, Bundle extras) {
-                        }
-
-                        public void onProviderEnabled(String provider) {
-                        }
-
-                        public void onProviderDisabled(String provider) {
-                        }
-                    };
-                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener, Looper.getMainLooper());
+                    getLocationManagerInfo(action, event, context);
                 }
             } else {
                 getLocationManagerInfo(action, event, context);
