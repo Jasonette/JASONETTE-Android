@@ -167,6 +167,8 @@ public class Launcher extends Application {
                             this.global.put(entry.getKey(), new JSONObject(val));
                         } else if (json instanceof JSONArray) {
                             this.global.put(entry.getKey(), new JSONArray(val));
+                        } else {
+                            this.global.put(entry.getKey(), json);
                         }
                     } catch (Exception e){
                         Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
