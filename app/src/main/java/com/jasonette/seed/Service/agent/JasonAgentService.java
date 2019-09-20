@@ -503,7 +503,9 @@ public class JasonAgentService {
                             view.setTag(payload);
                         } catch (Exception e) {
                             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                            notifier.notify();
+                            synchronized (notifier) {
+                                notifier.notify();
+                            }
                         }
                         return false;
                     }
