@@ -124,6 +124,8 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
     JSONObject intent_to_resolve;
     public JSONObject agents = new JSONObject();
     private boolean isexecuting = false;
+    /* Variable for checking a savedInstanceState for loadURL in JasonAgentService */
+    public boolean savedInstance = false;
 
     /*************************************************************
      *
@@ -285,6 +287,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
         }
 
         if(savedInstanceState != null) {
+            this.savedInstance = false;
             // Restore model and url
             // Then rebuild the view
             try {
@@ -305,6 +308,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                 Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
             }
         } else {
+            this.savedInstance=true;
             onRefresh();
         }
 
@@ -594,6 +598,26 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
         savedInstanceState.putParcelable("listState", listState);
 
         super.onSaveInstanceState(savedInstanceState);
+        try{
+            WebView agent = (WebView) this.agents.get("$webcontainer@" + model.url);
+            agent.saveState(savedInstanceState);
+        }
+        catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState)
+    {
+        super.onRestoreInstanceState(savedInstanceState);
+        try{
+            WebView agent = (WebView) this.agents.get("$webcontainer@" + model.url);
+            agent.restoreState(savedInstanceState);
+        }
+        catch (Exception e){
+            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+        }
     }
 
 
