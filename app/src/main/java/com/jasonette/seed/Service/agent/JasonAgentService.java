@@ -3,7 +3,7 @@ package com.jasonette.seed.Service.agent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;

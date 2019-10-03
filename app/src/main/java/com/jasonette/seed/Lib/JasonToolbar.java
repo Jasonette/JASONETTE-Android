@@ -2,18 +2,22 @@ package com.jasonette.seed.Lib;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 
 import com.bumptech.glide.Glide;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
+
+//import android.support.annotation.Nullable;
+//import android.support.v7.widget.Toolbar;
 
 /**
  * Created by realitix on 27/07/17.

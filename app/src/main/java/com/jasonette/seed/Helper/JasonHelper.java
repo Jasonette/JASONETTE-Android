@@ -5,11 +5,12 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.WindowManager;
 import android.widget.TextView;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Launcher.Launcher;
