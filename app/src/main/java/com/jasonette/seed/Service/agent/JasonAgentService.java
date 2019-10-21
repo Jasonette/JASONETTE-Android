@@ -578,7 +578,9 @@ public class JasonAgentService {
                         agent.loadUrl("file:///android_asset/file/" + url.substring(7));
                         // 2. remote url
                     } else {
-                        agent.loadUrl(url);
+                        if (context.savedInstance) {
+                            agent.loadUrl(url);
+                        }
                     }
                 }
             }
