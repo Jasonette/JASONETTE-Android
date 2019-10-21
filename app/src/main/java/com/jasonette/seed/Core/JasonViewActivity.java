@@ -137,7 +137,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
     * Enables the Android back button to go back in the background web view.
     */
     @Override
-    protected void onBackPressed() {
+    public void onBackPressed() {
         super.onBackPressed();
         if(backgroundWebview != null) {
             if(backgroundWebview.canGoBack()) {
