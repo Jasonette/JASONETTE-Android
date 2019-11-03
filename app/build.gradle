@@ -1,15 +1,25 @@
+buildscript {
+    repositories {
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
+}
+
+repositories {
+    maven { url 'https://maven.google.com' }
+}
+
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion '27.0.3'
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "com.jasonette"
-        minSdkVersion 17
-        targetSdkVersion 27
+        minSdkVersion 21
+        targetSdkVersion 28
         versionCode 3
         versionName "0.1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
     }
     buildTypes {
@@ -26,32 +36,40 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.2.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation 'com.google.firebase:firebase-messaging:11.6.2'
-    debugImplementation 'com.facebook.stetho:stetho:1.5.0'
-    debugImplementation 'com.facebook.stetho:stetho-okhttp3:1.5.0'
-    debugImplementation 'com.facebook.stetho:stetho-timber:1.5.0'
+    implementation 'com.google.firebase:firebase-messaging:20.0.0'
+    debugImplementation 'com.facebook.stetho:stetho:1.5.1'
+    debugImplementation 'com.facebook.stetho:stetho-okhttp3:1.5.1'
+    debugImplementation 'com.facebook.stetho:stetho-timber:1.5.1'
     //noinspection GradleCompatible
-    implementation 'com.android.support:appcompat-v7:27.0.2'
-    implementation 'com.google.android.gms:play-services-maps:11.6.2'
-    implementation 'com.squareup.okhttp3:okhttp:3.7.0'
-    implementation 'com.github.bumptech.glide:glide:3.7.0'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.2.0'
+    implementation 'com.github.bumptech.glide:glide:4.10.0'
     implementation 'jp.wasabeef:glide-transformations:2.0.1'
-    implementation 'com.eclipsesource.j2v8:j2v8:4.8.0@aar'
-    implementation 'com.android.support:recyclerview-v7:27.0.2'
-    implementation 'com.android.support:design:27.0.2'
+    implementation 'com.eclipsesource.j2v8:j2v8:5.0.103@aar'
+    //implementation 'com.android.support:recyclerview-v7:27.1.1'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    //implementation 'com.android.support:design:27.1.1'
+    implementation 'com.google.android.material:material:1.0.0'
     implementation 'com.aurelhubert:ahbottomnavigation:2.0.2'
-    implementation 'com.android.support:support-core-ui:27.0.2'
-    implementation 'commons-lang:commons-lang:2.6'
-    implementation 'com.github.scribejava:scribejava-apis:4.0.0'
+    //implementation 'com.android.support:support-core-ui:27.1.1'
+    implementation 'androidx.legacy:legacy-support-core-ui:1.0.0'
+    implementation 'commons-lang:commons-lang:20030203.000129'
+    implementation 'com.github.scribejava:scribejava-apis:6.8.1'
     implementation 'com.yqritc:recyclerview-flexibledivider:1.4.0'
     implementation 'com.commonsware.cwac:cam2:0.7.4'
     implementation 'com.github.maks:AndroidAudioRecorder:0.3.0-jasonette'
     implementation 'com.github.florent37:singledateandtimepicker:1.0.8'
-    implementation 'com.jakewharton.timber:timber:4.5.1'
+    implementation 'com.jakewharton.timber:timber:4.7.1'
     //noinspection UseOfBundledGooglePlayServices
-    implementation 'com.google.android.gms:play-services:11.6.2'
-    implementation 'com.android.support:multidex:1.0.2'
+    //implementation 'com.android.support:multidex:1.0.3'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'com.android.volley:volley:1.1.1'
+    implementation 'com.facebook.stetho:stetho:1.5.1'
+    implementation 'com.facebook.stetho:stetho-okhttp3:1.5.1'
+    implementation 'com.google.android.gms:play-services-vision:18.0.0'
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
 }

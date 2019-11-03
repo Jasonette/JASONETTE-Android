@@ -17,14 +17,17 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
@@ -34,7 +37,6 @@ import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
@@ -46,9 +48,11 @@ import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigationItem;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.Request;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.SizeReadyCallback;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 import com.jasonette.seed.Component.JasonComponentFactory;
 import com.jasonette.seed.Component.JasonImageComponent;
 import com.jasonette.seed.Helper.JasonHelper;
@@ -1835,12 +1839,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
 
                                     backgroundCurrentView = backgroundImageView;
 
-                                    DiskCacheStrategy cacheStrategy = DiskCacheStrategy.RESULT;
-                                    // gif doesn't work with RESULT cache strategy
-                                    // TODO: Check with Glide V4
-                                    if (background.matches(".*\\.gif")) {
-                                        cacheStrategy = DiskCacheStrategy.SOURCE;
-                                    }
+                                    DiskCacheStrategy cacheStrategy = DiskCacheStrategy.AUTOMATIC;
 
                                     with(JasonViewActivity.this)
                                             .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
@@ -1860,11 +1859,63 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                     }
                                     byte[] bs = Base64.decode(base64, Base64.NO_WRAP);
 
-                                    with(JasonViewActivity.this).load(bs).into(new SimpleTarget<GlideDrawable>() {
+                                    with(JasonViewActivity.this).load(bs).into(new Target<Drawable>() {
                                         @Override
-                                        public void onResourceReady(GlideDrawable resource, GlideAnimation<? super GlideDrawable> glideAnimation) {
+                                        public void onResourceReady(Drawable resource, Transition<? super Drawable> glideAnimation) {
                                             sectionLayout.setBackground(resource);
                                         }
+
+                                        @Override
+                                        public void onStart() {
+
+                                        }
+
+                                        @Override
+                                        public void onStop() {
+
+                                        }
+
+                                        @Override
+                                        public void onDestroy() {
+
+                                        }
+
+                                        @Override
+                                        public void onLoadStarted(@Nullable Drawable placeholder) {
+
+                                        }
+
+                                        @Override
+                                        public void onLoadFailed(@Nullable Drawable errorDrawable) {
+
+                                        }
+
+                                        @Override
+                                        public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                                        }
+
+                                        @Override
+                                        public void getSize(@NonNull SizeReadyCallback cb) {
+
+                                        }
+
+                                        @Override
+                                        public void removeCallback(@NonNull SizeReadyCallback cb) {
+
+                                        }
+
+                                        @Override
+                                        public void setRequest(@Nullable Request request) {
+
+                                        }
+
+                                        @Nullable
+                                        @Override
+                                        public Request getRequest() {
+                                            return null;
+                                        }
+
                                     });
                                 } else {
                                     if (background.equalsIgnoreCase("camera")) {
@@ -1892,7 +1943,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                     JasonAgentService agentService = (JasonAgentService)((Launcher)getApplicationContext()).services.get("JasonAgentService");
                                     backgroundWebview = agentService.setup(JasonViewActivity.this, background, "$webcontainer@" + model.url);
                                     backgroundWebview.setVisibility(View.VISIBLE);
-                                    
+
                                     //  do not apply any zoom on the text.
                                     backgroundWebview.getSettings().setTextZoom(100);
                                     // not interactive by default;
@@ -2373,11 +2424,11 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                         c.put("url", item.getString("image"));
                         Glide
                                 .with(this)
-                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                 .asBitmap()
-                                .into(new SimpleTarget<Bitmap>(100, 100) {
+                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                                .into(new CustomTarget<Bitmap>(100, 100) {
                                     @Override
-                                    public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
+                                    public void onResourceReady(Bitmap resource, Transition glideAnimation) {
                                         AHBottomNavigationItem tab_item = bottomNavigation.getItem(index);
                                         bottomNavigationItems.put(Integer.valueOf(index), tab_item);
                                         Drawable drawable = new BitmapDrawable(getResources(), resource);
@@ -2385,10 +2436,15 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                         tab_item.setTitle(text);
                                     }
                                     @Override
-                                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
+                                    public void onLoadFailed(Drawable errorDrawable) {
                                         AHBottomNavigationItem tab_item = bottomNavigation.getItem(index);
                                         bottomNavigationItems.put(Integer.valueOf(index), tab_item);
                                         tab_item.setTitle(text);
+                                    }
+
+                                    @Override
+                                    public void onLoadCleared(@Nullable Drawable placeholder) {
+
                                     }
                                 });
 
@@ -2417,11 +2473,11 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                         JSONObject c = new JSONObject();
                         c.put("url", item.getString("image"));
                         with(this)
-                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
                                 .asBitmap()
-                                .into(new SimpleTarget<Bitmap>(100, 100) {
+                                .load(JasonImageComponent.resolve_url(c, JasonViewActivity.this))
+                                .into(new CustomTarget<Bitmap>(100, 100) {
                                     @Override
-                                    public void onResourceReady(Bitmap resource, GlideAnimation glideAnimation) {
+                                    public void onResourceReady(Bitmap resource, Transition glideAnimation) {
                                         String text = "";
                                         try {
                                             if (item.has("text")) {
@@ -2441,7 +2497,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                         }
                                     }
                                     @Override
-                                    public void onLoadFailed(Exception exception, Drawable errorDrawable) {
+                                    public void onLoadFailed(Drawable errorDrawable) {
                                         String text = "";
                                         try {
                                             if (item.has("text")) {
@@ -2460,6 +2516,11 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                                 bottomNavigation.addItem(bottomNavigationItems.get(Integer.valueOf(j)));
                                             }
                                         }
+                                    }
+
+                                    @Override
+                                    public void onLoadCleared(@Nullable Drawable placeholder) {
+
                                     }
                                 });
 
@@ -2636,7 +2697,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                         c = -1;
                     }
                     if(c > 0) {
-                        ImageView searchButton = (ImageView) searchView.findViewById(android.support.v7.appcompat.R.id.search_button);
+                        ImageView searchButton = (ImageView) searchView.findViewById(androidx.appcompat.R.id.search_button);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                             searchButton.setImageTintList(ColorStateList.valueOf(JasonHelper.parse_color(header.getJSONObject("style").getString("color"))));
                         }

@@ -3,24 +3,28 @@ package com.jasonette.seed.Helper;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.LazyHeaders;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Iterator;
+
+//import com.bumptech.glide.request.animation.GlideAnimation;
 
 public class JasonImageHelper {
     public interface JasonImageDownloadListener {
@@ -102,11 +106,41 @@ public class JasonImageHelper {
 
                 Glide
                         .with(context)
-                        .load(url)
                         .asBitmap()
-                        .into(new SimpleTarget<Bitmap>(width, height) {
+                        .load(url)
+                        .into(new CustomTarget<Bitmap>(100,100) {
                             @Override
-                            public void onResourceReady(Bitmap bitmap, GlideAnimation anim) {
+                            public void onStart() {
+
+                            }
+
+                            @Override
+                            public void onStop() {
+
+                            }
+
+                            @Override
+                            public void onDestroy() {
+
+                            }
+
+                            @Override
+                            public void onLoadStarted(@Nullable Drawable placeholder) {
+
+                            }
+
+                            @Override
+                            public void onLoadFailed(@Nullable Drawable errorDrawable) {
+
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                            }
+
+                            @Override
+                            public void onResourceReady(Bitmap bitmap, Transition anim) {
                                 Uri bitmapUri = null;
                                 try {
                                     File file =  new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "share_image_" + System.currentTimeMillis() + ".png");

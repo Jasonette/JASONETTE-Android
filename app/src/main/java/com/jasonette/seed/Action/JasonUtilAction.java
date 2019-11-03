@@ -12,10 +12,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.ContactsContract;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AlertDialog;
 import android.text.InputType;
 import android.text.format.DateFormat;
 import android.util.Base64;
@@ -26,10 +22,15 @@ import android.widget.LinearLayout;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.github.florent37.singledateandtimepicker.dialog.SingleDateAndTimePickerDialog;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonImageHelper;
+import com.github.florent37.singledateandtimepicker.dialog.SingleDateAndTimePickerDialog;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -37,7 +38,10 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
+
+//import android.support.design.widget.Snackbar;
+//import androidx.core.app.DialogFragment;
+//import android.support.v7.app.AlertDialog;
 
 public class JasonUtilAction {
     private int counter; // general purpose counter;
@@ -199,7 +203,7 @@ public class JasonUtilAction {
                         for (int i = 0; i < items.length() ; i++) {
                             JSONObject item = (JSONObject)items.get(i);
                             if(item.has("text")){
-                               listItems.add(item.getString("text"));
+                                listItems.add(item.getString("text"));
                             } else {
                                 listItems.add("");
                             }
@@ -228,10 +232,10 @@ public class JasonUtilAction {
                             }
                         });
                         builder.setNeutralButton("CANCEL",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int val) {
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int val) {
+                                    }
                                 }
-                            }
                         );
                         builder.create().show();
                     }

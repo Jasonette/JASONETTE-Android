@@ -54,11 +54,11 @@ public class JasonOauthAction {
                 String client_secret = request_options.getString("client_secret");
 
                 if(!request_options.has("scheme") || request_options.getString("scheme").length() == 0
-                    || !request_options.has("host") || request_options.getString("host").length() == 0
-                    || !request_options.has("path") || request_options.getString("path").length() == 0
-                    || !authorize_options.has("scheme") || authorize_options.getString("scheme").length() == 0
-                    || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
-                    || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
+                        || !request_options.has("host") || request_options.getString("host").length() == 0
+                        || !request_options.has("path") || request_options.getString("path").length() == 0
+                        || !authorize_options.has("scheme") || authorize_options.getString("scheme").length() == 0
+                        || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
+                        || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
                 ) {
                     JasonHelper.next("error", action, data, event, context);
                 } else {
@@ -89,6 +89,11 @@ public class JasonOauthAction {
                         }
 
                         @Override
+                        protected String getAuthorizationBaseUrl() {
+                            return null;
+                        }
+
+                        @Override
                         public String getAuthorizationUrl(OAuth1RequestToken requestToken) {
                             return authorizeUriBuilder
                                     .appendQueryParameter("oauth_token", requestToken.getToken())
@@ -96,8 +101,7 @@ public class JasonOauthAction {
                         }
                     };
 
-                    final OAuth10aService oauthService = new ServiceBuilder()
-                            .apiKey(client_id)
+                    final OAuth10aService oauthService = new ServiceBuilder(client_id)
                             .apiSecret(client_secret)
                             .callback(callback_uri)
                             .build(oauthApi);
@@ -149,10 +153,10 @@ public class JasonOauthAction {
                     }
 
                     if(!authorize_options.has("scheme") || authorize_options.getString("scheme").length() == 0
-                        || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
-                        || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
-                        || !authorize_options_data.has("username") || authorize_options_data.getString("username").length() == 0
-                        || !authorize_options_data.has("password") || authorize_options_data.getString("password").length() == 0
+                            || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
+                            || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
+                            || !authorize_options_data.has("username") || authorize_options_data.getString("username").length() == 0
+                            || !authorize_options_data.has("password") || authorize_options_data.getString("password").length() == 0
                     ) {
                         JasonHelper.next("error", action, data, event, context);
                     } else {
@@ -162,8 +166,8 @@ public class JasonOauthAction {
                         Uri.Builder builder = new Uri.Builder();
 
                         builder.scheme(authorize_options.getString("scheme"))
-                            .encodedAuthority(authorize_options.getString("host"))
-                            .encodedPath(authorize_options.getString("path"));
+                                .encodedAuthority(authorize_options.getString("host"))
+                                .encodedPath(authorize_options.getString("path"));
 
                         final Uri uri = builder.build();
 
@@ -179,16 +183,16 @@ public class JasonOauthAction {
                             }
                         };
 
-                        ServiceBuilder serviceBuilder = new ServiceBuilder();
-                        serviceBuilder.apiKey(client_id);
+                        ServiceBuilder serviceBuilder = new ServiceBuilder(client_id);
+                        OAuth20Service tempOauthService = serviceBuilder.build(oauthApi);
                         if(client_secret.length() > 0) {
                             serviceBuilder.apiSecret(client_secret);
                         }
                         if(authorize_options_data.has("scope") && authorize_options_data.getString("scope").length() > 0) {
-                            serviceBuilder.scope(authorize_options_data.getString("scope"));
+                            serviceBuilder.withScope(authorize_options_data.getString("scope"));
                         }
                         if(authorize_options_data.has("state") && authorize_options_data.getString("state").length() > 0) {
-                            serviceBuilder.state(authorize_options_data.getString("state"));
+                            tempOauthService.createAuthorizationUrlBuilder().state(authorize_options_data.getString("state"));
                         }
 
                         final OAuth20Service oauthService = serviceBuilder.build(oauthApi);
@@ -240,14 +244,14 @@ public class JasonOauthAction {
                     SharedPreferences sharedPreferences = context.getSharedPreferences("oauth", Context.MODE_PRIVATE);
 
                     if(
-                        sharedPreferences.contains(client_id) &&
-                        sharedPreferences.contains(client_id + "_refresh_token") &&
-                        (
-                            sharedPreferences.contains(client_id + "_expires_in") &&
-                            (sharedPreferences.getInt(client_id + "_created_at", 0) + sharedPreferences.getInt(client_id + "_expires_in", 0))
-                                    <
-                            (int)(System.currentTimeMillis() / 1000)
-                        )
+                            sharedPreferences.contains(client_id) &&
+                                    sharedPreferences.contains(client_id + "_refresh_token") &&
+                                    (
+                                            sharedPreferences.contains(client_id + "_expires_in") &&
+                                                    (sharedPreferences.getInt(client_id + "_created_at", 0) + sharedPreferences.getInt(client_id + "_expires_in", 0))
+                                                            <
+                                                            (int)(System.currentTimeMillis() / 1000)
+                                    )
                     ) {
                         request_oauth20_access_token(action, data, event, context, null, sharedPreferences.getString(client_id + "_refresh_token", null));
                     } else {
@@ -271,7 +275,7 @@ public class JasonOauthAction {
                                 if(!authorize_options.has("scheme") || authorize_options.getString("scheme").length() == 0
                                         || !authorize_options.has("host") || authorize_options.getString("host").length() == 0
                                         || !authorize_options.has("path") || authorize_options.getString("path").length() == 0
-                                        ) {
+                                ) {
                                     JasonHelper.next("error", action, data, event, context);
                                 } else {
                                     Uri.Builder builder = new Uri.Builder();
@@ -294,21 +298,21 @@ public class JasonOauthAction {
                                         }
                                     };
 
-                                    ServiceBuilder serviceBuilder = new ServiceBuilder();
-                                    serviceBuilder.apiKey(client_id);
+                                    ServiceBuilder serviceBuilder = new ServiceBuilder(client_id);
+                                    OAuth20Service oauthService = serviceBuilder.build(oauthApi);
 
                                     if(client_secret.length() > 0) {
                                         serviceBuilder.apiSecret(client_secret);
                                     }
                                     if(authorize_options_data.has("scope") && authorize_options_data.getString("scope").length() > 0) {
-                                        serviceBuilder.scope(authorize_options_data.getString("scope"));
+                                        serviceBuilder.withScope(authorize_options_data.getString("scope"));
                                     }
                                     if(authorize_options_data.has("state") && authorize_options_data.getString("state").length() > 0) {
-                                        serviceBuilder.state(authorize_options_data.getString("state"));
+                                        oauthService.createAuthorizationUrlBuilder().state(authorize_options_data.getString("state"));
                                     }
                                     serviceBuilder.callback(redirect_uri);
 
-                                    OAuth20Service oauthService = serviceBuilder.build(oauthApi);
+                                    oauthService = serviceBuilder.build(oauthApi);
 
                                     Map<String, String> additionalParams = new HashMap<>();
 
@@ -385,21 +389,21 @@ public class JasonOauthAction {
                 JSONObject access_options = options.getJSONObject("access");
 
                 if(
-                    oauth_token.length() > 0  && oauth_verifier.length() > 0
-                    && access_options.has("scheme") && access_options.getString("scheme").length() > 0
-                    && access_options.has("host") && access_options.getString("host").length() > 0
-                    && access_options.has("path") && access_options.getString("path").length() > 0
-                    && access_options.has("path") && access_options.getString("path").length() > 0
-                    && access_options.has("client_id") && access_options.getString("client_id").length() > 0
-                    && access_options.has("client_secret") && access_options.getString("client_secret").length() > 0
+                        oauth_token.length() > 0  && oauth_verifier.length() > 0
+                                && access_options.has("scheme") && access_options.getString("scheme").length() > 0
+                                && access_options.has("host") && access_options.getString("host").length() > 0
+                                && access_options.has("path") && access_options.getString("path").length() > 0
+                                && access_options.has("path") && access_options.getString("path").length() > 0
+                                && access_options.has("client_id") && access_options.getString("client_id").length() > 0
+                                && access_options.has("client_secret") && access_options.getString("client_secret").length() > 0
                 ) {
                     String client_id = access_options.getString("client_id");
                     String client_secret = access_options.getString("client_secret");
 
                     Uri.Builder uriBuilder = new Uri.Builder();
                     uriBuilder.scheme(access_options.getString("scheme"))
-                        .encodedAuthority(access_options.getString("host"))
-                        .encodedPath(access_options.getString("path"));
+                            .encodedAuthority(access_options.getString("host"))
+                            .encodedPath(access_options.getString("path"));
 
                     final String accessUri = uriBuilder.build().toString();
 
@@ -414,10 +418,14 @@ public class JasonOauthAction {
                         public String getAccessTokenEndpoint() {
                             return accessUri.toString();
                         }
+
+                        @Override
+                        protected String getAuthorizationBaseUrl() {
+                            return null;
+                        }
                     };
 
-                    final OAuth10aService oauthService = new ServiceBuilder()
-                            .apiKey(client_id)
+                    final OAuth10aService oauthService = new ServiceBuilder(client_id)
                             .apiSecret(client_secret)
                             .build(oauthApi);
 
@@ -515,7 +523,7 @@ public class JasonOauthAction {
                     || !access_options.has("scheme") || access_options.getString("scheme").length() == 0
                     || !access_options.has("host") || access_options.getString("host").length() == 0
                     || !access_options.has("path") || access_options.getString("path").length() == 0
-                    ) {
+            ) {
                 JasonHelper.next("error", action, data, event, context);
             } else {
                 final Uri.Builder uri_builder = new Uri.Builder();
@@ -716,11 +724,15 @@ public class JasonOauthAction {
                         public String getAccessTokenEndpoint() { return null; }
 
                         @Override
+                        protected String getAuthorizationBaseUrl() {
+                            return null;
+                        }
+
+                        @Override
                         public String getAuthorizationUrl(OAuth1RequestToken requestToken) { return null; }
                     };
 
-                    ServiceBuilder serviceBuilder = new ServiceBuilder();
-                    serviceBuilder.apiKey(client_id);
+                    ServiceBuilder serviceBuilder = new ServiceBuilder(client_id);
 
                     if(client_secret.length() > 0) {
                         serviceBuilder.apiSecret(client_secret);
@@ -763,8 +775,7 @@ public class JasonOauthAction {
                         }
                     };
 
-                    ServiceBuilder serviceBuilder = new ServiceBuilder();
-                    serviceBuilder.apiKey(client_id);
+                    ServiceBuilder serviceBuilder = new ServiceBuilder(client_id);
 
                     if(client_secret.length() > 0) {
                         serviceBuilder.apiSecret(client_secret);
