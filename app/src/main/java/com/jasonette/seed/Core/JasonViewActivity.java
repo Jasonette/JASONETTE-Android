@@ -142,14 +142,16 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
     */
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         if(backgroundWebview != null) {
             if(backgroundWebview.canGoBack()) {
                 backgroundWebview.goBack();
             }
             else {
-                finish();
+                super.onBackPressed();
+                //finish();
             }
+        }else{
+            super.onBackPressed();
         }
     }
 
