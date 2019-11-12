@@ -11,7 +11,7 @@ import org.json.JSONObject;
 public class JasonPushRegisterService extends FirebaseMessagingService {
     @Override
     public void onNewToken(String refreshedToken) {
-        //super.onNewToken(refreshedToken);
+        super.onNewToken(refreshedToken);
         if (refreshedToken != null) {
             try {
                 JSONObject payload = new JSONObject();
