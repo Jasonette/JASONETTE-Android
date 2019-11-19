@@ -1,7 +1,5 @@
 package com.jasonette.seed.Service.websocket;
 
-import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.jasonette.seed.Core.JasonViewActivity;
@@ -19,34 +17,34 @@ import okhttp3.WebSocketListener;
 /*****************************************
 
  ### Events:
-     - There are 4 events: $websocket.onopen, $websocket.onclose, $websocket.onmessage, $websocket.onerror
+ - There are 4 events: $websocket.onopen, $websocket.onclose, $websocket.onmessage, $websocket.onerror
 
  [1] $websocket.onopen
-     - Triggered when $websocket.open action succeeds.
-     - You can start sending messages after this event.
-     - Response Payload: none
+ - Triggered when $websocket.open action succeeds.
+ - You can start sending messages after this event.
+ - Response Payload: none
 
  [2] $websocket.onclose
-     - Triggered when $websocket.close action succeeds or the socket closes
-     - Response Payload: none
+ - Triggered when $websocket.close action succeeds or the socket closes
+ - Response Payload: none
 
  [3] $websocket.onerror
-     - Triggered when there's an error
-     - Response Payload:
-     {
-         "$jason": {
-             "error": [THE ERROR MESSAGE]
-         }
-     }
+ - Triggered when there's an error
+ - Response Payload:
+ {
+ "$jason": {
+ "error": [THE ERROR MESSAGE]
+ }
+ }
 
  [4] $websocket.onmessage
-     - Triggered whenever there's an incoming message
-     - Response Payload:
-     {
-         "$jason": {
-             "message": [THE INCOMING MESSAGE STRING]
-         }
-     }
+ - Triggered whenever there's an incoming message
+ - Response Payload:
+ {
+ "$jason": {
+ "message": [THE INCOMING MESSAGE STRING]
+ }
+ }
 
  *****************************************/
 

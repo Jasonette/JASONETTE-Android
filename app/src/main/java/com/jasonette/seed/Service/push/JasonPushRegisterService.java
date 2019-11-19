@@ -1,17 +1,17 @@
 package com.jasonette.seed.Service.push;
+
 import android.util.Log;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.FirebaseInstanceIdService;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Launcher.Launcher;
+import com.google.firebase.messaging.FirebaseMessagingService;
 
 import org.json.JSONObject;
 
-public class JasonPushRegisterService extends FirebaseInstanceIdService{
+public class JasonPushRegisterService extends FirebaseMessagingService {
     @Override
-    public void onTokenRefresh() {
-        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+    public void onNewToken(String refreshedToken) {
+        super.onNewToken(refreshedToken);
         if (refreshedToken != null) {
             try {
                 JSONObject payload = new JSONObject();

@@ -3,7 +3,7 @@ package com.jasonette.seed.Service.agent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -503,7 +503,9 @@ public class JasonAgentService {
                             view.setTag(payload);
                         } catch (Exception e) {
                             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                            notifier.notify();
+                            synchronized (notifier) {
+                                notifier.notify();
+                            }
                         }
                         return false;
                     }
@@ -576,7 +578,9 @@ public class JasonAgentService {
                         agent.loadUrl("file:///android_asset/file/" + url.substring(7));
                         // 2. remote url
                     } else {
-                        agent.loadUrl(url);
+                        if (context.savedInstance) {
+                            agent.loadUrl(url);
+                        }
                     }
                 }
             }

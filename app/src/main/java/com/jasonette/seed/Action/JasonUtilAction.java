@@ -1,5 +1,6 @@
 package com.jasonette.seed.Action;
 
+import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.ContentResolver;
@@ -12,24 +13,25 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.ContactsContract;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AlertDialog;
 import android.text.InputType;
 import android.text.format.DateFormat;
 import android.util.Base64;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.github.florent37.singledateandtimepicker.dialog.SingleDateAndTimePickerDialog;
+import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Helper.JasonImageHelper;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -37,7 +39,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 public class JasonUtilAction {
     private int counter; // general purpose counter;
@@ -269,26 +270,50 @@ public class JasonUtilAction {
 
 
     public void datepicker(final JSONObject action, final JSONObject data, final JSONObject event, final Context context) {
-        new SingleDateAndTimePickerDialog.Builder(context)
-                .bottomSheet()
-                .curved()
-                //.minutesStep(15)
-                //.title("Simple")
-                .listener(new SingleDateAndTimePickerDialog.Listener() {
+
+        final Calendar c = Calendar.getInstance();
+        int mYear = c.get(Calendar.YEAR);
+        int mMonth = c.get(Calendar.MONTH);
+        int mDay = c.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(context,
+                new DatePickerDialog.OnDateSetListener() {
+
                     @Override
-                    public void onDateSelected(Date date) {
-                        try {
-                            String val = String.valueOf(date.getTime()/1000);
-                            JSONObject value = new JSONObject();
-                            value.put("value", val);
-                            JasonHelper.next("success", action, value, event, context);
-                        } catch (Exception e) {
-                            Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                        }
+                    public void onDateSet(DatePicker view, int year,
+                                          int monthOfYear, int dayOfMonth) {
 
+                                showTimePickerDialog(action, event, year, monthOfYear, dayOfMonth, context);
                     }
-                }).display();
+                }, mYear, mMonth, mDay);
+        datePickerDialog.setTitle("Select Date");
+        datePickerDialog.show();
 
+    }
+
+    private void showTimePickerDialog(final JSONObject action, final JSONObject event, final int year, final int monthOfYear, final int dayOfMonth, final Context context) {
+        Calendar mcurrentTime = Calendar.getInstance();
+        final int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
+        final int minute = mcurrentTime.get(Calendar.MINUTE);
+        TimePickerDialog mTimePicker;
+        mTimePicker = new TimePickerDialog(context, new TimePickerDialog.OnTimeSetListener() {
+            @Override
+            public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
+                Date date = new Date(year, monthOfYear, dayOfMonth, selectedHour, selectedMinute);
+
+                try {
+                    String val = String.valueOf(date.getTime()/1000);
+                    JSONObject value = new JSONObject();
+                    value.put("value", val);
+                    JasonHelper.next("success", action, value, event, context);
+                } catch (Exception e) {
+                    Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
+                }
+
+            }
+        }, hour, minute, true);//Yes 24 hour time
+        mTimePicker.setTitle("Select Time");
+        mTimePicker.show();
     }
 
 
