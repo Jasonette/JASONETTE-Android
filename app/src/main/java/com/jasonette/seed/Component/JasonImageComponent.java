@@ -32,8 +32,6 @@ import org.json.JSONObject;
 import java.net.URI;
 import java.util.Iterator;
 
-//import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-//import com.bumptech.glide.request.animation.GlideAnimation;
 
 public class JasonImageComponent {
     private static LazyHeaders.Builder prepare(JSONObject component, Context context){

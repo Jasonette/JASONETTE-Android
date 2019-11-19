@@ -503,7 +503,9 @@ public class JasonAgentService {
                             view.setTag(payload);
                         } catch (Exception e) {
                             Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());
-                            notifier.notify();
+                            synchronized (notifier) {
+                                notifier.notify();
+                            }
                         }
                         return false;
                     }
@@ -576,7 +578,9 @@ public class JasonAgentService {
                         agent.loadUrl("file:///android_asset/file/" + url.substring(7));
                         // 2. remote url
                     } else {
-                        agent.loadUrl(url);
+                        if (context.savedInstance) {
+                            agent.loadUrl(url);
+                        }
                     }
                 }
             }

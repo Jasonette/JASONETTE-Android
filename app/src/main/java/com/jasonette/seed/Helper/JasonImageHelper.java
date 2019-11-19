@@ -24,7 +24,6 @@ import java.io.FileOutputStream;
 import java.net.URI;
 import java.util.Iterator;
 
-//import com.bumptech.glide.request.animation.GlideAnimation;
 
 public class JasonImageHelper {
     public interface JasonImageDownloadListener {

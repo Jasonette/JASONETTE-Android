@@ -8,6 +8,7 @@ import android.util.Log;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
 
+import org.hjson.JsonValue;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -227,7 +228,8 @@ public class JasonModel{
     private void resolve_and_build(String res){
         try {
 
-            jason = new JSONObject(res);
+            String jsonString = JsonValue.readHjson(res).toString();
+            jason = new JSONObject(jsonString);
 
             // "include" handling
             // 1. check if it contains "+": "..."

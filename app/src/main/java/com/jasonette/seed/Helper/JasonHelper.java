@@ -15,6 +15,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Launcher.Launcher;
 
+import org.hjson.JsonValue;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -283,8 +284,8 @@ public class JasonHelper {
             byte[] buffer = new byte[size];
             is.read(buffer);
             is.close();
-            jr = new String(buffer, "UTF-8");
-
+            String jsonString = JsonValue.readHjson(new String(buffer)).toString();
+            jr = new String(jsonString.getBytes(), "UTF-8");
 
             if(jr.trim().startsWith("[")) {
                 // array

@@ -16,8 +16,6 @@ import com.jasonette.seed.Helper.JasonHelper;
 
 import org.json.JSONObject;
 
-//import android.support.annotation.Nullable;
-//import android.support.v7.widget.Toolbar;
 
 /**
  * Created by realitix on 27/07/17.
