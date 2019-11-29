@@ -4,13 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Sentimental Versioning](http://sentimentalversioning.org/).
 
-## [2.0.0] Next Release
+## [2.0.0] Release
 
-This version is the current in development.
+
 
 ### Added
 
+- Hjson reading capability 
+
+- Upgraded to AndroidX and better performance for Glide implementation
+
+- onBackPressed avoiding closing the app on Back button press
+
 ### Changed
+
+- Complete implementation for Calendar Demo
 
 - Minimum Android version bumped to `6.0`.
 
@@ -22,7 +30,7 @@ This version is the current in development.
 
 - Fixed `build.gradle` for Android Studio `v3.2.1`. By [@CydeSwype](https://github.com/Jasonette/JASONETTE-Android/commits?author=CydeSwype).
 
--  Fixed text zoom issue in `Webview` by [@naei](https://github.com/naei).
+- Fixed text zoom issue in `Webview` by [@naei](https://github.com/naei).
 
 ### Updated
 
