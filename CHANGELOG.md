@@ -4,9 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Sentimental Versioning](http://sentimentalversioning.org/).
 
-## [2.0.0] Release
+## [3.0.0] Next Release
 
+This version is the current in development. Will be released after the week of *6th November 2020*.
 
+## [2.0.0](https://github.com/jasonelle/jasonelle/releases/tag/v2.0)
+
+This version was released in November 2019.
 
 ### Added
 
@@ -50,6 +54,8 @@ Huge thanks to the following persons that helped in this release:
 - [Adán Miranda](https://github.com/takakeiji): Helped compiling *Jason* App APK.
 
 - [Devs Chile](https://devschile.cl): Chilean commmunity of developers.
+
+More people here [https://jasonelle.com/docs/#/folks](https://jasonelle.com/docs/#/folks).
 
 ## [1.0](https://github.com/jasonelle/jasonelle/releases/tag/v1.0)
 
