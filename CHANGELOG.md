@@ -4,13 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Sentimental Versioning](http://sentimentalversioning.org/).
 
-## [2.0.0] Next Release
+## [3.0.0] Next Release
 
-This version is the current in development.
+This version is the current in development. Will be released after the week of *6th November 2020*.
+
+## [2.0.0](https://github.com/jasonelle/jasonelle/releases/tag/v2.0)
+
+This version was released in November 2019.
 
 ### Added
 
+- Hjson reading capability 
+
+- Upgraded to AndroidX and better performance for Glide implementation
+
+- onBackPressed avoiding closing the app on Back button press
+
 ### Changed
+
+- Complete implementation for Calendar Demo
 
 - Minimum Android version bumped to `6.0`.
 
@@ -22,7 +34,7 @@ This version is the current in development.
 
 - Fixed `build.gradle` for Android Studio `v3.2.1`. By [@CydeSwype](https://github.com/Jasonette/JASONETTE-Android/commits?author=CydeSwype).
 
--  Fixed text zoom issue in `Webview` by [@naei](https://github.com/naei).
+- Fixed text zoom issue in `Webview` by [@naei](https://github.com/naei).
 
 ### Updated
 
@@ -42,6 +54,8 @@ Huge thanks to the following persons that helped in this release:
 - [Adán Miranda](https://github.com/takakeiji): Helped compiling *Jason* App APK.
 
 - [Devs Chile](https://devschile.cl): Chilean commmunity of developers.
+
+More people here [https://jasonelle.com/docs/#/folks](https://jasonelle.com/docs/#/folks).
 
 ## [1.0](https://github.com/jasonelle/jasonelle/releases/tag/v1.0)
 
