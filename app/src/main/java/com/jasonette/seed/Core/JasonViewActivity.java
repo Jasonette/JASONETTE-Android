@@ -1725,6 +1725,7 @@ public class JasonViewActivity extends AppCompatActivity implements ActivityComp
                                     try {
                                         JasonAgentService agentService = (JasonAgentService)((Launcher)getApplicationContext()).services.get("JasonAgentService");
                                         WebView agent = agentService.setup(JasonViewActivity.this, agents.getJSONObject(key), key);
+                                        rootLayout.removeView(agent);
                                         rootLayout.addView(agent);
                                     } catch (JSONException e) {
                                     }
