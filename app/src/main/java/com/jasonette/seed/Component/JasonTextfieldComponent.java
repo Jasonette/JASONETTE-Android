@@ -3,7 +3,6 @@ package com.jasonette.seed.Component;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
-import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -16,8 +15,12 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
-import com.jasonette.seed.Helper.JasonHelper;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.jasonette.seed.Core.JasonViewActivity;
+import com.jasonette.seed.Helper.JasonHelper;
+
 import org.json.JSONObject;
 
 public class JasonTextfieldComponent {

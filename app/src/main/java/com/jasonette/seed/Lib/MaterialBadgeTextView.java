@@ -16,21 +16,21 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.Build;
-import android.support.v4.view.ViewCompat;
+import androidx.core.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.TextView;
+import androidx.appcompat.widget.AppCompatTextView;
 
 import com.jasonette.seed.Helper.JasonHelper;
 
 /**
  * Created by matrixxun on 2016/8/30.
  */
-public class MaterialBadgeTextView extends TextView {
+public class MaterialBadgeTextView extends AppCompatTextView {
 
     private static final int DEFAULT_FILL_TYPE = 0;
 
@@ -125,7 +125,7 @@ public class MaterialBadgeTextView extends TextView {
             final int diameter = max - (2 * mShadowRadius);
             OvalShape oval = new OvalShadow(mShadowRadius, diameter);
             circle = new ShapeDrawable(oval);
-            ViewCompat.setLayerType(this, ViewCompat.LAYER_TYPE_SOFTWARE, circle.getPaint());
+            ViewCompat.setLayerType(this, View.LAYER_TYPE_SOFTWARE, circle.getPaint());
             circle.getPaint().setShadowLayer(mShadowRadius, shadowXOffset, shadowYOffset, KEY_SHADOW_COLOR);
             circle.getPaint().setColor(backgroundColor);
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
@@ -135,7 +135,7 @@ public class MaterialBadgeTextView extends TextView {
             }
         } else if (text.length() > 1) {/**第二种背景是上下两边为直线的椭圆, 当文本长度大于1时 */
             SemiCircleRectDrawable sr = new SemiCircleRectDrawable();
-            ViewCompat.setLayerType(this, ViewCompat.LAYER_TYPE_SOFTWARE, sr.getPaint());
+            ViewCompat.setLayerType(this, View.LAYER_TYPE_SOFTWARE, sr.getPaint());
             sr.getPaint().setShadowLayer(mShadowRadius, shadowXOffset, shadowYOffset, KEY_SHADOW_COLOR);
             sr.getPaint().setColor(backgroundColor);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -214,7 +214,7 @@ public class MaterialBadgeTextView extends TextView {
         }
         setLayoutParams(params);
         ShapeDrawable drawable = new ShapeDrawable(new OvalShape());
-        ViewCompat.setLayerType(this, ViewCompat.LAYER_TYPE_SOFTWARE, drawable.getPaint());
+        ViewCompat.setLayerType(this, View.LAYER_TYPE_SOFTWARE, drawable.getPaint());
         drawable.getPaint().setColor(backgroundColor);
         drawable.getPaint().setAntiAlias(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {

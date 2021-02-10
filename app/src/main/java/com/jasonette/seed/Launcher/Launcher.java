@@ -16,6 +16,7 @@ import com.jasonette.seed.Core.JasonViewActivity;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.R;
 
+import org.hjson.JsonValue;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -129,7 +130,9 @@ public class Launcher extends Application {
                     byte[] buffer = new byte[size];
                     is.read(buffer);
                     is.close();
-                    jr = new String(buffer, "UTF-8");
+                    String jsonString = JsonValue.readHjson(new String (buffer)).toString();
+                    jr = new String(jsonString.getBytes(), "UTF-8");
+
                     JSONObject jrjson = new JSONObject(jr);
                     if(jrjson.has("classname")){
                         String resolved_classname = "com.jasonette.seed.Action." + jrjson.getString("classname");
@@ -167,6 +170,8 @@ public class Launcher extends Application {
                             this.global.put(entry.getKey(), new JSONObject(val));
                         } else if (json instanceof JSONArray) {
                             this.global.put(entry.getKey(), new JSONArray(val));
+                        } else {
+                            this.global.put(entry.getKey(), json);
                         }
                     } catch (Exception e){
                         Log.d("Warning", e.getStackTrace()[0].getMethodName() + " : " + e.toString());

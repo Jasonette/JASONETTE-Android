@@ -13,30 +13,61 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 
+import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class JasonRequire implements Runnable{
     final String URL;
+    final Dictionary URLObject;
     final CountDownLatch latch;
     final Context context;
     final OkHttpClient client;
+    final String method;
+    final String keyURL;
 
     JSONObject private_refs;
 
     public JasonRequire(String url, CountDownLatch latch, JSONObject refs, OkHttpClient client, Context context) {
         this.URL = url.replace("\\", "");
+        this.keyURL = this.URL;
+        this.latch = latch;
+        this.private_refs = refs;
+        this.context = context;
+        this.client = client;
+        this.URLObject = null;
+        this.method = "get";
+    }
+
+    /**
+     * This constructor version takes an object instead of a string for the url
+     * this url is typically from the mixin with [post] params used in JasonModel.java
+     * @param url
+     * @param latch
+     * @param refs
+     * @param client
+     * @param context
+     */
+    public JasonRequire(Dictionary url, CountDownLatch latch, JSONObject refs, OkHttpClient client, Context context) {
+        this.URLObject = url;
+        this.URL = ((String) url.get("parsed")).replace("\\", "");
+        this.method = (String) url.get("method");
+        this.keyURL = ((String) url.get("original")).replace("\\", "");;
         this.latch = latch;
         this.private_refs = refs;
         this.context = context;
         this.client = client;
     }
+
     public void run() {
         if(this.URL.contains("file://")) {
             local();
@@ -45,6 +76,7 @@ public class JasonRequire implements Runnable{
         }
     }
     private void local(){
+        Log.d("Debug", "Local file:// detected");
         try {
             Runnable r = new Runnable()
             {
@@ -68,6 +100,7 @@ public class JasonRequire implements Runnable{
         }
     }
     private void remote(){
+        Log.d("Debug", "Remote file detected");
         Request request;
         Request.Builder builder = new Request.Builder();
 
@@ -106,10 +139,23 @@ public class JasonRequire implements Runnable{
 
             Uri uri = b.build();
             String url_with_session = uri.toString();
-            request = builder
-                    .url(url_with_session)
-                    .build();
 
+            Log.d("Mixin", "Fetching: " + url_with_session);
+
+            if(this.method.equals("post")) {
+                Log.d("Mixin", "POST");
+                request = builder.url(url_with_session).post(
+                        RequestBody.create("{}",
+                                MediaType.parse("application/json")
+                        )
+                ).build();
+
+            } else {
+                Log.d("Mixin", "GET");
+                request = builder
+                        .url(url_with_session)
+                        .build();
+            }
 
             // Actual call
             client.newCall(request).enqueue(new Callback() {
@@ -127,16 +173,17 @@ public class JasonRequire implements Runnable{
                     }
                     try {
                         String res = response.body().string();
+                        Log.d("Body", res);
                         // store the res under
                         if(res.trim().startsWith("[")) {
                             // array
-                            private_refs.put(URL, new JSONArray(res));
+                            private_refs.put(keyURL, new JSONArray(res));
                         } else if(res.trim().startsWith("{")){
                             // object
-                            private_refs.put(URL, new JSONObject(res));
+                            private_refs.put(keyURL, new JSONObject(res));
                         } else {
                             // string
-                            private_refs.put(URL, res);
+                            private_refs.put(keyURL, res);
                         }
                         latch.countDown();
                     } catch (JSONException e) {

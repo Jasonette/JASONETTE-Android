@@ -8,11 +8,14 @@ import android.util.Log;
 import com.jasonette.seed.Helper.JasonHelper;
 import com.jasonette.seed.Launcher.Launcher;
 
+import org.hjson.JsonValue;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -190,9 +193,50 @@ public class JasonModel{
         }
     }
 
+    /**
+     * Parses a string similar to https://www.example.com/api/data.json[post]
+     * and returns a dictionary with original, parsed, and method
+     * @param url
+     * @return dictionary with original, parsed, and method url
+     */
+    private Dictionary get_method_for_url(String url) {
+        Dictionary result = new Hashtable();
+        result.put("original", url);
+        result.put("parsed", url);
+        result.put("method", "get");
+        result.put("shouldDownload", true);
 
+        String regex =  "\\[(POST|GET|PUT|HEAD|DELETE)\\]";
+        Pattern require_pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = require_pattern.matcher(url);
+
+        String matched = "";
+        String parsed = "";
+
+        while(matcher.find()) {
+            Log.d("Debug", "Match Found");
+            // group 0 contains [post]
+            matched = matcher.group(0);
+            parsed = url.substring(0, url.length() - matched.length());
+
+            // group 1 contains only post
+            result.put("method", matcher.group(1).toLowerCase());
+            result.put("parsed", parsed);
+        }
+
+        // if the url contains brackets [] and its the same as the original
+        // it means it maybe has wrong format
+        // so its better to not download it or it could crash the app
+        if(parsed.contentEquals(url) && url.contains("[]")) {
+            Log.d("Warning", "Provided Url for Mixin have wrong format.");
+            result.put("shouldDownload", false);
+        }
+
+        return result;
+    }
 
     private void include(String res){
+        Log.d("Debug", "Mixin Detected: " + res);
         String regex =  "\"([+@])\"[ ]*:[ ]*\"(([^\"@]+)(@))?([^\"]+)\"";
         Pattern require_pattern = Pattern.compile(regex);
         Matcher matcher = require_pattern.matcher(res);
@@ -211,8 +255,14 @@ public class JasonModel{
         if(urls.size() > 0) {
             CountDownLatch latch = new CountDownLatch(urls.size());
             ExecutorService taskExecutor = Executors.newFixedThreadPool(urls.size());
+            Dictionary parsedUrl = null;
+            Boolean shouldDownload = false;
             for (int i = 0; i < urls.size(); i++) {
-                taskExecutor.submit(new JasonRequire(urls.get(i), latch, refs, client, view));
+                parsedUrl = get_method_for_url(urls.get(i));
+                shouldDownload = (Boolean) parsedUrl.get("shouldDownload");
+                if(shouldDownload) {
+                    taskExecutor.submit(new JasonRequire(parsedUrl, latch, refs, client, view));
+                }
             }
             try {
                 latch.await();
@@ -227,7 +277,8 @@ public class JasonModel{
     private void resolve_and_build(String res){
         try {
 
-            jason = new JSONObject(res);
+            String jsonString = JsonValue.readHjson(res).toString();
+            jason = new JSONObject(jsonString);
 
             // "include" handling
             // 1. check if it contains "+": "..."
